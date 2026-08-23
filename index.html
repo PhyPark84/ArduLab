@@ -30,6 +30,11 @@
 .mediaHint{background:#eef8f8;border:1px solid #cfe8e8;border-radius:9px;padding:9px 11px;color:#315d60;font-size:13px;line-height:1.5}
 .mediaTableWrap{max-height:230px;overflow:auto;border:1px solid var(--line);border-radius:9px;margin-top:9px}
 .mediaStatus{font-weight:800;color:#08767b}
+.stepBtn{transition:.15s}
+.stepBtn.step-active{background:#ff7a00;color:#fff}
+.stepBtn.step-done{background:#e8f7ec;color:#18733a;border:1px solid #9bd1aa}
+.stepBtn.step-disabled{background:#edf0f4;color:#9aa3ad;cursor:not-allowed}
+.stepBtn.step-neutral{background:#e8f5f5;color:#08767b}
 
 </style>
 </head>
@@ -89,12 +94,18 @@
 
   <div class="mediaControls">
     <label>기준 길이 <input id="scaleLength" type="number" min="0" step="any" placeholder="예: 30"></label>
-    <label>단위 <input id="scaleUnit" value="cm" placeholder="cm"></label>
-    <button id="setScaleBtn" class="soft">① 기준 길이 설정</button>
-    <button id="setAxisBtn" class="soft">② 좌표축 설정</button>
-    <button id="recordPointBtn" class="orange">③ 점 기록</button>
-    <button id="undoMediaPointBtn" class="gray">마지막 점 취소</button>
-    <button id="clearMediaPointsBtn" class="gray">측정점 지우기</button>
+    <label>단위
+      <select id="scaleUnit">
+        <option value="mm">mm</option>
+        <option value="cm" selected>cm</option>
+        <option value="m">m</option>
+      </select>
+    </label>
+    <button id="setScaleBtn" class="stepBtn step-active">① 기준 길이 설정</button>
+    <button id="setAxisBtn" class="stepBtn step-disabled">② 좌표축 설정</button>
+    <button id="recordPointBtn" class="stepBtn step-disabled">③ 점 기록</button>
+    <button id="undoMediaPointBtn" class="stepBtn step-disabled">마지막 점 취소</button>
+    <button id="clearMediaPointsBtn" class="stepBtn step-disabled">측정점 지우기</button>
   </div>
 
   <div id="videoControls" class="mediaControls" style="display:none">
@@ -527,11 +538,71 @@ let mediaRaf = null;
 const mediaCanvas = $('mediaCanvas');
 const mediaCtx = mediaCanvas.getContext('2d');
 
+
+function setStepState(btnId,state,label){
+  const b=$(btnId); if(!b)return;
+  b.classList.remove('step-active','step-done','step-disabled','step-neutral');
+  if(state==='active'){b.classList.add('step-active');b.disabled=false}
+  else if(state==='done'){b.classList.add('step-done');b.disabled=false}
+  else if(state==='neutral'){b.classList.add('step-neutral');b.disabled=false}
+  else{b.classList.add('step-disabled');b.disabled=true}
+  if(label) b.textContent=label;
+}
+
+function updateMediaStepUI(){
+  const hasMedia=!!mediaKind;
+  const scaleDone=!!mediaScale;
+  const axisDone=!!(mediaOrigin&&mediaXAxis);
+  const hasPoints=mediaPoints.length>0;
+
+  if(!hasMedia){
+    setStepState('setScaleBtn','disabled','① 기준 길이 설정');
+    setStepState('setAxisBtn','disabled','② 좌표축 설정');
+    setStepState('recordPointBtn','disabled','③ 점 기록');
+  }else if(!scaleDone){
+    setStepState('setScaleBtn','active','① 기준 길이 설정');
+    setStepState('setAxisBtn','disabled','② 좌표축 설정');
+    setStepState('recordPointBtn','disabled','③ 점 기록');
+  }else if(!axisDone){
+    setStepState('setScaleBtn','done','✓ 기준 길이 설정');
+    setStepState('setAxisBtn','active','② 좌표축 설정');
+    setStepState('recordPointBtn','disabled','③ 점 기록');
+  }else{
+    setStepState('setScaleBtn','done','✓ 기준 길이 설정');
+    setStepState('setAxisBtn','done','✓ 좌표축 설정');
+    setStepState('recordPointBtn','active', mediaTool==='record'?'● 점 기록 중':'③ 점 기록');
+  }
+
+  setStepState('undoMediaPointBtn',hasPoints?'neutral':'disabled','마지막 점 취소');
+  setStepState('clearMediaPointsBtn',hasPoints?'neutral':'disabled','측정점 지우기');
+}
+
+function mediaWorkExists(){
+  return !!(
+    mediaScale ||
+    mediaOrigin ||
+    mediaXAxis ||
+    scaleClicks.length ||
+    axisClicks.length ||
+    mediaPoints.length
+  );
+}
+
+function validatePositiveNumber(value,label,integerOnly=false){
+  const n=Number(value);
+  if(!Number.isFinite(n) || n<=0 || (integerOnly && !Number.isInteger(n))){
+    alert(`${label}은 ${integerOnly?'1 이상의 정수':'0보다 큰 숫자'}로 입력해 주세요.`);
+    return null;
+  }
+  return n;
+}
+
 function resetMediaCalibration(clearPoints=true){
   scaleClicks=[]; axisClicks=[]; mediaScale=null; mediaOrigin=null; mediaXAxis=null; mediaTool='none';
   if(clearPoints) mediaPoints=[];
   renderMediaPointTable();
   drawMediaFrame();
+  updateMediaStepUI();
 }
 
 function configureMediaCanvas(w,h){
@@ -546,6 +617,10 @@ function openMediaPicker(kind){
   if(!input){
     alert('파일 선택 기능을 초기화하지 못했습니다. 페이지를 새로고침해 주세요.');
     return;
+  }
+  if(mediaKind && mediaWorkExists()){
+    const ok=confirm('현재 사진·영상 분석 데이터가 초기화됩니다.\n새 자료를 불러올까요?');
+    if(!ok) return;
   }
   input.accept = kind==='image' ? 'image/*' : 'video/*';
   input.dataset.kind=kind;
@@ -568,6 +643,7 @@ $('mediaFileInput').onchange=e=>{
       configureMediaCanvas(mediaImage.naturalWidth||960,mediaImage.naturalHeight||540);
       $('mediaStatus').textContent='사진 불러오기 완료';
       drawMediaFrame();
+      updateMediaStepUI();
     };
     mediaImage.src=mediaObjectUrl;
   }else{
@@ -579,6 +655,7 @@ $('mediaFileInput').onchange=e=>{
       $('mediaStatus').textContent='영상 불러오기 완료';
       $('videoTime').textContent='0.000 s';
       drawMediaFrame();
+      updateMediaStepUI();
     };
     mediaVideo.onplay=()=>{ $('videoPlayBtn').textContent='⏸ 정지'; animateVideo(); };
     mediaVideo.onpause=()=>{ $('videoPlayBtn').textContent='▶ 재생'; cancelAnimationFrame(mediaRaf); drawMediaFrame(); };
@@ -592,11 +669,16 @@ function animateVideo(){
   if(!mediaVideo.paused&&!mediaVideo.ended) mediaRaf=requestAnimationFrame(animateVideo);
 }
 
-$('videoPlayBtn').onclick=()=>mediaVideo.paused?mediaVideo.play():mediaVideo.pause();
+$('videoPlayBtn').onclick=()=>{
+  const fps=validatePositiveNumber($('videoFps').value,'FPS',true);
+  if(fps===null)return;
+  mediaVideo.paused?mediaVideo.play():mediaVideo.pause();
+};
 function stepFrame(dir){
   if(mediaKind!=='video')return;
+  const fps=validatePositiveNumber($('videoFps').value,'FPS',true);
+  if(fps===null)return;
   mediaVideo.pause();
-  const fps=Math.max(1,+$('videoFps').value||30);
   mediaVideo.currentTime=Math.max(0,Math.min(mediaVideo.duration||Infinity,mediaVideo.currentTime+dir/fps));
   setTimeout(drawMediaFrame,30);
 }
@@ -605,11 +687,12 @@ $('nextFrameBtn').onclick=()=>stepFrame(1);
 
 $('setScaleBtn').onclick=()=>{
   if(!mediaKind){alert('먼저 사진이나 영상을 불러와 주세요.');return}
-  const L=+$('scaleLength').value;
-  if(!(L>0)){alert('기준 길이를 숫자로 입력해 주세요.');return}
-  mediaUnit=$('scaleUnit').value.trim()||'unit';
+  const L=validatePositiveNumber($('scaleLength').value,'기준 길이',false);
+  if(L===null)return;
+  mediaUnit=$('scaleUnit').value;
   scaleClicks=[]; mediaTool='scale';
   $('mediaHint').textContent='기준 길이의 양 끝점을 차례로 클릭하세요. (2점)';
+  updateMediaStepUI();
 };
 $('setAxisBtn').onclick=()=>{
   if(!mediaScale){alert('먼저 기준 길이를 설정해 주세요.');return}
@@ -619,6 +702,7 @@ $('setAxisBtn').onclick=()=>{
 $('recordPointBtn').onclick=()=>{
   if(!mediaOrigin||!mediaXAxis||!mediaScale){alert('먼저 기준 길이와 좌표축을 설정해 주세요.');return}
   mediaTool='record';
+  updateMediaStepUI();
   $('mediaHint').textContent=mediaKind==='video'
     ? '영상에서 추적할 물체의 위치를 클릭하세요. 현재 영상 시간이 함께 기록됩니다.'
     : '사진에서 좌표를 얻고 싶은 점을 차례로 클릭하세요.';
@@ -645,6 +729,7 @@ mediaCanvas.addEventListener('click',e=>{
       mediaScale=L/d;
       mediaTool='none';
       $('mediaHint').textContent=`기준 설정 완료: ${fmt(L)} ${mediaUnit} = ${fmt(d)} px. 이제 좌표축을 설정하세요.`;
+      updateMediaStepUI();
     }
   }else if(mediaTool==='axis'){
     axisClicks.push(p);
@@ -655,6 +740,7 @@ mediaCanvas.addEventListener('click',e=>{
       mediaXAxis={x:dx/len,y:dy/len};
       mediaTool='none';
       $('mediaHint').textContent='좌표축 설정 완료. [점 기록]을 누른 뒤 측정할 점을 클릭하세요.';
+      updateMediaStepUI();
     }
   }else if(mediaTool==='record'){
     const q=screenToWorld(p);
@@ -662,6 +748,7 @@ mediaCanvas.addEventListener('click',e=>{
     if(mediaKind==='video') row.time=mediaVideo.currentTime;
     mediaPoints.push(row);
     renderMediaPointTable();
+    updateMediaStepUI();
     scheduleSave();
   }
   drawMediaFrame();
@@ -727,8 +814,8 @@ function renderMediaPointTable(){
     $('mediaPointBody').innerHTML=mediaPoints.map((p,i)=>`<tr><td>${i+1}</td><td>${fmt(p.x)}</td><td>${fmt(p.y)}</td></tr>`).join('');
   }
 }
-$('undoMediaPointBtn').onclick=()=>{mediaPoints.pop();renderMediaPointTable();drawMediaFrame();scheduleSave()};
-$('clearMediaPointsBtn').onclick=()=>{if(mediaPoints.length&&!confirm('기록한 측정점을 모두 지울까요?'))return;mediaPoints=[];renderMediaPointTable();drawMediaFrame();scheduleSave()};
+$('undoMediaPointBtn').onclick=()=>{mediaPoints.pop();renderMediaPointTable();drawMediaFrame();updateMediaStepUI();scheduleSave()};
+$('clearMediaPointsBtn').onclick=()=>{if(mediaPoints.length&&!confirm('기록한 측정점을 모두 지울까요?'))return;mediaPoints=[];renderMediaPointTable();drawMediaFrame();updateMediaStepUI();scheduleSave()};
 
 $('applyMediaDataBtn').onclick=()=>{
   if(!mediaPoints.length){alert('먼저 측정점을 기록해 주세요.');return}
@@ -750,7 +837,7 @@ $('copySetupPrompt').onclick=async()=>{try{await navigator.clipboard.writeText($
 
 function downloadBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}function stamp(){const d=new Date(),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`}
 window.addEventListener('beforeunload',e=>{if(collecting){e.preventDefault();e.returnValue=''}});
-(async function boot(){startTableTimer();renderTable();updateCounts();initManual();try{await initDB();await restoreTemp()}catch(e){console.warn('임시저장 초기화 실패',e)}})();
+(async function boot(){startTableTimer();renderTable();updateCounts();initManual();updateMediaStepUI();try{await initDB();await restoreTemp()}catch(e){console.warn('임시저장 초기화 실패',e)}})();
 </script>
 
 </body>
