@@ -3,93 +3,458 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>ArduLab Serial Test</title>
+
   <style>
     body {
       font-family: Arial, sans-serif;
-      max-width: 760px;
+      max-width: 850px;
       margin: 40px auto;
       padding: 0 20px;
+      color: #222;
+    }
+
+    h1 {
+      margin-bottom: 5px;
+    }
+
+    .sub {
+      color: #666;
+      margin-bottom: 25px;
     }
 
     button {
-      font-size: 18px;
-      padding: 12px 20px;
+      font-size: 16px;
+      padding: 11px 18px;
+      margin-right: 8px;
       cursor: pointer;
     }
 
-    #status {
+    .box {
       margin-top: 20px;
+      padding: 18px;
+      background: #f5f7fa;
+      border-radius: 12px;
+    }
+
+    #status {
       font-weight: bold;
     }
 
+    #variables span {
+      display: inline-block;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 20px;
+      padding: 6px 12px;
+      margin: 4px;
+    }
+
+    #latest {
+      font-size: 20px;
+      line-height: 1.8;
+    }
+
     #log {
-      margin-top: 20px;
-      padding: 15px;
-      min-height: 180px;
-      background: #f4f4f4;
-      border-radius: 10px;
+      height: 250px;
+      overflow-y: auto;
       white-space: pre-wrap;
+      font-family: monospace;
+      background: #111;
+      color: #eee;
+      padding: 15px;
+      border-radius: 10px;
+    }
+
+    .value {
+      font-weight: bold;
     }
   </style>
 </head>
+
 <body>
 
   <h1>ArduLab</h1>
-  <p>Web Serial 연결 테스트</p>
+
+  <div class="sub">
+    Web Serial 데이터 수신 테스트
+  </div>
 
   <button id="connectBtn">Arduino 연결</button>
+  <button id="disconnectBtn" disabled>연결 해제</button>
 
-  <div id="status">상태: 연결 안 됨</div>
+  <div class="box">
+    <div id="status">상태: 연결 안 됨</div>
+    <div id="count">수신 데이터: 0개</div>
+    <div id="rate">평균 수신 간격: -</div>
+  </div>
 
-  <div id="log">수신 데이터가 여기에 표시됩니다.</div>
+  <div class="box">
+    <b>인식된 변수</b>
+    <div id="variables">아직 없음</div>
+  </div>
 
-  <script>
-    const connectBtn = document.getElementById("connectBtn");
-    const status = document.getElementById("status");
-    const log = document.getElementById("log");
+  <div class="box">
+    <b>최근 데이터</b>
+    <div id="latest">-</div>
+  </div>
 
-    let port;
-    let reader;
+  <div class="box">
+    <b>원본 시리얼 데이터</b>
+    <div id="log"></div>
+  </div>
 
-    connectBtn.addEventListener("click", async () => {
-      if (!("serial" in navigator)) {
-        status.textContent = "상태: 이 브라우저는 Web Serial을 지원하지 않습니다.";
-        return;
+
+<script>
+
+let port = null;
+let reader = null;
+let keepReading = false;
+
+let lineBuffer = "";
+
+let receiveCount = 0;
+
+let lastReceiveTime = null;
+let totalInterval = 0;
+let intervalCount = 0;
+
+
+const connectBtn =
+  document.getElementById("connectBtn");
+
+const disconnectBtn =
+  document.getElementById("disconnectBtn");
+
+const statusDiv =
+  document.getElementById("status");
+
+const countDiv =
+  document.getElementById("count");
+
+const rateDiv =
+  document.getElementById("rate");
+
+const variablesDiv =
+  document.getElementById("variables");
+
+const latestDiv =
+  document.getElementById("latest");
+
+const logDiv =
+  document.getElementById("log");
+
+
+
+function parseLine(line) {
+
+  const parts = line.split(",");
+
+  const result = {};
+
+  for (const part of parts) {
+
+    const separator = part.indexOf(":");
+
+    if (separator === -1) {
+      return null;
+    }
+
+    const key =
+      part.slice(0, separator).trim();
+
+    const valueText =
+      part.slice(separator + 1).trim();
+
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) {
+      return null;
+    }
+
+    const value =
+      Number(valueText);
+
+    if (!Number.isFinite(value)) {
+      return null;
+    }
+
+    result[key] = value;
+  }
+
+  return Object.keys(result).length
+    ? result
+    : null;
+}
+
+
+
+function showData(data) {
+
+  variablesDiv.innerHTML = "";
+
+  Object.keys(data).forEach(name => {
+
+    const span =
+      document.createElement("span");
+
+    span.textContent = name;
+
+    variablesDiv.appendChild(span);
+  });
+
+
+  latestDiv.innerHTML = "";
+
+  Object.entries(data).forEach(
+    ([name, value]) => {
+
+      const row =
+        document.createElement("div");
+
+      row.innerHTML =
+        name +
+        " : <span class='value'>" +
+        value +
+        "</span>";
+
+      latestDiv.appendChild(row);
+    }
+  );
+}
+
+
+
+function processLine(line) {
+
+  line = line.trim();
+
+  if (!line) return;
+
+
+  logDiv.textContent += line + "\n";
+
+  logDiv.scrollTop =
+    logDiv.scrollHeight;
+
+
+  const data =
+    parseLine(line);
+
+  if (!data) {
+    return;
+  }
+
+
+  receiveCount++;
+
+  countDiv.textContent =
+    "정상 데이터 수신: " +
+    receiveCount +
+    "개";
+
+
+  const now =
+    performance.now();
+
+
+  if (lastReceiveTime !== null) {
+
+    const interval =
+      (now - lastReceiveTime) / 1000;
+
+    totalInterval += interval;
+
+    intervalCount++;
+
+
+    const average =
+      totalInterval /
+      intervalCount;
+
+
+    const hz =
+      average > 0
+        ? 1 / average
+        : 0;
+
+
+    rateDiv.textContent =
+      "평균 수신 간격: " +
+      average.toFixed(3) +
+      " s | " +
+      hz.toFixed(1) +
+      " Hz";
+  }
+
+
+  lastReceiveTime = now;
+
+
+  showData(data);
+}
+
+
+
+async function readSerial() {
+
+  const decoder =
+    new TextDecoderStream();
+
+  const readableStreamClosed =
+    port.readable.pipeTo(
+      decoder.writable
+    );
+
+  reader =
+    decoder.readable.getReader();
+
+
+  try {
+
+    while (keepReading) {
+
+      const {
+        value,
+        done
+      } =
+        await reader.read();
+
+
+      if (done) {
+        break;
       }
 
-      try {
-        port = await navigator.serial.requestPort();
 
-        await port.open({
-          baudRate: 9600
-        });
-
-        status.textContent = "상태: Arduino 연결됨";
-        log.textContent = "";
-
-        const decoder = new TextDecoderStream();
-        port.readable.pipeTo(decoder.writable);
-
-        reader = decoder.readable.getReader();
-
-        while (true) {
-          const { value, done } = await reader.read();
-
-          if (done) break;
-
-          if (value) {
-            log.textContent += value;
-            log.scrollTop = log.scrollHeight;
-          }
-        }
-
-      } catch (error) {
-        status.textContent = "상태: 연결 실패";
-        log.textContent = error.message;
+      if (!value) {
+        continue;
       }
-    });
-  </script>
+
+
+      lineBuffer += value;
+
+
+      const lines =
+        lineBuffer.split(/\r?\n/);
+
+
+      lineBuffer =
+        lines.pop();
+
+
+      for (const line of lines) {
+        processLine(line);
+      }
+    }
+
+  } catch (error) {
+
+    statusDiv.textContent =
+      "상태: 데이터 수신 오류";
+
+    console.error(error);
+
+  } finally {
+
+    reader.releaseLock();
+    reader = null;
+  }
+
+
+  try {
+    await readableStreamClosed;
+  } catch (e) {}
+}
+
+
+
+connectBtn.addEventListener(
+  "click",
+  async () => {
+
+    if (!("serial" in navigator)) {
+
+      statusDiv.textContent =
+        "이 브라우저는 Web Serial을 지원하지 않습니다.";
+
+      return;
+    }
+
+
+    try {
+
+      port =
+        await navigator.serial.requestPort();
+
+
+      await port.open({
+        baudRate: 9600
+      });
+
+
+      keepReading = true;
+
+
+      statusDiv.textContent =
+        "상태: Arduino 연결됨";
+
+
+      connectBtn.disabled = true;
+      disconnectBtn.disabled = false;
+
+
+      readSerial();
+
+
+    } catch (error) {
+
+      statusDiv.textContent =
+        "상태: 연결 실패";
+
+      console.error(error);
+    }
+  }
+);
+
+
+
+disconnectBtn.addEventListener(
+  "click",
+  async () => {
+
+    keepReading = false;
+
+
+    try {
+
+      if (reader) {
+        await reader.cancel();
+      }
+
+
+      if (port) {
+        await port.close();
+      }
+
+    } catch (error) {
+
+      console.error(error);
+    }
+
+
+    port = null;
+
+
+    statusDiv.textContent =
+      "상태: 연결 해제";
+
+
+    connectBtn.disabled = false;
+    disconnectBtn.disabled = true;
+  }
+);
+
+</script>
+
 
 </body>
 </html>
