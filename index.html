@@ -2,11 +2,94 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>ArduLab</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ArduLab Serial Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 760px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+
+    button {
+      font-size: 18px;
+      padding: 12px 20px;
+      cursor: pointer;
+    }
+
+    #status {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+
+    #log {
+      margin-top: 20px;
+      padding: 15px;
+      min-height: 180px;
+      background: #f4f4f4;
+      border-radius: 10px;
+      white-space: pre-wrap;
+    }
+  </style>
 </head>
 <body>
+
   <h1>ArduLab</h1>
-  <p>웹 ArduLab 테스트 페이지입니다.</p>
-  <p>Made by. PhyPark & GPT</p>
+  <p>Web Serial 연결 테스트</p>
+
+  <button id="connectBtn">Arduino 연결</button>
+
+  <div id="status">상태: 연결 안 됨</div>
+
+  <div id="log">수신 데이터가 여기에 표시됩니다.</div>
+
+  <script>
+    const connectBtn = document.getElementById("connectBtn");
+    const status = document.getElementById("status");
+    const log = document.getElementById("log");
+
+    let port;
+    let reader;
+
+    connectBtn.addEventListener("click", async () => {
+      if (!("serial" in navigator)) {
+        status.textContent = "상태: 이 브라우저는 Web Serial을 지원하지 않습니다.";
+        return;
+      }
+
+      try {
+        port = await navigator.serial.requestPort();
+
+        await port.open({
+          baudRate: 9600
+        });
+
+        status.textContent = "상태: Arduino 연결됨";
+        log.textContent = "";
+
+        const decoder = new TextDecoderStream();
+        port.readable.pipeTo(decoder.writable);
+
+        reader = decoder.readable.getReader();
+
+        while (true) {
+          const { value, done } = await reader.read();
+
+          if (done) break;
+
+          if (value) {
+            log.textContent += value;
+            log.scrollTop = log.scrollHeight;
+          }
+        }
+
+      } catch (error) {
+        status.textContent = "상태: 연결 실패";
+        log.textContent = error.message;
+      }
+    });
+  </script>
+
 </body>
 </html>
