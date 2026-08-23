@@ -2,225 +2,189 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ArduLab Web</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
-:root{--a:#00979d;--o:#ff7a00;--bg:#f5f7fb;--card:#fff;--line:#dfe5ec;--text:#202630;--muted:#6d7684}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,"Noto Sans KR",sans-serif}
-.wrap{width:min(1400px,calc(100% - 28px));margin:20px auto}.head{text-align:center;margin:8px 0 18px}
-.logo{font-size:42px;font-weight:900;margin:0}.logo .a{color:var(--a)}.logo .l{color:var(--o)}.by{font-size:12px;color:#999}
-.grid{display:grid;grid-template-columns:1fr 1.15fr;gap:14px}.card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:16px;box-shadow:0 4px 16px #1e2d460a;margin-bottom:14px}
-.card h2{font-size:17px;margin:0 0 12px}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.row>*{min-width:0}
-button,select,input,textarea{font:inherit}button{border:0;border-radius:9px;padding:10px 13px;font-weight:800;cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}
-.primary{background:var(--a);color:#fff}.orange{background:var(--o);color:#fff}.soft{background:#e8f5f5;color:#08767b}.gray{background:#edf0f4;color:#39414d}.danger{background:#fff0f0;color:#b83232}
-select,input{border:1px solid var(--line);border-radius:8px;padding:9px;background:#fff}textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:10px;resize:vertical}
-.status{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.stat{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:10px}.stat b{display:block;font-size:12px;margin-bottom:5px}.val{font-weight:900;color:var(--a)}
-.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{background:#eaf7f7;color:#08767b;border-radius:999px;padding:6px 10px;font-weight:800;font-size:13px}
-.tableWrap{max-height:370px;overflow:auto;border:1px solid var(--line);border-radius:10px}table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:7px 9px;border-bottom:1px solid #edf0f4;text-align:center;white-space:nowrap}th{position:sticky;top:0;background:#eef7f7;color:#16686c;z-index:2}
-.excluded{opacity:.35;text-decoration:line-through}.muted{color:var(--muted);font-size:13px;line-height:1.5}.controls{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.controls label{font-size:12px;font-weight:800}.controls select,.controls input{width:100%;margin-top:4px}
-canvas{width:100%;height:390px;border:1px solid var(--line);border-radius:10px;background:#fff;touch-action:none}.result{white-space:pre-wrap;background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:12px;min-height:150px;font-family:ui-monospace,Consolas,monospace;font-size:13px;overflow:auto}
-.tabs{display:flex;gap:6px;margin-bottom:10px}.tab{background:#edf0f4}.tab.active{background:var(--a);color:#fff}.panel{display:none}.panel.active{display:block}
-.notegrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.notegrid .full{grid-column:1/-1}.footer{text-align:center;color:#aaa;font-size:12px;padding:8px}
-@media(max-width:900px){.grid{grid-template-columns:1fr}.status{grid-template-columns:1fr 1fr}.notegrid{grid-template-columns:1fr}.notegrid .full{grid-column:auto}}
+:root{--a:#00979d;--o:#ff7a00;--bg:#f5f7fb;--card:#fff;--line:#dfe5ec;--text:#202630;--muted:#6d7684;--purple:#7c3aed}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,"Noto Sans KR",sans-serif}.wrap{width:min(1450px,calc(100% - 28px));margin:18px auto}.head{text-align:center;margin:6px 0 16px}.logo{font-size:42px;font-weight:900;margin:0}.logo .a{color:var(--a)}.logo .l{color:var(--o)}.by{font-size:12px;color:#999}.card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:15px;margin-bottom:13px;box-shadow:0 4px 16px #1e2d460a}.card h2{font-size:17px;margin:0 0 11px}.grid{display:grid;grid-template-columns:1fr 1.18fr;gap:13px}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.row>*{min-width:0}button,select,input,textarea{font:inherit}button{border:0;border-radius:9px;padding:9px 12px;font-weight:800;cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}.primary{background:var(--a);color:#fff}.orange{background:var(--o);color:#fff}.purple{background:var(--purple);color:#fff}.soft{background:#e8f5f5;color:#08767b}.gray{background:#edf0f4;color:#39414d}.danger{background:#fff0f0;color:#b83232}.small{padding:6px 9px;font-size:12px}select,input,textarea{border:1px solid var(--line);border-radius:8px;padding:8px;background:#fff}textarea{width:100%;resize:vertical}.status{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.stat{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:10px}.stat b{display:block;font-size:12px;margin-bottom:4px}.val{font-weight:900;color:var(--a)}.muted{color:var(--muted);font-size:13px;line-height:1.5}.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{background:#eaf7f7;color:#08767b;border-radius:999px;padding:6px 10px;font-weight:800;font-size:13px}.tableWrap{max-height:400px;overflow:auto;border:1px solid var(--line);border-radius:10px;background:#fff}table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:7px 9px;border-bottom:1px solid #edf0f4;text-align:center;white-space:nowrap}th{position:sticky;top:0;background:#eef7f7;color:#16686c;z-index:2}.excluded{opacity:.35;text-decoration:line-through}.controls{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.controls label{font-size:12px;font-weight:800}.controls select,.controls input{width:100%;margin-top:4px}canvas.graph{width:100%;height:410px;border:1px solid var(--line);border-radius:10px;background:#fff;touch-action:none;cursor:crosshair}.result{white-space:pre-wrap;background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:11px;min-height:130px;font-family:ui-monospace,Consolas,monospace;font-size:13px;overflow:auto}.footer{text-align:center;color:#aaa;font-size:12px;padding:8px}.banner{display:none;background:#fff9dd;border:1px solid #f0d46a;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:13px}.modal{display:none;position:fixed;inset:0;background:#0009;z-index:50;align-items:center;justify-content:center;padding:20px}.modal.show{display:flex}.modalBox{background:#fff;border-radius:15px;padding:17px;width:min(850px,96vw);max-height:92vh;overflow:auto;box-shadow:0 20px 60px #0005}.modalBox.large{width:min(1180px,97vw)}.modalHead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.modalHead h3{margin:0}.checkgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.checkitem{border:1px solid var(--line);border-radius:8px;padding:7px;background:#fafbfc}.sheetWrap{overflow:auto;max-height:500px;border:1px solid var(--line)}.sheet{min-width:700px}.sheet td,.sheet th{min-width:110px}.sheet td[contenteditable="true"]{background:#fff;text-align:left}.sheet .nameRow td{background:#eaf4f4;font-weight:700}.notegrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.notegrid .full{grid-column:1/-1}.tooltip{position:fixed;display:none;pointer-events:none;background:#fff;border:1px solid #cbd5e1;border-radius:8px;padding:7px 9px;font-size:12px;box-shadow:0 5px 20px #0002;z-index:80;white-space:pre-line}.inlineChecks{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.inlineChecks label{font-size:13px}.rangeGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.rangeGrid input{width:100%}.sampleList{display:grid;gap:8px}.sampleBtn{text-align:left;padding:12px;background:#f7fafb;border:1px solid var(--line)}
+@media(max-width:920px){.grid{grid-template-columns:1fr}.status{grid-template-columns:1fr 1fr}.checkgrid{grid-template-columns:1fr 1fr}.notegrid{grid-template-columns:1fr}.notegrid .full{grid-column:auto}.rangeGrid{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
 <div class="wrap">
 <header class="head"><h1 class="logo"><span class="a">Ardu</span><span class="l">Lab</span></h1><div class="by">Made by. PhyPark & GPT</div></header>
-
-<section class="card">
-<h2>🔌 Arduino / 데이터</h2>
+<div id="restoreBanner" class="banner"></div>
+<section class="card"><h2>🔌 Arduino / 데이터</h2>
 <div class="row">
 <select id="baud"><option>9600</option><option>19200</option><option>38400</option><option>57600</option><option>115200</option></select>
 <button id="connect" class="primary">Arduino 연결</button><button id="disconnect" class="gray" disabled>연결 해제</button>
-<button id="collect" class="orange" disabled>▶ 수집 시작</button><button id="reset" class="gray">새 실험</button>
-<button id="saveCsv" class="soft">CSV 저장</button><button id="loadCsv" class="soft">CSV 불러오기</button>
-<input id="fileInput" type="file" accept=".csv,text/csv" hidden>
-<button id="manualBtn" class="soft">표 붙여넣기</button>
+<button id="collect" class="orange" disabled>▶ 수집 시작</button><button id="newExp" class="danger">새 실험</button>
+<button id="saveCsv" class="soft">CSV 저장</button><button id="loadFile" class="soft">CSV/Excel 불러오기</button><input id="fileInput" type="file" accept=".csv,.xlsx,text/csv" hidden>
+<button id="manualBtn" class="soft">데이터 수동입력</button><button id="sampleBtn" class="soft">예제 데이터</button>
+<button id="tableVarsBtn" class="gray">표 변수 선택</button><button id="noteBtn" class="gray">실험노트</button>
 </div>
-<p class="muted">Arduino 형식 예: <b>freq:500,sound:372</b> · 시리얼 수신은 화면 그리기와 분리하여 처리합니다.</p>
-<div class="status">
-<div class="stat"><b>상태</b><span id="status" class="val">연결 안 됨</span></div>
-<div class="stat"><b>데이터</b><span id="count" class="val">0개</span></div>
-<div class="stat"><b>샘플링</b><span id="sampling" class="val">-</span></div>
-<div class="stat"><b>분석 사용</b><span id="activeCount" class="val">0개</span></div>
-</div>
-<div style="margin-top:10px"><div id="schemaMsg" class="muted">변수 대기 중</div><div id="chips" class="chips" style="margin-top:7px"></div></div>
+<p class="muted">Arduino 출력 형식: <b>freq:500,sound:372</b> · 데이터는 즉시 내부 저장되고 표는 약 0.15초 간격으로 갱신됩니다. 그래프는 실시간으로 다시 그리지 않습니다.</p>
+<div class="status"><div class="stat"><b>상태</b><span id="status" class="val">연결 안 됨</span></div><div class="stat"><b>수집 데이터</b><span id="count" class="val">0개</span></div><div class="stat"><b>실제 샘플링</b><span id="sampling" class="val">-</span></div><div class="stat"><b>분석 사용</b><span id="activeCount" class="val">0개</span></div></div>
+<div style="margin-top:9px"><div id="schemaMsg" class="muted">변수 대기 중</div><div id="chips" class="chips" style="margin-top:6px"></div></div>
 </section>
+<div class="grid"><div>
+<section class="card"><h2>📋 실험 데이터</h2><div class="tableWrap" id="tableWrap"><table><thead id="thead"></thead><tbody id="tbody"></tbody></table></div><div class="muted" style="margin-top:6px">화면에는 최근 최대 500행을 표시하지만 내부 데이터와 CSV에는 전체 데이터를 사용합니다.</div></section>
+<section class="card"><h2>🧮 데이터 처리</h2><div class="row"><button id="calcVarBtn" class="soft">계산 변수 추가</button><button id="maVarBtn" class="soft">이동평균 변수 생성</button><button id="outlierBtn" class="soft">이상값 제외</button><button id="outlierReset" class="gray">이상값 초기화</button></div><p class="muted">이상값은 실제 삭제하지 않고 분석에서만 제외합니다.</p></section>
+</div><div>
+<section class="card"><h2>📈 그래프 / 분석</h2>
+<div class="controls"><label>X축<select id="xVar"></select></label><label>Y축<select id="yVar"></select></label><label>회귀<select id="regType"><option value="none">없음</option><option value="linear">1차 회귀</option><option value="quadratic">2차 회귀</option></select></label><label>이동평균선 n<input id="maN" type="number" min="1" value="1"></label></div>
+<div class="inlineChecks" style="margin-top:9px"><label><input id="smoothCheck" type="checkbox"> 부드러운 선 표시</label><label><input id="slopeCheck" type="checkbox"> 좌표/국소 기울기 표시</label><label><input id="customRangeCheck" type="checkbox"> 축 범위 직접 지정</label></div>
+<div id="axisRangeBox" class="rangeGrid" style="display:none;margin-top:8px"><input id="xMin" placeholder="X 최소"><input id="xMax" placeholder="X 최대"><input id="yMin" placeholder="Y 최소"><input id="yMax" placeholder="Y 최대"></div>
+<div class="row" style="margin:10px 0"><button id="drawBtn" class="primary">그래프 그리기</button><button id="analyzeBtn" class="soft">통계 분석</button><button id="manualIntervalBtn" class="soft">구간 직접 입력</button><button id="intervalBtn" class="soft">구간 그래프</button><button id="clearInterval" class="gray">구간 해제</button><button id="pngBtn" class="soft">그래프 PNG 저장</button></div>
+<canvas id="chart" class="graph" width="950" height="410"></canvas><p class="muted">그래프를 그린 뒤 점에 마우스를 올리면 좌표를 볼 수 있습니다. 좌우로 드래그하면 구간을 선택합니다.</p><div id="result" class="result">분석 결과가 여기에 표시됩니다.</div>
+</section></div></div>
+<div class="footer">ArduLab Web · Python 자유분석 기능 제외</div>
+</div>
+<div id="tooltip" class="tooltip"></div>
 
-<div class="grid">
-<div>
-<section class="card">
-<h2>📋 실험 데이터</h2>
-<div class="tableWrap"><table><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
-</section>
+<!-- 표 변수 선택 -->
+<div id="tableVarsModal" class="modal"><div class="modalBox"><div class="modalHead"><h3>표에 표시할 변수 선택</h3><button data-close="tableVarsModal" class="gray">닫기</button></div><div id="tableVarChecks" class="checkgrid"></div><div class="row" style="margin-top:12px"><button id="selectAllVars" class="soft">전체 선택</button><button id="clearAllVars" class="gray">전체 해제</button><button id="applyTableVars" class="primary">적용</button></div></div></div>
 
-<section class="card">
-<h2>🧹 데이터 처리</h2>
-<div class="row">
-<select id="outlierVar"></select><input id="outlierZ" type="number" value="2" min="0.5" step="0.1" style="width:90px">
-<button id="outlierBtn" class="soft">이상값 제외</button><button id="outlierReset" class="gray">제외 초기화</button>
-</div>
-<p class="muted">이상값은 원본에서 삭제하지 않고 분석에서만 제외합니다.</p>
-</section>
-</div>
+<!-- 샘플 -->
+<div id="sampleModal" class="modal"><div class="modalBox"><div class="modalHead"><h3>예제 데이터 선택</h3><button data-close="sampleModal" class="gray">닫기</button></div><div class="sampleList"><button class="sampleBtn" data-sample="ohm">옴의 법칙 실험 (직선 관계와 회귀 분석)</button><button class="sampleBtn" data-sample="resonance">기주공명 실험 (피크와 구간 분석)</button><button class="sampleBtn" data-sample="fall">자유낙하운동 (변수 추가)</button><button class="sampleBtn" data-sample="light">거리에 따른 빛의 세기 (이상값 제거와 이동평균)</button><button class="sampleBtn" data-sample="reaction">시각 vs 청각 반응속도 비교 (변수 해석과 AI 협업)</button></div></div></div>
 
-<div>
-<section class="card">
-<h2>📈 그래프 / 분석</h2>
-<div class="controls">
-<label>X축<select id="xVar"></select></label><label>Y축<select id="yVar"></select></label>
-<label>회귀<select id="regType"><option value="none">없음</option><option value="linear">1차 회귀</option><option value="quadratic">2차 회귀</option></select></label>
-<label>이동평균<input id="maN" type="number" min="1" value="1"></label>
-</div>
-<div class="row" style="margin:10px 0">
-<button id="drawBtn" class="primary">그래프 그리기</button><button id="analyzeBtn" class="soft">통계 분석</button><button id="pngBtn" class="soft">그래프 PNG 저장</button><button id="clearInterval" class="gray">구간 선택 해제</button>
-</div>
-<canvas id="chart" width="900" height="390"></canvas>
-<p class="muted">그래프에서 가로로 드래그하면 해당 X 구간만 선택하여 분석할 수 있습니다.</p>
-<div id="result" class="result">분석 결과가 여기에 표시됩니다.</div>
-</section>
-</div>
-</div>
+<!-- 수동 입력 -->
+<div id="manualModal" class="modal"><div class="modalBox large"><div class="modalHead"><h3>데이터 수동입력</h3><button data-close="manualModal" class="gray">닫기</button></div><p class="muted">첫 행은 변수명입니다. 셀을 직접 편집하거나 Excel/Sheets에서 범위를 복사해 붙여넣을 수 있습니다.</p><div class="sheetWrap"><table id="manualSheet" class="sheet"></table></div><div class="row" style="margin-top:10px"><button id="manualExample" class="soft">옴의 법칙 예시</button><button id="addRows" class="gray">행 10개 추가</button><button id="addCols" class="gray">열 3개 추가</button><button id="manualClear" class="gray">전체 지우기</button><button id="manualApply" class="primary">적용</button></div></div></div>
 
-<section class="card">
-<h2>📝 실험노트</h2>
-<div class="notegrid">
-<label>실험 제목<textarea id="noteTitle" rows="2"></textarea></label>
-<label>실험 설계 요약<textarea id="noteDesign" rows="2"></textarea></label>
-<label>변수 설명<textarea id="noteVars" rows="3"></textarea></label>
-<label>관찰 내용<textarea id="noteObs" rows="3"></textarea></label>
-<label>결과 해석<textarea id="noteInterp" rows="4"></textarea></label>
-<label>오차 원인<textarea id="noteError" rows="4"></textarea></label>
-<label class="full">궁금한 점<textarea id="noteQuestion" rows="3"></textarea></label>
-</div>
-<div class="row" style="margin-top:10px"><button id="noteSave" class="soft">실험노트 저장</button><button id="promptBtn" class="primary">AI 협업용 내용 만들기</button></div>
-<div id="promptResult" class="result" style="margin-top:10px;display:none"></div>
-</section>
+<!-- 계산 변수 -->
+<div id="calcModal" class="modal"><div class="modalBox"><div class="modalHead"><h3>계산 변수 추가</h3><button data-close="calcModal" class="gray">닫기</button></div><label>새 변수 이름<input id="calcName" style="width:100%;margin-top:4px" placeholder="speed"></label><label style="display:block;margin-top:9px">계산식<input id="calcExpr" style="width:100%;margin-top:4px" placeholder="Position / time"></label><p class="muted">지원: + - * / % **, pi, sqrt(), log(), sin(), cos(), tan(), abs(), diff("변수"), integ("변수")<br>diff/integ는 time 변수가 있을 때 사용합니다.</p><button id="calcApply" class="primary">변수 생성</button></div></div>
 
-<div class="footer">ArduLab Web · 독립 사용 / 온라인 워크북 연동 준비 구조</div>
-</div>
+<!-- 이동평균 변수 -->
+<div id="maModal" class="modal"><div class="modalBox"><div class="modalHead"><h3>이동평균 변수 생성</h3><button data-close="maModal" class="gray">닫기</button></div><label>변수<select id="maVarSelect" style="width:100%;margin-top:4px"></select></label><label style="display:block;margin-top:9px">이동평균 개수 n<input id="maVarN" type="number" min="2" value="5" style="width:100%;margin-top:4px"></label><button id="maCreate" class="primary" style="margin-top:10px">생성</button></div></div>
 
-<div id="manualModal" style="display:none;position:fixed;inset:0;background:#0008;z-index:20;align-items:center;justify-content:center">
-<div class="card" style="width:min(760px,92vw)">
-<h2>표 데이터 붙여넣기</h2><p class="muted">첫 줄은 변수명입니다. Excel/Sheets에서 그대로 복사해 붙여넣을 수 있습니다.</p>
-<textarea id="manualText" rows="14" placeholder="time&#9;voltage&#9;current&#10;0&#9;1.0&#9;0.10"></textarea>
-<div class="row" style="margin-top:10px"><button id="manualApply" class="primary">불러오기</button><button id="manualClose" class="gray">닫기</button></div>
-</div></div>
+<!-- 이상값 -->
+<div id="outlierModal" class="modal"><div class="modalBox"><div class="modalHead"><h3>이상값 제외</h3><button data-close="outlierModal" class="gray">닫기</button></div><label>기준 변수<select id="outlierVar" style="width:100%;margin-top:4px"></select></label><div style="margin-top:10px"><label><input type="radio" name="outMethod" value="zscore" checked> 평균 ± nσ</label> &nbsp; <label><input type="radio" name="outMethod" value="iqr"> IQR 방식</label> &nbsp; <label><input type="radio" name="outMethod" value="range"> 직접 범위</label></div><div class="row" style="margin-top:9px"><input id="out1" value="2" placeholder="nσ 또는 최소값"><input id="out2" placeholder="최대값(직접 범위)"></div><button id="outApply" class="primary" style="margin-top:10px">제외 적용</button></div></div>
+
+<!-- 실험노트 -->
+<div id="noteModal" class="modal"><div class="modalBox large"><div class="modalHead"><h3>실험노트</h3><button data-close="noteModal" class="gray">닫기</button></div><p class="muted">작성 내용은 별도 저장 버튼 없이 자동 임시저장됩니다.</p><div class="notegrid"><label>실험 제목<textarea id="noteTitle" rows="2"></textarea></label><label>실험 설계 요약<textarea id="noteDesign" rows="2"></textarea></label><label>X 변수<select id="noteX" style="width:100%;margin-top:4px"></select><textarea id="noteXDesc" rows="3" placeholder="X 변수 설명"></textarea></label><label>Y 변수<select id="noteY" style="width:100%;margin-top:4px"></select><textarea id="noteYDesc" rows="3" placeholder="Y 변수 설명"></textarea></label><label>실험 관찰 내용<textarea id="noteObs" rows="3"></textarea></label><label>결과 해석<textarea id="noteInterp" rows="4"></textarea></label><label>오차 원인<textarea id="noteError" rows="3"></textarea></label><label>궁금한 점<textarea id="noteQuestion" rows="3"></textarea></label></div><div class="row" style="margin-top:10px"><button id="promptBtn" class="primary">AI 협업 프롬프트 만들기</button><button id="copyPrompt" class="soft" disabled>프롬프트 복사</button></div><div id="promptResult" class="result" style="display:none;margin-top:10px"></div></div></div>
+
+<!-- 구간 그래프 -->
+<div id="intervalModal" class="modal"><div class="modalBox large"><div class="modalHead"><h3>구간 그래프</h3><button data-close="intervalModal" class="gray">닫기</button></div><canvas id="intervalChart" class="graph" width="1050" height="470"></canvas><div id="intervalResult" class="result" style="margin-top:10px"></div><div class="row" style="margin-top:9px"><button id="intervalPng" class="soft">구간 그래프 PNG 저장</button></div></div></div>
+
+<!-- 구간 직접 입력 -->
+<div id="manualIntervalModal" class="modal"><div class="modalBox"><div class="modalHead"><h3>구간 직접 입력</h3><button data-close="manualIntervalModal" class="gray">닫기</button></div><div class="row"><input id="intervalStart" placeholder="시작값"><input id="intervalEnd" placeholder="끝값"><button id="intervalApply" class="primary">적용</button></div></div></div>
 
 <script>
-const MAX_DATA=6000, SCHEMA_CONFIRM=3, TABLE_RENDER_LIMIT=500;
-let port=null,reader=null,keepReading=false,collecting=false,lineBuffer="";
-let variables=[],lastSchema="",sameSchema=0,dataRows=[],excluded=new Set(),startTime=null;
-let lastSample=null,totalDt=0,dtCount=0,selectedRange=null,dragStart=null,lastGraph=null;
-const $=id=>document.getElementById(id);
-const fmt=n=>Number.isFinite(n)?(Math.abs(n)>=1000?n.toFixed(2):n.toFixed(4).replace(/0+$/,"").replace(/\.$/,"")):"";
-function parseLine(line){
- const out={}; for(const p0 of line.trim().split(",")){const p=p0.trim(),i=p.indexOf(":");if(i<0)return null;
- const k=p.slice(0,i).trim(),v=Number(p.slice(i+1).trim());if(!/^[A-Za-z_][A-Za-z0-9_]*$/.test(k)||!Number.isFinite(v)||k in out)return null;out[k]=v}
- return Object.keys(out).length?out:null;
+'use strict';
+const MAX_DATA=6000, TABLE_RENDER_LIMIT=500, TABLE_REFRESH_MS=150, SCHEMA_CONFIRM=3, TEMP_TTL=24*60*60*1000;
+const $=id=>document.getElementById(id); const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+let port=null,reader=null,keepReading=false,collecting=false,lineBuffer='',sourceVars=[],allVars=[],tableVars=[],lastSchema='',sameSchema=0,validDataAfterConnect=false;
+let dataRows=[],excluded=new Set(),startTime=null,lastSample=null,totalDt=0,dtCount=0,tableDirty=false,tableTimer=null,diagnosticTimer=null,stabilizingUntil=0;
+let selectedRange=null,graphState=null,intervalState=null,dragStartPx=null,hoverMain=null,hoverInterval=null,saveTimer=null,db=null;
+let note={title:'',design:'',x_name:'',x_description:'',y_name:'',y_description:'',observation:'',interpretation:'',error:'',question:''};
+function fmt(n){if(!Number.isFinite(n))return '';const a=Math.abs(n);if(a>=10000||a>0&&a<0.0001)return n.toExponential(3);return n.toFixed(4).replace(/0+$/,'').replace(/\.$/,'')}
+function openModal(id){$(id).classList.add('show')} function closeModal(id){$(id).classList.remove('show')}
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>closeModal(b.dataset.close));
+function getActiveRows(){return dataRows.filter((_,i)=>!excluded.has(i))}
+function unionVars(){const s=[];for(const r of dataRows)for(const k of Object.keys(r))if(!s.includes(k))s.push(k);return s}
+function syncVars(preferExisting=true){const newAll=unionVars();allVars=newAll.length?newAll:(sourceVars.length?['time',...sourceVars]:[]);if(!preferExisting||!tableVars.length)tableVars=[...allVars];else tableVars=tableVars.filter(v=>allVars.includes(v));refreshVarUI()}
+function refreshVarUI(){
+ $('chips').innerHTML=allVars.map(v=>`<span class="chip">${escapeHtml(v)}</span>`).join('');
+ for(const id of ['xVar','yVar','outlierVar','maVarSelect','noteX','noteY']){const el=$(id),old=el.value;el.innerHTML=allVars.map(v=>`<option value="${escapeAttr(v)}">${escapeHtml(v)}</option>`).join('');if(allVars.includes(old))el.value=old}
+ if(allVars.length){if(!$('xVar').value)$('xVar').value=allVars[0];if(!$('yVar').value||$('yVar').value===$('xVar').value)$('yVar').value=allVars.find(v=>v!==$('xVar').value)||allVars[0]}
+ if(note.x_name&&allVars.includes(note.x_name))$('noteX').value=note.x_name;if(note.y_name&&allVars.includes(note.y_name))$('noteY').value=note.y_name;
+ $('collect').disabled=!(port&&sourceVars.length);
 }
-function activeRows(){return dataRows.filter((_,i)=>!excluded.has(i))}
-function setVariables(v){
- variables=[...v]; $("chips").innerHTML=["time",...variables].map(x=>`<span class="chip">${x}</span>`).join("");
- for(const id of ["xVar","yVar","outlierVar"]){const s=$(id),old=s.value;s.innerHTML=["time",...variables].map(x=>`<option>${x}</option>`).join("");if([...s.options].some(o=>o.value===old))s.value=old}
- if(!$("yVar").value||$("yVar").value==="time")$("yVar").value=variables[0]||"time";
- $("collect").disabled=false;renderTable();
-}
-function processData(d){
- const schema=Object.keys(d).join("|"); if(schema===lastSchema)sameSchema++;else{lastSchema=schema;sameSchema=1}
- if(sameSchema<SCHEMA_CONFIRM){$("schemaMsg").textContent=`감지된 변수: ${Object.keys(d).join(", ")} (${sameSchema}/${SCHEMA_CONFIRM})`;return}
- if(variables.join("|")!==schema)setVariables(Object.keys(d));$("schemaMsg").textContent="변수 인식 완료";
- if(collecting)addRow(d);
-}
-function addRow(d){
- const now=performance.now();if(startTime===null){startTime=now;lastSample=now}
- const row={time:+((now-startTime)/1000).toFixed(3),...d};dataRows.push(row);
- if(dataRows.length>MAX_DATA){dataRows.shift();excluded=new Set([...excluded].filter(i=>i>0).map(i=>i-1))}
- if(lastSample!==null&&now>lastSample){totalDt+=(now-lastSample)/1000;dtCount++;const a=totalDt/dtCount;$("sampling").textContent=`${a.toFixed(3)} s / ${(1/a).toFixed(1)} Hz`}lastSample=now;
- updateCounts();scheduleUI();
-}
-let uiPending=false;function scheduleUI(){if(uiPending)return;uiPending=true;requestAnimationFrame(()=>{uiPending=false;renderTable();if(lastGraph)drawGraph(false)})}
-function updateCounts(){$("count").textContent=dataRows.length+"개";$("activeCount").textContent=activeRows().length+"개"}
-function renderTable(){
- const cols=["No.","time",...variables];$("thead").innerHTML="<tr>"+cols.map(c=>`<th>${c}</th>`).join("")+"</tr>";
- const start=Math.max(0,dataRows.length-TABLE_RENDER_LIMIT),html=[];
- for(let i=start;i<dataRows.length;i++){const r=dataRows[i],cls=excluded.has(i)?"excluded":"";html.push(`<tr class="${cls}"><td>${i+1}</td><td>${fmt(r.time)}</td>${variables.map(v=>`<td>${fmt(r[v])}</td>`).join("")}</tr>`)}
- $("tbody").innerHTML=html.join("");
- const w=$("tbody").parentElement.parentElement;w.scrollTop=w.scrollHeight;
-}
-async function readSerial(){
- const dec=new TextDecoderStream(),closed=port.readable.pipeTo(dec.writable);reader=dec.readable.getReader();
- try{while(keepReading){const {value,done}=await reader.read();if(done)break;if(!value)continue;lineBuffer+=value;const ls=lineBuffer.split(/\r?\n/);lineBuffer=ls.pop();for(const l of ls){const d=parseLine(l);if(d)processData(d)}}}
- catch(e){console.error(e);$("status").textContent="수신 오류"}finally{try{reader?.releaseLock()}catch{}reader=null}try{await closed}catch{}
-}
-$("connect").onclick=async()=>{
- if(!("serial" in navigator)){alert("Chrome 또는 Edge에서 실행해주세요.");return}
- try{port=await navigator.serial.requestPort();await port.open({baudRate:+$("baud").value});keepReading=true;$("status").textContent="연결됨";$("connect").disabled=true;$("disconnect").disabled=false;$("baud").disabled=true;readSerial()}catch(e){console.error(e);$("status").textContent="연결 실패"}
-};
-$("disconnect").onclick=async()=>{keepReading=false;collecting=false;try{await reader?.cancel()}catch{}try{await port?.close()}catch{}port=null;$("status").textContent="연결 해제";$("connect").disabled=false;$("disconnect").disabled=true;$("baud").disabled=false;$("collect").textContent="▶ 수집 시작"};
-$("collect").onclick=()=>{collecting=!collecting;if(collecting&&dataRows.length===0){startTime=null;lastSample=null;totalDt=0;dtCount=0}$("collect").textContent=collecting?"■ 수집 중지":"▶ 계속 수집";$("status").textContent=collecting?"데이터 수집 중":(port?"수집 중지":"연결 안 됨")};
-$("reset").onclick=()=>{if(dataRows.length&&!confirm("현재 실험 데이터를 비우고 새 실험을 시작할까요?"))return;collecting=false;dataRows=[];excluded.clear();startTime=null;lastSample=null;totalDt=0;dtCount=0;selectedRange=null;lastGraph=null;$("collect").textContent="▶ 수집 시작";$("sampling").textContent="-";$("result").textContent="분석 결과가 여기에 표시됩니다.";clearCanvas();updateCounts();renderTable()};
-function csvEscape(x){const s=String(x??"");return /[",\n]/.test(s)?`"${s.replace(/"/g,'""')}"`:s}
-$("saveCsv").onclick=()=>{if(!dataRows.length){alert("저장할 데이터가 없습니다.");return}const cols=["time",...variables],lines=[cols.join(",")];for(const r of dataRows)lines.push(cols.map(c=>csvEscape(r[c]??"")).join(","));downloadBlob(new Blob(["\ufeff"+lines.join("\n")],{type:"text/csv;charset=utf-8"}),`ArduLab_${stamp()}.csv`)};
-$("loadCsv").onclick=()=>$("fileInput").click();
-$("fileInput").onchange=async e=>{const f=e.target.files[0];if(!f)return;loadTextTable(await f.text(),",");e.target.value=""};
-function splitCSVLine(line){const a=[];let s="",q=false;for(let i=0;i<line.length;i++){const c=line[i];if(c==='"'){if(q&&line[i+1]==='"'){s+='"';i++}else q=!q}else if(c===","&&!q){a.push(s.trim());s=""}else s+=c}a.push(s.trim());return a}
-function loadTextTable(text,mode="auto"){
- const lines=text.split(/\r?\n/).filter(x=>x.trim());if(lines.length<2){alert("데이터가 부족합니다.");return}
- const split=l=>mode===","?splitCSVLine(l):(l.includes("\t")?l.split("\t"):l.includes(",")?splitCSVLine(l):l.trim().split(/\s+/));
- const headers=split(lines[0]).map(x=>x.trim()).filter(Boolean);const rows=[];
- for(const l of lines.slice(1)){const cells=split(l),r={};headers.forEach((h,i)=>{const n=Number(String(cells[i]??"").replace(/,/g,""));if(Number.isFinite(n))r[h]=n});if(Object.keys(r).length)rows.push(r)}
- if(!rows.length){alert("읽을 수 있는 숫자 데이터가 없습니다.");return}dataRows=rows;excluded.clear();variables=headers.filter(h=>h!=="time");if(!headers.includes("time")&&rows.every(r=>!("time" in r)))variables=headers;setVariables(variables);$("schemaMsg").textContent="파일/표 데이터 불러오기 완료";$("status").textContent="파일 분석 모드";updateCounts();renderTable();drawGraph(false)
-}
-$("manualBtn").onclick=()=>{$("manualModal").style.display="flex"};$("manualClose").onclick=()=>{$("manualModal").style.display="none"};$("manualApply").onclick=()=>{loadTextTable($("manualText").value);$("manualModal").style.display="none"};
-function mean(a){return a.reduce((s,x)=>s+x,0)/a.length}function median(a){const b=[...a].sort((x,y)=>x-y),m=Math.floor(b.length/2);return b.length%2?b[m]:(b[m-1]+b[m])/2}
-function stdev(a){if(a.length<2)return 0;const m=mean(a);return Math.sqrt(a.reduce((s,x)=>s+(x-m)**2,0)/(a.length-1))}
-function linearReg(x,y){if(x.length<2)return null;const mx=mean(x),my=mean(y),den=x.reduce((s,v)=>s+(v-mx)**2,0);if(!den)return null;const a=x.reduce((s,v,i)=>s+(v-mx)*(y[i]-my),0)/den,b=my-a*mx;const ss=y.reduce((s,v)=>s+(v-my)**2,0),er=y.reduce((s,v,i)=>s+(v-(a*x[i]+b))**2,0);return{type:"linear",a,b,r2:ss?1-er/ss:1}}
-function solve3(A,b){for(let i=0;i<3;i++){let m=i;for(let j=i+1;j<3;j++)if(Math.abs(A[j][i])>Math.abs(A[m][i]))m=j;[A[i],A[m]]=[A[m],A[i]];[b[i],b[m]]=[b[m],b[i]];if(Math.abs(A[i][i])<1e-12)return null;const d=A[i][i];for(let k=i;k<3;k++)A[i][k]/=d;b[i]/=d;for(let j=0;j<3;j++)if(j!==i){const f=A[j][i];for(let k=i;k<3;k++)A[j][k]-=f*A[i][k];b[j]-=f*b[i]}}return b}
-function quadReg(x,y){if(x.length<3)return null;const n=x.length,s1=x.reduce((a,v)=>a+v,0),s2=x.reduce((a,v)=>a+v*v,0),s3=x.reduce((a,v)=>a+v**3,0),s4=x.reduce((a,v)=>a+v**4,0),sy=y.reduce((a,v)=>a+v,0),sxy=x.reduce((a,v,i)=>a+v*y[i],0),sx2y=x.reduce((a,v,i)=>a+v*v*y[i],0);const sol=solve3([[s4,s3,s2],[s3,s2,s1],[s2,s1,n]],[sx2y,sxy,sy]);if(!sol)return null;const[a,b,c]=sol,my=mean(y),ss=y.reduce((s,v)=>s+(v-my)**2,0),er=y.reduce((s,v,i)=>s+(v-(a*x[i]**2+b*x[i]+c))**2,0);return{type:"quadratic",a,b,c,r2:ss?1-er/ss:1}}
-function graphData(){
- const xv=$("xVar").value,yv=$("yVar").value;let pts=activeRows().map((r,i)=>({x:r[xv],y:r[yv],i})).filter(p=>Number.isFinite(p.x)&&Number.isFinite(p.y));
- if(selectedRange)pts=pts.filter(p=>p.x>=selectedRange[0]&&p.x<=selectedRange[1]);return{xv,yv,pts}
-}
-function movingAverage(pts,n){if(n<=1)return pts;const out=[];for(let i=n-1;i<pts.length;i++){const w=pts.slice(i-n+1,i+1);out.push({x:mean(w.map(p=>p.x)),y:mean(w.map(p=>p.y))})}return out}
-function clearCanvas(){const c=$("chart"),ctx=c.getContext("2d");ctx.clearRect(0,0,c.width,c.height)}
-function drawGraph(save=true){
- const c=$("chart"),ctx=c.getContext("2d"),{xv,yv,pts}=graphData();clearCanvas();if(pts.length<1){if(save)alert("그래프 데이터가 없습니다.");return}
- const xs=pts.map(p=>p.x),ys=pts.map(p=>p.y),xmin=Math.min(...xs),xmax=Math.max(...xs),ymin=Math.min(...ys),ymax=Math.max(...ys),pad=50;
- const dx=(xmax-xmin)||1,dy=(ymax-ymin)||1,X=x=>pad+(x-xmin)/dx*(c.width-2*pad),Y=y=>c.height-pad-(y-ymin)/dy*(c.height-2*pad);
- ctx.strokeStyle="#cad2dc";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pad,20);ctx.lineTo(pad,c.height-pad);ctx.lineTo(c.width-20,c.height-pad);ctx.stroke();
- ctx.fillStyle="#4b5563";ctx.font="13px Arial";ctx.fillText(yv,10,18);ctx.fillText(xv,c.width-40,c.height-12);ctx.fillText(fmt(xmin),pad-10,c.height-25);ctx.fillText(fmt(xmax),c.width-pad-25,c.height-25);ctx.fillText(fmt(ymin),5,c.height-pad);ctx.fillText(fmt(ymax),5,30);
- ctx.fillStyle="#00979d";for(const p of pts){ctx.beginPath();ctx.arc(X(p.x),Y(p.y),3,0,Math.PI*2);ctx.fill()}
- const n=Math.max(1,+$("maN").value||1),ma=movingAverage(pts,n);if(n>1&&ma.length){ctx.strokeStyle="#ff7a00";ctx.lineWidth=2;ctx.beginPath();ma.forEach((p,i)=>i?ctx.lineTo(X(p.x),Y(p.y)):ctx.moveTo(X(p.x),Y(p.y)));ctx.stroke()}
- let reg=null;if($("regType").value==="linear")reg=linearReg(xs,ys);if($("regType").value==="quadratic")reg=quadReg(xs,ys);
- if(reg){ctx.strokeStyle="#7c3aed";ctx.lineWidth=2;ctx.beginPath();for(let i=0;i<=150;i++){const x=xmin+dx*i/150,y=reg.type==="linear"?reg.a*x+reg.b:reg.a*x*x+reg.b*x+reg.c;i?ctx.lineTo(X(x),Y(y)):ctx.moveTo(X(x),Y(y))}ctx.stroke()}
- if(selectedRange){ctx.fillStyle="#00979d18";ctx.fillRect(X(selectedRange[0]),20,X(selectedRange[1])-X(selectedRange[0]),c.height-pad-20)}
- lastGraph={xmin,xmax,ymin,ymax,X,Y};if(save)analyze();
-}
-$("drawBtn").onclick=()=>drawGraph();$("analyzeBtn").onclick=()=>analyze();
-function analyze(){
- const{xv,yv,pts}=graphData();if(!pts.length){$("result").textContent="분석할 데이터가 없습니다.";return}const x=pts.map(p=>p.x),y=pts.map(p=>p.y),mn=Math.min(...y),mx=Math.max(...y),mi=y.indexOf(mn),ma=y.indexOf(mx);
- let t=`[${selectedRange?"선택 구간":"전체 구간"} 분석]\n${xv}: ${fmt(Math.min(...x))} ~ ${fmt(Math.max(...x))}\n분석 변수: ${yv}\n데이터 개수: ${y.length}개\n\n평균: ${fmt(mean(y))}\n중앙값: ${fmt(median(y))}\n표준편차: ${fmt(stdev(y))}\n\n최소값: ${fmt(mn)} (x=${fmt(x[mi])})\n최대값: ${fmt(mx)} (x=${fmt(x[ma])})\n범위: ${fmt(mx-mn)}\n전체 변화량: ${fmt(y[y.length-1]-y[0])}`;
- let r=null;if($("regType").value==="linear")r=linearReg(x,y);if($("regType").value==="quadratic")r=quadReg(x,y);
- if(r?.type==="linear")t+=`\n\n[1차 회귀]\ny = ${fmt(r.a)}x + ${fmt(r.b)}\n기울기: ${fmt(r.a)}\n절편: ${fmt(r.b)}\nR²: ${fmt(r.r2)}`;
- if(r?.type==="quadratic")t+=`\n\n[2차 회귀]\ny = ${fmt(r.a)}x² + ${fmt(r.b)}x + ${fmt(r.c)}\nR²: ${fmt(r.r2)}`;
- $("result").textContent=t;
-}
-$("chart").addEventListener("pointerdown",e=>{if(!lastGraph)return;const r=e.currentTarget.getBoundingClientRect(),px=(e.clientX-r.left)*e.currentTarget.width/r.width;dragStart=px});
-$("chart").addEventListener("pointerup",e=>{if(dragStart===null||!lastGraph)return;const c=e.currentTarget,r=c.getBoundingClientRect(),px=(e.clientX-r.left)*c.width/r.width,{xmin,xmax}=lastGraph,inv=p=>xmin+(p-50)/(c.width-100)*(xmax-xmin);let a=inv(Math.min(dragStart,px)),b=inv(Math.max(dragStart,px));dragStart=null;if(Math.abs(px-dragStart)<3)return;selectedRange=[a,b];drawGraph()});
-$("clearInterval").onclick=()=>{selectedRange=null;drawGraph()};
-$("pngBtn").onclick=()=>{if(!lastGraph){alert("먼저 그래프를 그려주세요.");return}$("chart").toBlob(b=>downloadBlob(b,`ArduLab_graph_${stamp()}.png`))};
-$("outlierBtn").onclick=()=>{const v=$("outlierVar").value,zlim=+$("outlierZ").value,vals=activeRows().map(r=>r[v]).filter(Number.isFinite),m=mean(vals),sd=stdev(vals);if(!sd){alert("표준편차가 0이라 제외할 값이 없습니다.");return}dataRows.forEach((r,i)=>{if(Number.isFinite(r[v])&&Math.abs((r[v]-m)/sd)>zlim)excluded.add(i)});updateCounts();renderTable();drawGraph(false)};
-$("outlierReset").onclick=()=>{excluded.clear();updateCounts();renderTable();drawGraph(false)};
-function downloadBlob(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
-function stamp(){const d=new Date(),p=n=>String(n).padStart(2,"0");return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`}
-const noteIds=["noteTitle","noteDesign","noteVars","noteObs","noteInterp","noteError","noteQuestion"];
-$("noteSave").onclick=()=>{const o={};noteIds.forEach(id=>o[id]=$(id).value);localStorage.setItem("ardulab_note",JSON.stringify(o));alert("이 브라우저에 실험노트를 저장했습니다.")};
-try{const o=JSON.parse(localStorage.getItem("ardulab_note")||"{}");noteIds.forEach(id=>{if(o[id])$(id).value=o[id]})}catch{}
-$("promptBtn").onclick=()=>{analyze();const t=`다음은 내가 수행한 과학 실험과 데이터 분석 결과입니다.\n\n[실험 제목]\n${$("noteTitle").value}\n\n[실험 설계 요약]\n${$("noteDesign").value}\n\n[변수 설명]\n${$("noteVars").value}\n\n[관찰 내용]\n${$("noteObs").value}\n\n[데이터 분석]\n${$("result").textContent}\n\n[내 결과 해석]\n${$("noteInterp").value}\n\n[오차 원인]\n${$("noteError").value}\n\n[궁금한 점]\n${$("noteQuestion").value}\n\n내 보고서를 대신 작성하지 말고, 내 해석이 과학적으로 타당한지 검토하고 부족한 점은 질문과 힌트로 도와줘.`;$("promptResult").style.display="block";$("promptResult").textContent=t};
-window.addEventListener("beforeunload",e=>{if(collecting){e.preventDefault();e.returnValue=""}});
-renderTable();updateCounts();
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function escapeAttr(s){return escapeHtml(s)}
+function parseLine(line){const out={};for(const p0 of line.trim().split(',')){const p=p0.trim(),i=p.indexOf(':');if(i<0)return null;const k=p.slice(0,i).trim(),v=Number(p.slice(i+1).trim());if(!/^[A-Za-z_][A-Za-z0-9_]*$/.test(k)||!Number.isFinite(v)||k in out)return null;out[k]=v}return Object.keys(out).length?out:null}
+function processSerialData(d){validDataAfterConnect=true;const schema=Object.keys(d).join('|');if(schema===lastSchema)sameSchema++;else{lastSchema=schema;sameSchema=1}if(sameSchema<SCHEMA_CONFIRM){$('schemaMsg').textContent=`감지된 변수: ${Object.keys(d).join(', ')} (${sameSchema}/${SCHEMA_CONFIRM})`;return}if(sourceVars.join('|')!==schema){sourceVars=Object.keys(d);allVars=['time',...sourceVars];if(!tableVars.length)tableVars=[...allVars];refreshVarUI()}$('schemaMsg').textContent='변수 인식 완료';if(collecting)addSerialRow(d)}
+function addSerialRow(d){const now=performance.now();if(startTime===null){startTime=now;lastSample=now}const row={time:+((now-startTime)/1000).toFixed(3),...d};dataRows.push(row);if(dataRows.length>MAX_DATA){dataRows.shift();excluded=new Set([...excluded].filter(i=>i>0).map(i=>i-1))}if(lastSample!==null&&now>lastSample){totalDt+=(now-lastSample)/1000;dtCount++;const av=totalDt/dtCount;$('sampling').textContent=`${av.toFixed(3)} s / ${(1/av).toFixed(1)} Hz`}lastSample=now;updateCounts();markTableDirty();scheduleSave()}
+function updateCounts(){$('count').textContent=dataRows.length+'개';$('activeCount').textContent=getActiveRows().length+'개'}
+function markTableDirty(){tableDirty=true} function startTableTimer(){if(tableTimer)return;tableTimer=setInterval(()=>{if(tableDirty){renderTable();tableDirty=false}},TABLE_REFRESH_MS)}
+function renderTable(){const vars=tableVars.length?tableVars:allVars;$('thead').innerHTML='<tr><th>No.</th>'+vars.map(v=>`<th>${escapeHtml(v)}</th>`).join('')+'</tr>';const start=Math.max(0,dataRows.length-TABLE_RENDER_LIMIT),rows=[];for(let i=start;i<dataRows.length;i++){const r=dataRows[i],cls=excluded.has(i)?'excluded':'';rows.push(`<tr class="${cls}"><td>${i+1}</td>${vars.map(v=>`<td>${fmt(r[v])}</td>`).join('')}</tr>`)}$('tbody').innerHTML=rows.join('');const w=$('tableWrap');w.scrollTop=w.scrollHeight}
+async function readSerial(){const decoder=new TextDecoderStream(),closed=port.readable.pipeTo(decoder.writable);reader=decoder.readable.getReader();try{while(keepReading){const {value,done}=await reader.read();if(done)break;if(!value)continue;if(performance.now()<stabilizingUntil)continue;lineBuffer+=value;const lines=lineBuffer.split(/\r?\n/);lineBuffer=lines.pop();for(const line of lines){const d=parseLine(line);if(d)processSerialData(d)}}}catch(e){console.error(e);if(keepReading)handleConnectionLost('USB 연결이 끊겼거나 시리얼 통신에 오류가 발생했습니다.')}finally{try{reader?.releaseLock()}catch{}reader=null;try{await closed}catch{}}}
+$('connect').onclick=async()=>{if(!('serial'in navigator)){alert('Chrome 또는 Edge에서 실행해주세요.');return}try{port=await navigator.serial.requestPort();await port.open({baudRate:+$('baud').value});keepReading=true;validDataAfterConnect=false;lastSchema='';sameSchema=0;lineBuffer='';stabilizingUntil=performance.now()+2000;$('status').textContent='연결 안정화 중...';$('connect').disabled=true;$('disconnect').disabled=false;$('baud').disabled=true;readSerial();await sleep(2000);if(port){$('status').textContent='연결됨';$('schemaMsg').textContent='정상 데이터 수신 대기 중...'}clearTimeout(diagnosticTimer);diagnosticTimer=setTimeout(()=>{if(port&&!validDataAfterConnect)alert('아두이노에서 정상 데이터를 읽지 못했습니다.\n\n확인할 것:\n1. Arduino의 Serial.begin() 값과 보드레이트가 같은지\n2. 출력이 변수:값 형식인지 (예: temp:23.5,light:450)\n3. Arduino IDE의 시리얼 모니터가 닫혀 있는지')},5000)}catch(e){console.error(e);$('status').textContent='연결 실패'}};
+$('disconnect').onclick=()=>disconnectSerial(false);
+async function disconnectSerial(lost=false){keepReading=false;collecting=false;clearTimeout(diagnosticTimer);try{await reader?.cancel()}catch{}try{await port?.close()}catch{}port=null;$('status').textContent=lost?'연결 끊김 (데이터 유지)':'연결 해제';$('connect').disabled=false;$('disconnect').disabled=true;$('baud').disabled=false;$('collect').disabled=true;$('collect').textContent='▶ 수집 시작'}
+function handleConnectionLost(msg){disconnectSerial(true);alert(msg+'\n수집된 데이터는 유지됩니다.')}
+if('serial'in navigator)navigator.serial.addEventListener('disconnect',e=>{if(port&&e.target===port)handleConnectionLost('Arduino가 분리되었습니다.')});
+$('collect').onclick=()=>{collecting=!collecting;if(collecting&&dataRows.length===0){startTime=null;lastSample=null;totalDt=0;dtCount=0}$('collect').textContent=collecting?'■ 수집 중지':'▶ 계속 실험하기';$('status').textContent=collecting?'데이터 수집 중':'데이터 수집 중지';scheduleSave()};
+
+// IndexedDB 임시저장 (24시간)
+function initDB(){return new Promise((res,rej)=>{const q=indexedDB.open('ArduLabDB',1);q.onupgradeneeded=()=>q.result.createObjectStore('state');q.onsuccess=()=>{db=q.result;res()};q.onerror=()=>rej(q.error)})}
+function dbPut(v){if(!db)return;const tx=db.transaction('state','readwrite');tx.objectStore('state').put(v,'current')}
+function dbGet(){return new Promise(res=>{if(!db)return res(null);const q=db.transaction('state').objectStore('state').get('current');q.onsuccess=()=>res(q.result||null);q.onerror=()=>res(null)})}
+function dbClear(){if(!db)return;db.transaction('state','readwrite').objectStore('state').delete('current')}
+function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>dbPut({savedAt:Date.now(),dataRows,excluded:[...excluded],sourceVars,allVars,tableVars,note}),500)}
+async function restoreTemp(){const s=await dbGet();if(!s)return;if(Date.now()-s.savedAt>TEMP_TTL){dbClear();return}dataRows=Array.isArray(s.dataRows)?s.dataRows:[];excluded=new Set(s.excluded||[]);sourceVars=s.sourceVars||[];allVars=s.allVars||unionVars();tableVars=s.tableVars||[...allVars];note={...note,...(s.note||{})};refreshVarUI();loadNoteUI();updateCounts();renderTable();$('restoreBanner').style.display='block';$('restoreBanner').textContent=`직전 실험 임시자료를 복구했습니다. 마지막 저장: ${new Date(s.savedAt).toLocaleString()} · 새 학생이 시작할 때는 반드시 [새 실험]을 눌러주세요.`}
+$('newExp').onclick=async()=>{if((dataRows.length||Object.values(note).some(Boolean))&&!confirm('새 실험을 시작하면 현재 실험 데이터와 실험노트의 임시자료가 삭제됩니다.\n필요한 자료를 저장했는지 확인해 주세요.'))return;dataRows=[];excluded.clear();sourceVars=[];allVars=[];tableVars=[];selectedRange=null;graphState=null;intervalState=null;startTime=null;lastSample=null;totalDt=0;dtCount=0;note={title:'',design:'',x_name:'',x_description:'',y_name:'',y_description:'',observation:'',interpretation:'',error:'',question:''};dbClear();loadNoteUI();refreshVarUI();updateCounts();renderTable();clearCanvas($('chart'));$('sampling').textContent='-';$('result').textContent='분석 결과가 여기에 표시됩니다.';$('schemaMsg').textContent=port?'정상 데이터 수신 대기 중...':'변수 대기 중';$('restoreBanner').style.display='none';$('collect').textContent='▶ 수집 시작';collecting=false};
+
+// 파일 불러오기 / 저장
+$('loadFile').onclick=()=>$('fileInput').click();$('fileInput').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{if(f.name.toLowerCase().endsWith('.xlsx'))await loadXlsx(f);else loadCsvText(await f.text());}catch(err){console.error(err);alert('파일을 읽지 못했습니다: '+err.message)}e.target.value=''};
+function splitCSVLine(line){const a=[];let s='',q=false;for(let i=0;i<line.length;i++){const c=line[i];if(c==='"'){if(q&&line[i+1]==='"'){s+='"';i++}else q=!q}else if(c===','&&!q){a.push(s.trim());s=''}else s+=c}a.push(s.trim());return a}
+function loadCsvText(text){const lines=text.replace(/^\uFEFF/,'').split(/\r?\n/).filter(x=>x.trim());if(lines.length<2)throw new Error('데이터가 부족합니다.');const headers=splitCSVLine(lines[0]).map(x=>x.trim());const rows=[];for(const l of lines.slice(1)){const c=splitCSVLine(l),r={};headers.forEach((h,i)=>{if(!h)return;const n=Number(String(c[i]??'').replace(/,/g,''));if(Number.isFinite(n))r[h]=n});if(Object.keys(r).length)rows.push(r)}applyLoadedRows(rows,headers,'CSV 파일 분석 모드')}
+async function loadXlsx(file){if(typeof XLSX==='undefined')throw new Error('Excel 처리 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.');const buf=await file.arrayBuffer(),wb=XLSX.read(buf,{type:'array'}),ws=wb.Sheets[wb.SheetNames[0]],arr=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:''});if(arr.length<2)throw new Error('데이터가 부족합니다.');const headers=arr[0].map(x=>String(x).trim()),rows=[];for(const vals of arr.slice(1)){const r={};headers.forEach((h,i)=>{if(!h)return;const v=vals[i],n=typeof v==='number'?v:Number(String(v).replace(/,/g,''));if(Number.isFinite(n))r[h]=n});if(Object.keys(r).length)rows.push(r)}applyLoadedRows(rows,headers,'Excel 파일 분석 모드')}
+function applyLoadedRows(rows,headers,msg){if(!rows.length)throw new Error('읽을 수 있는 숫자 데이터가 없습니다.');dataRows=rows;excluded.clear();sourceVars=[];allVars=unionVars();tableVars=[...allVars];selectedRange=null;refreshVarUI();updateCounts();renderTable();$('status').textContent=msg;$('schemaMsg').textContent='파일 데이터 불러오기 완료';scheduleSave()}
+function csvEscape(x){const s=String(x??'');return /[",\n]/.test(s)?`"${s.replace(/"/g,'""')}"`:s}
+$('saveCsv').onclick=()=>{const rows=getActiveRows();if(!rows.length){alert('저장할 분석 데이터가 없습니다.');return}const cols=tableVars.length?tableVars:allVars;if(!cols.length){alert('표에 저장할 변수를 선택해 주세요.');return}const lines=[cols.map(csvEscape).join(',')];for(const r of rows)lines.push(cols.map(c=>csvEscape(r[c]??'')).join(','));downloadBlob(new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv;charset=utf-8'}),`ArduLab_data_${stamp()}.csv`)};
+
+// 표 변수 선택
+$('tableVarsBtn').onclick=()=>{const selected=new Set(tableVars);$('tableVarChecks').innerHTML=allVars.map(v=>`<label class="checkitem"><input type="checkbox" value="${escapeAttr(v)}" ${selected.has(v)?'checked':''}> ${escapeHtml(v)}</label>`).join('');openModal('tableVarsModal')};$('selectAllVars').onclick=()=>document.querySelectorAll('#tableVarChecks input').forEach(x=>x.checked=true);$('clearAllVars').onclick=()=>document.querySelectorAll('#tableVarChecks input').forEach(x=>x.checked=false);$('applyTableVars').onclick=()=>{tableVars=[...document.querySelectorAll('#tableVarChecks input:checked')].map(x=>x.value);renderTable();scheduleSave();closeModal('tableVarsModal')};
+
+// 샘플 데이터
+$('sampleBtn').onclick=()=>openModal('sampleModal');document.querySelectorAll('[data-sample]').forEach(b=>b.onclick=()=>{loadSample(b.dataset.sample);closeModal('sampleModal')});
+function loadSample(type){let rows=[],msg='';if(type==='ohm'){for(let i=0;i<=30;i++){const v=i*.2;rows.push({Voltage:+v.toFixed(3),Current:+(.48*v+.05).toFixed(3)})}msg='옴의 법칙 실험'}else if(type==='resonance'){const len=.28,c=343,f0=c/(2*len);for(let f=200;f<=1400;f+=5){const s=15+420*Math.exp(-((f-f0)**2)/(2*28**2))+300*Math.exp(-((f-2*f0)**2)/(2*35**2));rows.push({Frequency:f,Sound:+s.toFixed(3)})}msg='28 cm 양쪽 개방관 기주공명'}else if(type==='fall'){for(let i=0;i<=40;i++){const t=i*.05,p=.5*9.8*t*t+.002*Math.sin(t*20);rows.push({time:+t.toFixed(3),Position:+p.toFixed(4)})}msg='자유낙하운동'}else if(type==='light'){for(let d=5;d<=100;d++){let light=1200/((d/10)**2+.8)+6*Math.sin(d*.45)+3*Math.sin(d*1.2);if([22,57,84].includes(d))light+=120;rows.push({Distance:d,LightIntensity:+light.toFixed(3)})}msg='거리에 따른 빛의 세기'}else if(type==='reaction'){for(let t=1;t<=30;t++){rows.push({Trial:t,ReactionType:1,ReactionTime:+(.245+.018*Math.sin(t*.8)).toFixed(3)});rows.push({Trial:t,ReactionType:2,ReactionTime:+(.205+.014*Math.cos(t*.7)).toFixed(3)})}msg='시각 vs 청각 반응속도'}applyLoadedRows(rows,Object.keys(rows[0]||{}),'예제 데이터 분석 모드');$('schemaMsg').textContent='예제 데이터 불러오기 완료: '+msg}
+
+// 수동 입력 스프레드시트
+let manualData=[];function initManual(r=21,c=6){manualData=Array.from({length:r},()=>Array(c).fill(''));renderManual()}
+function renderManual(){const c=Math.max(1,...manualData.map(r=>r.length));let h='<thead><tr><th></th>';for(let j=0;j<c;j++)h+=`<th>${colName(j)}</th>`;h+='</tr></thead><tbody>';manualData.forEach((r,i)=>{h+=`<tr class="${i===0?'nameRow':''}"><th>${i===0?'변수명':i}</th>`;for(let j=0;j<c;j++)h+=`<td contenteditable="true" data-r="${i}" data-c="${j}">${escapeHtml(r[j]??'')}</td>`;h+='</tr>'});h+='</tbody>';$('manualSheet').innerHTML=h;document.querySelectorAll('#manualSheet td').forEach(td=>{td.oninput=()=>manualData[+td.dataset.r][+td.dataset.c]=td.innerText.trim();td.onpaste=manualPaste})}
+function colName(i){let s='';for(i++;i;i=Math.floor((i-1)/26))s=String.fromCharCode(65+(i-1)%26)+s;return s}
+function manualPaste(e){const text=e.clipboardData.getData('text/plain');if(!text.includes('\t')&&!text.includes('\n'))return;e.preventDefault();const sr=+e.currentTarget.dataset.r,sc=+e.currentTarget.dataset.c,rows=text.replace(/\r/g,'').split('\n').filter((x,i,a)=>x!==''||i<a.length-1).map(l=>l.split('\t'));while(manualData.length<sr+rows.length)manualData.push(Array(manualData[0]?.length||6).fill(''));const need=sc+Math.max(...rows.map(r=>r.length));manualData.forEach(r=>{while(r.length<need)r.push('')});rows.forEach((r,i)=>r.forEach((v,j)=>manualData[sr+i][sc+j]=v.trim()));renderManual()}
+$('manualBtn').onclick=()=>{if(!manualData.length)initManual();openModal('manualModal')};$('addRows').onclick=()=>{for(let i=0;i<10;i++)manualData.push(Array(manualData[0]?.length||6).fill(''));renderManual()};$('addCols').onclick=()=>{manualData.forEach(r=>r.push('','',''));renderManual()};$('manualClear').onclick=()=>initManual();$('manualExample').onclick=()=>{initManual();const ex=[['Voltage','Current','Resistance'],['0','0.000','10'],['1','0.100','10'],['2','0.200','10'],['3','0.300','10'],['4','0.400','10'],['5','0.500','10']];ex.forEach((r,i)=>r.forEach((v,j)=>manualData[i][j]=v));renderManual()};$('manualApply').onclick=()=>{const headers=manualData[0].map((x,i)=>String(x).trim()||`Variable${i+1}`),rows=[];for(const vals of manualData.slice(1)){const r={};vals.forEach((v,i)=>{const n=Number(String(v).replace(/,/g,''));if(Number.isFinite(n)&&String(v).trim()!=='')r[headers[i]]=n});if(Object.keys(r).length)rows.push(r)}if(!rows.length){alert('분석에 사용할 숫자 데이터가 없습니다.');return}applyLoadedRows(rows,headers,'수동입력 분석 모드');closeModal('manualModal')};
+
+// 계산 변수
+$('calcVarBtn').onclick=()=>openModal('calcModal');$('calcApply').onclick=()=>{const name=$('calcName').value.trim(),expr=$('calcExpr').value.trim();if(!/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)){alert('변수 이름은 영어 또는 _로 시작하고 영어/숫자/_만 사용할 수 있습니다.');return}if(!expr)return;let success=0;for(let i=0;i<dataRows.length;i++){try{const v=calcExpression(expr,i);if(Number.isFinite(v)){dataRows[i][name]=v;success++}else dataRows[i][name]=''}catch{dataRows[i][name]=''}}if(!success){alert('계산된 값이 없습니다. 변수명과 수식을 확인하세요.');return}syncVars();renderTable();scheduleSave();closeModal('calcModal');alert(`계산 변수 '${name}'이 추가되었습니다. 계산 성공: ${success}개`)};
+function calcExpression(expr,i){let s=expr.trim();s=s.replace(/diff\(\s*["']([A-Za-z_][A-Za-z0-9_]*)["']\s*\)/g,(_,v)=>String(calcDiff(v,i))).replace(/integ\(\s*["']([A-Za-z_][A-Za-z0-9_]*)["']\s*\)/g,(_,v)=>String(calcInteg(v,i)));const funcs={sqrt:'Math.sqrt',log:'Math.log',sin:'Math.sin',cos:'Math.cos',tan:'Math.tan',abs:'Math.abs'};for(const [k,v] of Object.entries(funcs))s=s.replace(new RegExp(`\\b${k}\\s*\\(`,'g'),v+'(');s=s.replace(/\bpi\b/g,String(Math.PI));const ids=s.match(/[A-Za-z_][A-Za-z0-9_]*/g)||[];for(const id of [...new Set(ids)]){if(id==='Math')continue;if(!Object.prototype.hasOwnProperty.call(dataRows[i],id))throw new Error('unknown');const v=dataRows[i][id];if(!Number.isFinite(v))throw new Error('nan');s=s.replace(new RegExp(`\\b${id}\\b`,'g'),`(${v})`)}if(!/^[0-9eE+\-*/%().,\sMathsqrtlogincota]+$/.test(s))throw new Error('unsafe');return Function(`"use strict";return (${s})`)()}
+function calcDiff(v,i){if(i===0)return 0;const a=dataRows[i],b=dataRows[i-1],dt=a.time-b.time;return Number.isFinite(a[v])&&Number.isFinite(b[v])&&Number.isFinite(dt)&&dt!==0?(a[v]-b[v])/dt:0}function calcInteg(v,i){let t=0;for(let j=1;j<=i;j++){const a=dataRows[j],b=dataRows[j-1],dt=a.time-b.time;if(Number.isFinite(a[v])&&Number.isFinite(b[v])&&Number.isFinite(dt))t+=(a[v]+b[v])/2*dt}return t}
+
+// 이동평균 변수
+$('maVarBtn').onclick=()=>openModal('maModal');$('maCreate').onclick=()=>{const v=$('maVarSelect').value,n=+$('maVarN').value;if(!v||!Number.isInteger(n)||n<2){alert('변수와 2 이상의 정수 n을 확인하세요.');return}const name=`${v}_ma${n}`,vals=dataRows.map(r=>r[v]);for(let i=0;i<dataRows.length;i++){const w=vals.slice(Math.max(0,i-n+1),i+1).filter(Number.isFinite);dataRows[i][name]=w.length?mean(w):''}syncVars();renderTable();scheduleSave();closeModal('maModal');alert(`이동평균 변수 '${name}'이 추가되었습니다.`)};
+
+// 이상값
+$('outlierBtn').onclick=()=>openModal('outlierModal');$('outlierReset').onclick=()=>{excluded.clear();updateCounts();renderTable();scheduleSave();alert('이상값 제외 설정을 초기화했습니다.')};$('outApply').onclick=()=>{const v=$('outlierVar').value,vals=dataRows.map((r,i)=>[i,r[v]]).filter(x=>Number.isFinite(x[1]));if(!vals.length){alert('숫자 데이터가 없습니다.');return}const method=document.querySelector('input[name="outMethod"]:checked').value;let lower,upper;try{if(method==='zscore'){const n=+$('out1').value,a=vals.map(x=>x[1]),m=mean(a),sd=stdev(a);if(!sd){alert('표준편차가 0이라 제외할 이상값이 없습니다.');return}lower=m-n*sd;upper=m+n*sd}else if(method==='iqr'){const a=vals.map(x=>x[1]).sort((a,b)=>a-b),q1=a[Math.floor(a.length/4)],q3=a[Math.floor(a.length*3/4)],iqr=q3-q1;lower=q1-1.5*iqr;upper=q3+1.5*iqr}else{lower=+$('out1').value;upper=+$('out2').value;if(!Number.isFinite(lower)||!Number.isFinite(upper))throw 0}}catch{alert('입력값을 확인하세요.');return}let n=0;for(const [i,x] of vals)if(x<lower||x>upper){if(!excluded.has(i))n++;excluded.add(i)}updateCounts();renderTable();scheduleSave();closeModal('outlierModal');alert(`이상값 ${n}개를 분석에서 제외했습니다. 원본 데이터는 삭제되지 않습니다.`)};
+
+// 수학 / 회귀
+function mean(a){return a.reduce((s,x)=>s+x,0)/a.length}function median(a){const b=[...a].sort((x,y)=>x-y),m=Math.floor(b.length/2);return b.length%2?b[m]:(b[m-1]+b[m])/2}function stdev(a){if(a.length<2)return 0;const m=mean(a);return Math.sqrt(a.reduce((s,x)=>s+(x-m)**2,0)/(a.length-1))}
+function linearReg(x,y){if(x.length<2)return null;const mx=mean(x),my=mean(y),den=x.reduce((s,v)=>s+(v-mx)**2,0);if(!den)return null;const a=x.reduce((s,v,i)=>s+(v-mx)*(y[i]-my),0)/den,b=my-a*mx,ss=y.reduce((s,v)=>s+(v-my)**2,0),er=y.reduce((s,v,i)=>s+(v-(a*x[i]+b))**2,0);return{type:'linear',a,b,r2:ss?1-er/ss:1}}
+function solve3(A,b){A=A.map(r=>[...r]);b=[...b];for(let i=0;i<3;i++){let m=i;for(let j=i+1;j<3;j++)if(Math.abs(A[j][i])>Math.abs(A[m][i]))m=j;[A[i],A[m]]=[A[m],A[i]];[b[i],b[m]]=[b[m],b[i]];if(Math.abs(A[i][i])<1e-12)return null;const d=A[i][i];for(let k=i;k<3;k++)A[i][k]/=d;b[i]/=d;for(let j=0;j<3;j++)if(j!==i){const f=A[j][i];for(let k=i;k<3;k++)A[j][k]-=f*A[i][k];b[j]-=f*b[i]}}return b}
+function quadReg(x,y){if(x.length<3)return null;const n=x.length,s1=x.reduce((a,v)=>a+v,0),s2=x.reduce((a,v)=>a+v*v,0),s3=x.reduce((a,v)=>a+v**3,0),s4=x.reduce((a,v)=>a+v**4,0),sy=y.reduce((a,v)=>a+v,0),sxy=x.reduce((a,v,i)=>a+v*y[i],0),sx2y=x.reduce((a,v,i)=>a+v*v*y[i],0),sol=solve3([[s4,s3,s2],[s3,s2,s1],[s2,s1,n]],[sx2y,sxy,sy]);if(!sol)return null;const[a,b,c]=sol,my=mean(y),ss=y.reduce((s,v)=>s+(v-my)**2,0),er=y.reduce((s,v,i)=>s+(v-(a*x[i]**2+b*x[i]+c))**2,0);return{type:'quadratic',a,b,c,r2:ss?1-er/ss:1}}
+function getGraphPoints(useRange=true){const xv=$('xVar').value,yv=$('yVar').value;let pts=[];dataRows.forEach((r,i)=>{if(!excluded.has(i)&&Number.isFinite(r[xv])&&Number.isFinite(r[yv]))pts.push({x:r[xv],y:r[yv],rowIndex:i})});if(useRange&&selectedRange)pts=pts.filter(p=>p.x>=selectedRange[0]&&p.x<=selectedRange[1]);return{xv,yv,pts}}
+function axisConfig(pts){let xs=pts.map(p=>p.x),ys=pts.map(p=>p.y),xmin=Math.min(...xs),xmax=Math.max(...xs),ymin=Math.min(...ys),ymax=Math.max(...ys);if(xmin===xmax){xmin-=1;xmax+=1}if(ymin===ymax){ymin-=1;ymax+=1}if($('customRangeCheck').checked){const vals=[+$('xMin').value,+$('xMax').value,+$('yMin').value,+$('yMax').value];if(Number.isFinite(vals[0]))xmin=vals[0];if(Number.isFinite(vals[1]))xmax=vals[1];if(Number.isFinite(vals[2]))ymin=vals[2];if(Number.isFinite(vals[3]))ymax=vals[3]}return{xmin,xmax,ymin,ymax}}
+$('customRangeCheck').onchange=()=>{$('axisRangeBox').style.display=$('customRangeCheck').checked?'grid':'none'};
+function clearCanvas(c){c.getContext('2d').clearRect(0,0,c.width,c.height)}
+function drawGraph(){const {xv,yv,pts}=getGraphPoints(false);if(!pts.length){alert('그래프를 그릴 데이터가 없습니다.');return}graphState=makeGraphState($('chart'),xv,yv,pts,axisConfig(pts));renderGraph(graphState,null,selectedRange);analyze();}
+function makeGraphState(canvas,xv,yv,pts,axis){const pad={l:62,r:25,t:28,b:50},X=x=>pad.l+(x-axis.xmin)/(axis.xmax-axis.xmin)*(canvas.width-pad.l-pad.r),Y=y=>canvas.height-pad.b-(y-axis.ymin)/(axis.ymax-axis.ymin)*(canvas.height-pad.t-pad.b);return{canvas,xv,yv,pts,axis,pad,X,Y}}
+function smoothPoints(pts,n){if(n<=1)return pts;const out=[];for(let i=0;i<pts.length;i++){const w=pts.slice(Math.max(0,i-n+1),i+1);out.push({x:pts[i].x,y:mean(w.map(p=>p.y))})}return out}
+function renderGraph(st,hoverIndex=null,range=null){const c=st.canvas,ctx=c.getContext('2d'),{xmin,xmax,ymin,ymax}=st.axis,{l,r,t,b}=st.pad;clearCanvas(c);ctx.strokeStyle='#cbd5e1';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(l,t);ctx.lineTo(l,c.height-b);ctx.lineTo(c.width-r,c.height-b);ctx.stroke();ctx.fillStyle='#475569';ctx.font='13px Arial';ctx.fillText(st.yv,8,18);ctx.fillText(st.xv,c.width-45,c.height-12);ctx.fillText(fmt(xmin),l-12,c.height-28);ctx.fillText(fmt(xmax),c.width-r-35,c.height-28);ctx.fillText(fmt(ymin),5,c.height-b+4);ctx.fillText(fmt(ymax),5,t+5);
+ if(range){ctx.fillStyle='#00979d18';ctx.fillRect(st.X(range[0]),t,st.X(range[1])-st.X(range[0]),c.height-b-t)}
+ ctx.fillStyle='#00979d';for(const p of st.pts){const x=st.X(p.x),y=st.Y(p.y);if(x<l||x>c.width-r||y<t||y>c.height-b)continue;ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fill()}
+ if($('smoothCheck').checked){const n=Math.max(2,+$('maN').value||5),sp=smoothPoints(st.pts,n);ctx.strokeStyle='#ff7a00';ctx.lineWidth=2;ctx.beginPath();sp.forEach((p,i)=>i?ctx.lineTo(st.X(p.x),st.Y(p.y)):ctx.moveTo(st.X(p.x),st.Y(p.y)));ctx.stroke()}
+ const rt=$('regType').value,x=st.pts.map(p=>p.x),y=st.pts.map(p=>p.y);let reg=rt==='linear'?linearReg(x,y):rt==='quadratic'?quadReg(x,y):null;if(reg){ctx.strokeStyle='#7c3aed';ctx.lineWidth=2;ctx.beginPath();for(let i=0;i<=180;i++){const xx=xmin+(xmax-xmin)*i/180,yy=reg.type==='linear'?reg.a*xx+reg.b:reg.a*xx*xx+reg.b*xx+reg.c;i?ctx.lineTo(st.X(xx),st.Y(yy)):ctx.moveTo(st.X(xx),st.Y(yy))}ctx.stroke()}
+ if(hoverIndex!==null&&st.pts[hoverIndex])drawTangentOverlay(st,hoverIndex)}
+function drawTangentOverlay(st,i){if(!$('slopeCheck').checked)return;const p=st.pts[i],i1=i<=0?0:i-1,i2=i>=st.pts.length-1?st.pts.length-1:i+1;if(i1===i2)return;const dx=st.pts[i2].x-st.pts[i1].x;if(dx===0)return;const slope=(st.pts[i2].y-st.pts[i1].y)/dx,span=(st.axis.xmax-st.axis.xmin)*.08,xa=p.x-span,xb=p.x+span,ya=p.y+slope*(xa-p.x),yb=p.y+slope*(xb-p.x),ctx=st.canvas.getContext('2d');ctx.strokeStyle='#8e44ad';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(st.X(xa),st.Y(ya));ctx.lineTo(st.X(xb),st.Y(yb));ctx.stroke();ctx.fillStyle='#8e44ad';ctx.font='bold 13px Arial';ctx.fillText('기울기: '+fmt(slope),st.pad.l+10,st.pad.t+18)}
+function nearestPoint(st,px,py){let best=-1,bd=12;st.pts.forEach((p,i)=>{const d=Math.hypot(st.X(p.x)-px,st.Y(p.y)-py);if(d<bd){bd=d;best=i}});return best}
+function bindGraphEvents(canvas,isInterval=false){canvas.addEventListener('pointermove',e=>{const st=isInterval?intervalState:graphState;if(!st)return;const r=canvas.getBoundingClientRect(),px=(e.clientX-r.left)*canvas.width/r.width,py=(e.clientY-r.top)*canvas.height/r.height,i=nearestPoint(st,px,py);if(i>=0){renderGraph(st,i,isInterval?null:selectedRange);const p=st.pts[i],tip=$('tooltip');tip.style.display='block';tip.style.left=(e.clientX+14)+'px';tip.style.top=(e.clientY+14)+'px';let txt=`${st.xv}: ${fmt(p.x)}\n${st.yv}: ${fmt(p.y)}`;if($('slopeCheck').checked){const i1=i<=0?0:i-1,i2=i>=st.pts.length-1?st.pts.length-1:i+1,dx=st.pts[i2].x-st.pts[i1].x;if(dx)txt+=`\n기울기: ${fmt((st.pts[i2].y-st.pts[i1].y)/dx)}`}tip.textContent=txt}else{$('tooltip').style.display='none';renderGraph(st,null,isInterval?null:selectedRange)}});canvas.addEventListener('pointerleave',()=>{$('tooltip').style.display='none';const st=isInterval?intervalState:graphState;if(st)renderGraph(st,null,isInterval?null:selectedRange)});if(!isInterval){canvas.addEventListener('pointerdown',e=>{if(!graphState)return;const r=canvas.getBoundingClientRect();dragStartPx=(e.clientX-r.left)*canvas.width/r.width});canvas.addEventListener('pointerup',e=>{if(dragStartPx===null||!graphState)return;const r=canvas.getBoundingClientRect(),end=(e.clientX-r.left)*canvas.width/r.width,start=dragStartPx;dragStartPx=null;if(Math.abs(end-start)<5)return;const inv=px=>graphState.axis.xmin+(px-graphState.pad.l)/(canvas.width-graphState.pad.l-graphState.pad.r)*(graphState.axis.xmax-graphState.axis.xmin);let a=inv(Math.min(start,end)),b=inv(Math.max(start,end));selectedRange=[a,b];renderGraph(graphState,null,selectedRange);analyze();openIntervalGraph()})}}
+bindGraphEvents($('chart'),false);bindGraphEvents($('intervalChart'),true);$('drawBtn').onclick=drawGraph;$('smoothCheck').onchange=()=>{if(graphState)renderGraph(graphState,null,selectedRange)};$('slopeCheck').onchange=()=>{if(graphState)renderGraph(graphState,null,selectedRange);if(intervalState)renderGraph(intervalState)};$('regType').onchange=()=>{if(graphState){renderGraph(graphState,null,selectedRange);analyze()}};
+function analyze(){const {xv,yv,pts}=getGraphPoints(true);if(!pts.length){$('result').textContent='분석할 데이터가 없습니다.';return}const x=pts.map(p=>p.x),y=pts.map(p=>p.y),mn=Math.min(...y),mx=Math.max(...y),mi=y.indexOf(mn),ma=y.indexOf(mx);let t=`[${selectedRange?'선택 구간':'전체 구간'} 분석]\n${xv}: ${fmt(Math.min(...x))} ~ ${fmt(Math.max(...x))}\n분석 변수: ${yv}\n데이터 개수: ${y.length}개\n\n평균: ${fmt(mean(y))}\n중앙값: ${fmt(median(y))}\n표준편차: ${fmt(stdev(y))}\n\n최소값: ${fmt(mn)} (x=${fmt(x[mi])})\n최대값: ${fmt(mx)} (x=${fmt(x[ma])})\n범위: ${fmt(mx-mn)}\n전체 변화량: ${fmt(y[y.length-1]-y[0])}`;const rt=$('regType').value,r=rt==='linear'?linearReg(x,y):rt==='quadratic'?quadReg(x,y):null;if(r?.type==='linear')t+=`\n\n[1차 회귀]\ny = ${fmt(r.a)}x + ${fmt(r.b)}\n기울기: ${fmt(r.a)}\n절편: ${fmt(r.b)}\nR²: ${fmt(r.r2)}`;if(r?.type==='quadratic')t+=`\n\n[2차 회귀]\ny = ${fmt(r.a)}x² + ${fmt(r.b)}x + ${fmt(r.c)}\nR²: ${fmt(r.r2)}`;$('result').textContent=t;return t}
+$('analyzeBtn').onclick=analyze;$('clearInterval').onclick=()=>{selectedRange=null;if(graphState)renderGraph(graphState,null,null);analyze()};$('manualIntervalBtn').onclick=()=>openModal('manualIntervalModal');$('intervalApply').onclick=()=>{let a=+$('intervalStart').value,b=+$('intervalEnd').value;if(!Number.isFinite(a)||!Number.isFinite(b)){alert('숫자를 입력하세요.');return}if(a>b)[a,b]=[b,a];selectedRange=[a,b];closeModal('manualIntervalModal');if(graphState)renderGraph(graphState,null,selectedRange);analyze();openIntervalGraph()};$('intervalBtn').onclick=openIntervalGraph;
+function openIntervalGraph(){if(!selectedRange){alert('먼저 그래프에서 구간을 드래그하거나 직접 입력해 주세요.');return}const{xv,yv,pts}=getGraphPoints(true);if(!pts.length){alert('선택 구간에 데이터가 없습니다.');return}const axis={xmin:Math.min(...pts.map(p=>p.x)),xmax:Math.max(...pts.map(p=>p.x)),ymin:Math.min(...pts.map(p=>p.y)),ymax:Math.max(...pts.map(p=>p.y))};if(axis.xmin===axis.xmax){axis.xmin-=1;axis.xmax+=1}if(axis.ymin===axis.ymax){axis.ymin-=1;axis.ymax+=1}intervalState=makeGraphState($('intervalChart'),xv,yv,pts,axis);renderGraph(intervalState);$('intervalResult').textContent=analyze();openModal('intervalModal')}
+$('pngBtn').onclick=()=>saveCanvas($('chart'),`ArduLab_graph_${stamp()}.png`);$('intervalPng').onclick=()=>saveCanvas($('intervalChart'),`ArduLab_interval_${stamp()}.png`);function saveCanvas(c,name){if(!c.getContext('2d'))return;c.toBlob(b=>downloadBlob(b,name))}
+
+// 실험노트 자동저장 + 프롬프트
+const noteMap={noteTitle:'title',noteDesign:'design',noteX:'x_name',noteXDesc:'x_description',noteY:'y_name',noteYDesc:'y_description',noteObs:'observation',noteInterp:'interpretation',noteError:'error',noteQuestion:'question'};
+function loadNoteUI(){for(const[id,key]of Object.entries(noteMap)){if($(id).tagName==='SELECT'){if(allVars.includes(note[key]))$(id).value=note[key]}else $(id).value=note[key]||''}}
+$('noteBtn').onclick=()=>{refreshVarUI();loadNoteUI();openModal('noteModal')};for(const[id,key]of Object.entries(noteMap)){$(id).addEventListener('input',()=>{note[key]=$(id).value;scheduleSave()});$(id).addEventListener('change',()=>{note[key]=$(id).value;scheduleSave()})}
+$('promptBtn').onclick=()=>{const oldX=$('xVar').value,oldY=$('yVar').value;if(note.x_name&&allVars.includes(note.x_name))$('xVar').value=note.x_name;if(note.y_name&&allVars.includes(note.y_name))$('yVar').value=note.y_name;const summary=analyze()||'분석 결과 없음';$('xVar').value=oldX;$('yVar').value=oldY;const intervalText=selectedRange?`${fmt(selectedRange[0])} ~ ${fmt(selectedRange[1])}`:'전체 데이터 사용';const prompt=`다음은 내가 수행한 과학 실험과 데이터 분석 결과입니다.\n\n[실험 제목]\n${note.title}\n\n[실험 설계 요약]\n${note.design}\n\n[활용 변수]\n- X축 변수: ${note.x_name}\n- Y축 변수: ${note.y_name}\n\n[변수 설명]\n[X 변수]\n${note.x_name}\n${note.x_description}\n\n[Y 변수]\n${note.y_name}\n${note.y_description}\n\n[분석 범위]\n- ${intervalText}\n\n[데이터 요약 및 회귀 분석]\n${summary}\n\n[실험 관찰 내용]\n${note.observation}\n\n[내가 먼저 해석한 실험 결과]\n${note.interpretation}\n\n[오차 원인]\n${note.error}\n\n[궁금한 점]\n${note.question}\n\n---\n너는 과학 선생님이자 탐구 활동 협업자의 역할을 해줘.\n\n중요한 규칙:\n- 완성된 보고서나 정답을 대신 써주지 마.\n- 내 해석을 바탕으로 피드백만 해줘.\n- 내가 스스로 고칠 수 있도록 힌트와 질문 중심으로 답해줘.\n- 데이터로 뒷받침되지 않는 주장이 있으면 알려줘.\n- 과학적으로 더 정확하게 표현할 수 있는 방향을 제안해줘.\n\n검토해 줬으면 하는 내용:\n1. 내 해석에서 논리적으로 부족한 부분\n2. 데이터와 연결이 약한 주장\n3. 그래프 경향에 대한 더 나은 설명 방향\n4. 오차 원인으로 생각해볼 수 있는 점\n5. 실험을 개선하기 위한 아이디어\n6. 보고서에 쓰기 전에 내가 스스로 보완해야 할 질문`;$('promptResult').style.display='block';$('promptResult').textContent=prompt;$('copyPrompt').disabled=false};$('copyPrompt').onclick=async()=>{await navigator.clipboard.writeText($('promptResult').textContent);alert('프롬프트를 복사했습니다.')};
+
+function downloadBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}function stamp(){const d=new Date(),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`}
+window.addEventListener('beforeunload',e=>{if(collecting){e.preventDefault();e.returnValue=''}});
+(async function boot(){startTableTimer();renderTable();updateCounts();initManual();try{await initDB();await restoreTemp()}catch(e){console.warn('임시저장 초기화 실패',e)}})();
 </script>
 </body>
 </html>
