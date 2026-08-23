@@ -32,6 +32,7 @@
 .mediaStatus{font-weight:800;color:#08767b}
 .stepBtn{transition:.15s}
 .stepBtn.step-active{background:#ff7a00;color:#fff}
+.stepBtn.step-working{background:#0f7c82;color:#fff;box-shadow:0 0 0 3px #0f7c8222 inset}
 .stepBtn.step-done{background:#e8f7ec;color:#18733a;border:1px solid #9bd1aa}
 .stepBtn.step-disabled{background:#edf0f4;color:#9aa3ad;cursor:not-allowed}
 .stepBtn.step-neutral{background:#e8f5f5;color:#08767b}
@@ -541,8 +542,9 @@ const mediaCtx = mediaCanvas.getContext('2d');
 
 function setStepState(btnId,state,label){
   const b=$(btnId); if(!b)return;
-  b.classList.remove('step-active','step-done','step-disabled','step-neutral');
+  b.classList.remove('step-active','step-working','step-done','step-disabled','step-neutral');
   if(state==='active'){b.classList.add('step-active');b.disabled=false}
+  else if(state==='working'){b.classList.add('step-working');b.disabled=false}
   else if(state==='done'){b.classList.add('step-done');b.disabled=false}
   else if(state==='neutral'){b.classList.add('step-neutral');b.disabled=false}
   else{b.classList.add('step-disabled');b.disabled=true}
@@ -560,17 +562,29 @@ function updateMediaStepUI(){
     setStepState('setAxisBtn','disabled','② 좌표축 설정');
     setStepState('recordPointBtn','disabled','③ 점 기록');
   }else if(!scaleDone){
-    setStepState('setScaleBtn','active','① 기준 길이 설정');
+    setStepState(
+      'setScaleBtn',
+      mediaTool==='scale' ? 'working' : 'active',
+      mediaTool==='scale' ? '● 기준 길이 두 점 선택 중' : '① 기준 길이 설정'
+    );
     setStepState('setAxisBtn','disabled','② 좌표축 설정');
     setStepState('recordPointBtn','disabled','③ 점 기록');
   }else if(!axisDone){
     setStepState('setScaleBtn','done','✓ 기준 길이 설정');
-    setStepState('setAxisBtn','active','② 좌표축 설정');
+    setStepState(
+      'setAxisBtn',
+      mediaTool==='axis' ? 'working' : 'active',
+      mediaTool==='axis' ? '● 원점과 X축 방향 선택 중' : '② 좌표축 설정'
+    );
     setStepState('recordPointBtn','disabled','③ 점 기록');
   }else{
     setStepState('setScaleBtn','done','✓ 기준 길이 설정');
     setStepState('setAxisBtn','done','✓ 좌표축 설정');
-    setStepState('recordPointBtn','active', mediaTool==='record'?'● 점 기록 중':'③ 점 기록');
+    setStepState(
+      'recordPointBtn',
+      mediaTool==='record' ? 'working' : 'active',
+      mediaTool==='record' ? '● 점 기록 중' : '③ 점 기록'
+    );
   }
 
   setStepState('undoMediaPointBtn',hasPoints?'neutral':'disabled','마지막 점 취소');
@@ -698,6 +712,7 @@ $('setAxisBtn').onclick=()=>{
   if(!mediaScale){alert('먼저 기준 길이를 설정해 주세요.');return}
   axisClicks=[]; mediaTool='axis';
   $('mediaHint').textContent='좌표의 원점을 클릭한 뒤, +X축 방향의 두 번째 점을 클릭하세요.';
+  updateMediaStepUI();
 };
 $('recordPointBtn').onclick=()=>{
   if(!mediaOrigin||!mediaXAxis||!mediaScale){alert('먼저 기준 길이와 좌표축을 설정해 주세요.');return}
