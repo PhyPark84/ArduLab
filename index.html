@@ -4,89 +4,129 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ArduLab Web</title>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js">
-function resetCurrentExperimentOnly(){
-  if(!confirm('현재 측정 데이터와 그래프·분석 결과를 지우고 실험을 다시 시작할까요?\n실험노트와 보고서는 유지됩니다.')) return;
-  try{
-    if(typeof rows!=='undefined') rows.length=0;
-    if(typeof dataRows!=='undefined' && Array.isArray(dataRows)) dataRows.length=0;
-    if(typeof allVars!=='undefined' && Array.isArray(allVars)){ allVars.length=0; allVars.push('time'); }
-    if(typeof selectedRange!=='undefined') selectedRange=null;
-    if(typeof graphState!=='undefined') graphState=null;
-    if(typeof intervalState!=='undefined') intervalState=null;
-    if(typeof startTime!=='undefined') startTime=null;
-    if(typeof sampleCount!=='undefined') sampleCount=0;
-    if(typeof renderTable==='function') renderTable();
-    if(typeof updateVarUI==='function') updateVarUI();
-    if(typeof refreshVars==='function') refreshVars();
-    const chart=document.getElementById('chart'); if(chart) chart.getContext('2d').clearRect(0,0,chart.width,chart.height);
-    const result=document.getElementById('result'); if(result) result.innerHTML='';
-    const intervalCanvas=document.getElementById('intervalChart'); if(intervalCanvas) intervalCanvas.getContext('2d').clearRect(0,0,intervalCanvas.width,intervalCanvas.height);
-    closeModal('newExperimentModal');
-  }catch(e){ console.error(e); alert('초기화 중 문제가 생겼습니다. 페이지를 새로고침한 뒤 다시 시도해 주세요.'); }
-}
-
-function clearAllExperimentRecords(){
-  if(!confirm('모든 기록을 삭제할까요?\n실험 데이터, 분석 상태, 실험노트, 보고서와 임시 저장 기록이 모두 삭제됩니다.')) return;
-  try{
-    // ArduLab이 이 브라우저에 저장한 로컬 기록을 비운다.
-    const keys=[];
-    for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k) keys.push(k); }
-    keys.filter(k=>/ardu|lab|experiment|note|report|backup|restore/i.test(k)).forEach(k=>localStorage.removeItem(k));
-    const skeys=[];
-    for(let i=0;i<sessionStorage.length;i++){ const k=sessionStorage.key(i); if(k) skeys.push(k); }
-    skeys.filter(k=>/ardu|lab|experiment|note|report|backup|restore/i.test(k)).forEach(k=>sessionStorage.removeItem(k));
-
-    // 화면상의 노트/보고서 입력값도 비운다.
-    document.querySelectorAll('#noteModal textarea,#noteModal input,#reportModal textarea,#reportModal input').forEach(el=>el.value='');
-    if(typeof noteText!=='undefined') noteText='';
-    if(typeof reportText!=='undefined') reportText='';
-
-    if(typeof rows!=='undefined') rows.length=0;
-    if(typeof dataRows!=='undefined' && Array.isArray(dataRows)) dataRows.length=0;
-    if(typeof allVars!=='undefined' && Array.isArray(allVars)){ allVars.length=0; allVars.push('time'); }
-    if(typeof selectedRange!=='undefined') selectedRange=null;
-    if(typeof graphState!=='undefined') graphState=null;
-    if(typeof intervalState!=='undefined') intervalState=null;
-    if(typeof startTime!=='undefined') startTime=null;
-    if(typeof sampleCount!=='undefined') sampleCount=0;
-    if(typeof renderTable==='function') renderTable();
-    if(typeof updateVarUI==='function') updateVarUI();
-    if(typeof refreshVars==='function') refreshVars();
-    const chart=document.getElementById('chart'); if(chart) chart.getContext('2d').clearRect(0,0,chart.width,chart.height);
-    const result=document.getElementById('result'); if(result) result.innerHTML='';
-    closeModal('newExperimentModal');
-    alert('모든 기록을 삭제했습니다. 새 사용자가 실험을 시작할 수 있습니다.');
-  }catch(e){ console.error(e); alert('전체 삭제 중 문제가 생겼습니다.'); }
-}
-
-$('restartExperimentBtn').onclick=resetCurrentExperimentOnly;
-$('clearAllExperimentBtn').onclick=clearAllExperimentRecords;
-
-</script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{--a:#00979d;--o:#ff7a00;--bg:#f5f7fb;--card:#fff;--line:#dfe5ec;--text:#202630;--muted:#6d7684;--purple:#7c3aed}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,"Noto Sans KR",sans-serif}.wrap{width:min(1450px,calc(100% - 28px));margin:18px auto}.head{text-align:center;margin:6px 0 16px}.logo{font-size:42px;font-weight:900;margin:0}.logo .a{color:var(--a)}.logo .l{color:var(--o)}.by{font-size:12px;color:#999}.card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:15px;margin-bottom:13px;box-shadow:0 4px 16px #1e2d460a}.card h2{font-size:17px;margin:0 0 11px}.grid{display:grid;grid-template-columns:1fr 1.18fr;gap:13px}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.row>*{min-width:0}button,select,input,textarea{font:inherit}button{border:0;border-radius:9px;padding:9px 12px;font-weight:800;cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}.primary{background:var(--a);color:#fff}.orange{background:var(--o);color:#fff}.purple{background:var(--purple);color:#fff}.soft{background:#e8f5f5;color:#08767b}.gray{background:#edf0f4;color:#39414d}.danger{background:#fff0f0;color:#b83232}.small{padding:6px 9px;font-size:12px}select,input,textarea{border:1px solid var(--line);border-radius:8px;padding:8px;background:#fff}textarea{width:100%;resize:vertical}.status{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.stat{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:10px}.stat b{display:block;font-size:12px;margin-bottom:4px}.val{font-weight:900;color:var(--a)}.muted{color:var(--muted);font-size:13px;line-height:1.5}.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{background:#eaf7f7;color:#08767b;border-radius:999px;padding:6px 10px;font-weight:800;font-size:13px}.tableWrap{max-height:400px;overflow:auto;border:1px solid var(--line);border-radius:10px;background:#fff}table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:7px 9px;border-bottom:1px solid #edf0f4;text-align:center;white-space:nowrap}th{position:sticky;top:0;background:#eef7f7;color:#16686c;z-index:2}.excluded{opacity:.35;text-decoration:line-through}.controls{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.controls label{font-size:12px;font-weight:800}.controls select,.controls input{width:100%;margin-top:4px}canvas.graph{width:100%;height:410px;border:1px solid var(--line);border-radius:10px;background:#fff;touch-action:none;cursor:crosshair}.result{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:14px;min-height:130px;font-size:15px;line-height:1.65;overflow:auto}.analysisSection{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:9px 0}.analysisTitle{font-size:16px;font-weight:900;color:#08767b;margin-bottom:7px}.analysisTitle.reg{color:#6d28d9}.analysisGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 18px}.analysisItem b{color:#334155}.codeGuide{background:#f8fafc;border:1px solid var(--line);border-radius:9px;padding:10px;font-family:ui-monospace,Consolas,monospace;font-size:13px;white-space:pre-wrap}.footer{text-align:center;color:#aaa;font-size:12px;padding:8px}.banner{display:none;background:#fff9dd;border:1px solid #f0d46a;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:13px}.modal{display:none;position:fixed;inset:0;background:#0009;z-index:50;align-items:center;justify-content:center;padding:20px}.modal.show{display:flex}.modalBox{background:#fff;border-radius:15px;padding:17px;width:min(850px,96vw);max-height:92vh;overflow:auto;box-shadow:0 20px 60px #0005}.modalBox.large{width:min(1180px,97vw)}.modalHead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.modalHead h3{margin:0}.checkgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.checkitem{border:1px solid var(--line);border-radius:8px;padding:7px;background:#fafbfc}.sheetWrap{overflow:auto;max-height:500px;border:1px solid var(--line)}.sheet{min-width:700px}.sheet td,.sheet th{min-width:110px}.sheet td[contenteditable="true"]{background:#fff;text-align:left}.sheet .nameRow td{background:#eaf4f4;font-weight:700}.notegrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.notegrid .full{grid-column:1/-1}.tooltip{position:fixed;display:none;pointer-events:none;background:#fff;border:1px solid #cbd5e1;border-radius:8px;padding:7px 9px;font-size:12px;box-shadow:0 5px 20px #0002;z-index:80;white-space:pre-line}.inlineChecks{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.inlineChecks label{font-size:13px}.rangeGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.rangeGrid input{width:100%}.sampleList{display:grid;gap:8px}.sampleBtn{text-align:left;padding:12px;background:#f7fafb;border:1px solid var(--line)}
 @media(max-width:920px){.grid{grid-template-columns:1fr}.status{grid-template-columns:1fr 1fr}.checkgrid{grid-template-columns:1fr 1fr}.notegrid{grid-template-columns:1fr}.notegrid .full{grid-column:auto}.rangeGrid{grid-template-columns:1fr 1fr}}
+
+.modeChooser{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:13px}
+.modeBtn{padding:11px 18px;border:1px solid var(--line);background:#fff;color:#475569}
+.modeBtn.active{background:var(--a);color:#fff;border-color:var(--a)}
+.inputPanel{display:none}.inputPanel.active{display:block}
+.mediaStage{position:relative;width:100%;background:#111;border-radius:12px;overflow:hidden;border:1px solid var(--line);min-height:260px;display:flex;align-items:center;justify-content:center}
+#mediaCanvas{display:block;max-width:100%;height:auto;background:#111;cursor:crosshair}
+.mediaControls{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin:9px 0}
+.mediaControls input{width:110px}
+.mediaHint{background:#eef8f8;border:1px solid #cfe8e8;border-radius:9px;padding:9px 11px;color:#315d60;font-size:13px;line-height:1.5}
+.mediaTableWrap{max-height:230px;overflow:auto;border:1px solid var(--line);border-radius:9px;margin-top:9px}
+.mediaStatus{font-weight:800;color:#08767b}
+
 </style>
 </head>
 <body>
 <div class="wrap">
 <header class="head"><h1 class="logo"><span class="a">Ardu</span><span class="l">Lab</span></h1><div class="by">Made by. PhyPark & GPT</div></header>
 <div id="restoreBanner" class="banner"></div>
-<section class="card"><h2>🔌 Arduino / 데이터</h2>
-<div class="row">
-<select id="baud"><option>9600</option><option>19200</option><option>38400</option><option>57600</option><option>115200</option></select>
-<button id="connect" class="primary">Arduino 연결</button><button id="disconnect" class="gray" disabled>연결 해제</button>
-<button id="collect" class="orange" disabled>▶ 수집 시작</button><button id="newExp" class="danger">새 실험</button>
-<button id="saveCsv" class="soft">CSV 저장</button><button id="loadFile" class="soft">CSV/Excel 불러오기</button><input id="fileInput" type="file" accept=".csv,.xlsx,text/csv" hidden>
-<button id="manualBtn" class="soft">데이터 수동입력</button><button id="sampleBtn" class="soft">예제 데이터</button>
-<button id="noteBtn" class="gray">실험노트 작성하기</button><button id="guideBtn" class="gray">❓ 사용 전 유의사항</button>
-</div>
-<p class="muted">Arduino 출력 형식: <b>freq:500,sound:372</b> · 데이터는 즉시 내부 저장되고 표는 약 0.15초 간격으로 갱신됩니다. 그래프는 실시간으로 다시 그리지 않습니다.</p>
-<div class="status"><div class="stat"><b>상태</b><span id="status" class="val">연결 안 됨</span></div><div class="stat"><b>수집 데이터</b><span id="count" class="val">0개</span></div><div class="stat"><b>실제 샘플링</b><span id="sampling" class="val">-</span></div><div class="stat"><b>분석 사용</b><span id="activeCount" class="val">0개</span></div></div>
-<div style="margin-top:9px"><div id="schemaMsg" class="muted">변수 대기 중</div><div id="chips" class="chips" style="margin-top:6px"></div></div>
+
+<section class="card">
+  <div class="modeChooser">
+    <button class="modeBtn active" data-input-mode="arduino">🔌 Arduino 실험</button>
+    <button class="modeBtn" data-input-mode="media">📷 사진·영상 분석</button>
+    <button class="modeBtn" data-input-mode="file">📂 파일·수동 데이터</button>
+  </div>
+  <div class="row" style="justify-content:center">
+    <button id="newExp" class="danger">새 실험</button>
+    <button id="saveCsv" class="soft">CSV 저장</button>
+    <button id="noteBtn" class="gray">실험노트 작성하기</button>
+    <button id="guideBtn" class="gray">❓ 사용 전 유의사항</button>
+  </div>
 </section>
+
+<section id="arduinoInputPanel" class="card inputPanel active">
+  <h2>🔌 Arduino 실험</h2>
+  <div class="row">
+    <label>보드레이트
+      <select id="baud"><option>9600</option><option>19200</option><option>38400</option><option>57600</option><option>115200</option></select>
+    </label>
+    <button id="connect" class="primary">Arduino 연결</button>
+    <button id="disconnect" class="gray" disabled>연결 해제</button>
+    <button id="collect" class="orange" disabled>▶ 수집 시작</button>
+  </div>
+  <p class="muted">Arduino 출력 형식: <b>freq:500,sound:372</b> · 데이터는 즉시 내부 저장되고 표는 약 0.15초 간격으로 갱신됩니다.</p>
+</section>
+
+<section id="mediaInputPanel" class="card inputPanel">
+  <h2>📷 사진·영상 분석</h2>
+  <div class="row">
+    <button id="loadImageBtn" class="primary">사진 불러오기</button>
+    <button id="loadVideoBtn" class="primary">영상 불러오기</button>
+    <input id="mediaFileInput" type="file" hidden>
+    <span id="mediaStatus" class="mediaStatus">사진 또는 영상을 불러와 주세요.</span>
+  </div>
+
+  <div class="mediaControls">
+    <label>기준 길이 <input id="scaleLength" type="number" min="0" step="any" placeholder="예: 30"></label>
+    <label>단위 <input id="scaleUnit" value="cm" placeholder="cm"></label>
+    <button id="setScaleBtn" class="soft">① 기준 길이 설정</button>
+    <button id="setAxisBtn" class="soft">② 좌표축 설정</button>
+    <button id="recordPointBtn" class="orange">③ 점 기록</button>
+    <button id="undoMediaPointBtn" class="gray">마지막 점 취소</button>
+    <button id="clearMediaPointsBtn" class="gray">측정점 지우기</button>
+  </div>
+
+  <div id="videoControls" class="mediaControls" style="display:none">
+    <button id="videoPlayBtn" class="soft">▶ 재생</button>
+    <button id="prevFrameBtn" class="gray">◀ 이전 프레임</button>
+    <button id="nextFrameBtn" class="gray">다음 프레임 ▶</button>
+    <label>FPS <input id="videoFps" type="number" min="1" step="1" value="30"></label>
+    <span id="videoTime" class="muted">0.000 s</span>
+  </div>
+
+  <div id="mediaHint" class="mediaHint">
+    순서: 자료 불러오기 → 기준 길이 입력 후 두 점 클릭 → 원점과 +X 방향 점 클릭 → 점 기록.
+    영상은 원하는 프레임으로 이동한 뒤 물체 위치를 클릭하세요.
+  </div>
+
+  <div class="mediaStage" style="margin-top:10px">
+    <canvas id="mediaCanvas" width="960" height="540"></canvas>
+  </div>
+
+  <div class="mediaTableWrap">
+    <table>
+      <thead id="mediaPointHead"><tr><th>No.</th><th>x</th><th>y</th></tr></thead>
+      <tbody id="mediaPointBody"></tbody>
+    </table>
+  </div>
+
+  <div class="row" style="margin-top:10px">
+    <button id="applyMediaDataBtn" class="primary">ArduLab 데이터로 적용</button>
+    <span class="muted">적용하면 아래의 기존 표·그래프·회귀·구간분석 기능을 그대로 사용할 수 있습니다.</span>
+  </div>
+</section>
+
+<section id="fileInputPanel" class="card inputPanel">
+  <h2>📂 파일·수동 데이터 분석</h2>
+  <div class="row">
+    <button id="loadFile" class="soft">CSV/Excel 불러오기</button>
+    <input id="fileInput" type="file" accept=".csv,.xlsx,text/csv" hidden>
+    <button id="manualBtn" class="soft">데이터 수동입력</button>
+    <button id="sampleBtn" class="soft">예제 데이터</button>
+  </div>
+  <p class="muted">Arduino 없이도 CSV/Excel, 직접 입력한 데이터, 예제 데이터를 불러와 같은 분석 기능을 사용할 수 있습니다.</p>
+</section>
+
+<section class="card">
+  <h2>📡 데이터 상태</h2>
+  <div class="status">
+    <div class="stat"><b>상태</b><span id="status" class="val">연결 안 됨</span></div>
+    <div class="stat"><b>수집 데이터</b><span id="count" class="val">0개</span></div>
+    <div class="stat"><b>실제 샘플링</b><span id="sampling" class="val">-</span></div>
+    <div class="stat"><b>분석 사용</b><span id="activeCount" class="val">0개</span></div>
+  </div>
+  <div style="margin-top:9px"><div id="schemaMsg" class="muted">변수 대기 중</div><div id="chips" class="chips" style="margin-top:6px"></div></div>
+</section>
+
 <div class="grid"><div>
 <section class="card"><h2>📋 실험 데이터</h2><div class="tableWrap" id="tableWrap"><table><thead id="thead"></thead><tbody id="tbody"></tbody></table></div><div class="muted" style="margin-top:6px">화면에는 최근 최대 500행을 표시하지만 내부 데이터와 CSV에는 전체 데이터를 사용합니다.</div></section>
 <section class="card"><h2>🧮 데이터 처리</h2><div class="row"><button id="tableVarsBtn" class="gray">표 변수 선택</button><button id="calcVarBtn" class="soft">계산 변수 추가</button><button id="maVarBtn" class="soft">이동평균 변수 생성</button><button id="outlierBtn" class="soft">이상값 제외</button><button id="outlierReset" class="gray">이상값 초기화</button></div><p class="muted">이상값은 실제 삭제하지 않고 분석에서만 제외합니다.</p></section>
@@ -218,9 +258,9 @@ function initDB(){return new Promise((res,rej)=>{const q=indexedDB.open('ArduLab
 function dbPut(v){if(!db)return;const tx=db.transaction('state','readwrite');tx.objectStore('state').put(v,'current')}
 function dbGet(){return new Promise(res=>{if(!db)return res(null);const q=db.transaction('state').objectStore('state').get('current');q.onsuccess=()=>res(q.result||null);q.onerror=()=>res(null)})}
 function dbClear(){if(!db)return;db.transaction('state','readwrite').objectStore('state').delete('current')}
-function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>dbPut({savedAt:Date.now(),dataRows,excluded:[...excluded],sourceVars,allVars,tableVars,note}),500)}
+function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>dbPut({savedAt:Date.now(),dataRows,excluded:[...excluded],sourceVars,allVars,tableVars,note,mediaMeta:{kind:mediaKind,scale:mediaScale,unit:mediaUnit,origin:mediaOrigin,xAxis:mediaXAxis,points:mediaPoints}}),500)}
 async function restoreTemp(){const s=await dbGet();if(!s)return;if(Date.now()-s.savedAt>TEMP_TTL){dbClear();return}dataRows=Array.isArray(s.dataRows)?s.dataRows:[];excluded=new Set(s.excluded||[]);sourceVars=s.sourceVars||[];allVars=s.allVars||unionVars();tableVars=s.tableVars||[...allVars];note={...note,...(s.note||{})};refreshVarUI();loadNoteUI();updateCounts();renderTable();$('restoreBanner').style.display='block';$('restoreBanner').textContent=`직전 실험 임시자료를 복구했습니다. 마지막 저장: ${new Date(s.savedAt).toLocaleString()} · 새 학생이 시작할 때는 반드시 [새 실험]을 눌러주세요.`}
-$('newExp').onclick=()=>openModal('newExperimentModal');dbClear();loadNoteUI();refreshVarUI();updateCounts();renderTable();clearCanvas($('chart'));$('sampling').textContent='-';$('result').textContent='분석 결과가 여기에 표시됩니다.';$('schemaMsg').textContent=port?'정상 데이터 수신 대기 중...':'변수 대기 중';$('restoreBanner').style.display='none';$('collect').textContent='▶ 수집 시작';collecting=false};
+$('newExp').onclick=()=>openModal('newExperimentModal');
 
 // 파일 불러오기 / 저장
 $('loadFile').onclick=()=>$('fileInput').click();$('fileInput').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{if(f.name.toLowerCase().endsWith('.xlsx'))await loadXlsx(f);else loadCsvText(await f.text());}catch(err){console.error(err);alert('파일을 읽지 못했습니다: '+err.message)}e.target.value=''};
@@ -317,6 +357,314 @@ const noteMap={noteTitle:'title',noteDesign:'design',noteX:'x_name',noteXDesc:'x
 function loadNoteUI(){for(const[id,key]of Object.entries(noteMap)){if($(id).tagName==='SELECT'){if(allVars.includes(note[key]))$(id).value=note[key]}else $(id).value=note[key]||''}}
 $('noteBtn').onclick=()=>{refreshVarUI();loadNoteUI();openModal('noteModal')};for(const[id,key]of Object.entries(noteMap)){$(id).addEventListener('input',()=>{note[key]=$(id).value;scheduleSave()});$(id).addEventListener('change',()=>{note[key]=$(id).value;scheduleSave()})}
 $('promptBtn').onclick=()=>{const oldX=$('xVar').value,oldY=$('yVar').value;if(note.x_name&&allVars.includes(note.x_name))$('xVar').value=note.x_name;if(note.y_name&&allVars.includes(note.y_name))$('yVar').value=note.y_name;const summary=analyze()||'분석 결과 없음';$('xVar').value=oldX;$('yVar').value=oldY;const intervalText=selectedRange?`${fmt(selectedRange[0])} ~ ${fmt(selectedRange[1])}`:'전체 데이터 사용';const prompt=`다음은 내가 수행한 과학 실험과 데이터 분석 결과입니다.\n\n[실험 제목]\n${note.title}\n\n[실험 설계 요약]\n${note.design}\n\n[활용 변수]\n- X축 변수: ${note.x_name}\n- Y축 변수: ${note.y_name}\n\n[변수 설명]\n[X 변수]\n${note.x_name}\n${note.x_description}\n\n[Y 변수]\n${note.y_name}\n${note.y_description}\n\n[분석 범위]\n- ${intervalText}\n\n[데이터 요약 및 회귀 분석]\n${summary}\n\n[실험 관찰 내용]\n${note.observation}\n\n[내가 먼저 해석한 실험 결과]\n${note.interpretation}\n\n[오차 원인]\n${note.error}\n\n[궁금한 점]\n${note.question}\n\n---\n너는 과학 선생님이자 탐구 활동 협업자의 역할을 해줘.\n\n중요한 규칙:\n- 완성된 보고서나 정답을 대신 써주지 마.\n- 내 해석을 바탕으로 피드백만 해줘.\n- 내가 스스로 고칠 수 있도록 힌트와 질문 중심으로 답해줘.\n- 데이터로 뒷받침되지 않는 주장이 있으면 알려줘.\n- 과학적으로 더 정확하게 표현할 수 있는 방향을 제안해줘.\n\n검토해 줬으면 하는 내용:\n1. 내 해석에서 논리적으로 부족한 부분\n2. 데이터와 연결이 약한 주장\n3. 그래프 경향에 대한 더 나은 설명 방향\n4. 오차 원인으로 생각해볼 수 있는 점\n5. 실험을 개선하기 위한 아이디어\n6. 보고서에 쓰기 전에 내가 스스로 보완해야 할 질문`;$('promptResult').style.display='block';$('promptResult').textContent=prompt;$('copyPrompt').disabled=false};$('copyPrompt').onclick=async()=>{await navigator.clipboard.writeText($('promptResult').textContent);alert('프롬프트를 복사했습니다.')};
+
+
+// ============================================================
+// 입력 모드 전환
+// ============================================================
+function setInputMode(mode){
+  document.querySelectorAll('.modeBtn').forEach(b=>b.classList.toggle('active', b.dataset.inputMode===mode));
+  document.querySelectorAll('.inputPanel').forEach(p=>p.classList.remove('active'));
+  const panel = mode==='arduino' ? $('arduinoInputPanel') : mode==='media' ? $('mediaInputPanel') : $('fileInputPanel');
+  if(panel) panel.classList.add('active');
+}
+document.querySelectorAll('.modeBtn').forEach(b=>b.onclick=()=>setInputMode(b.dataset.inputMode));
+
+// ============================================================
+// 사진·영상 분석
+// - 사진/영상은 좌표 데이터를 만드는 입력 도구 역할만 합니다.
+// - 생성된 데이터는 기존 ArduLab 분석 기능으로 넘깁니다.
+// ============================================================
+let mediaKind = null;      
+function resetCurrentExperimentOnly(){
+  if(!confirm('현재 측정 데이터와 그래프·분석 결과를 지우고 실험을 다시 시작할까요?\n실험노트와 보고서는 유지됩니다.')) return;
+  try{
+    if(typeof rows!=='undefined') rows.length=0;
+    if(typeof dataRows!=='undefined' && Array.isArray(dataRows)) dataRows.length=0;
+    if(typeof allVars!=='undefined' && Array.isArray(allVars)){ allVars.length=0; allVars.push('time'); }
+    if(typeof selectedRange!=='undefined') selectedRange=null;
+    if(typeof graphState!=='undefined') graphState=null;
+    if(typeof intervalState!=='undefined') intervalState=null;
+    if(typeof startTime!=='undefined') startTime=null;
+    if(typeof sampleCount!=='undefined') sampleCount=0;
+    if(typeof renderTable==='function') renderTable();
+    if(typeof updateVarUI==='function') updateVarUI();
+    if(typeof refreshVars==='function') refreshVars();
+    const chart=document.getElementById('chart'); if(chart) chart.getContext('2d').clearRect(0,0,chart.width,chart.height);
+    const result=document.getElementById('result'); if(result) result.innerHTML='';
+    const intervalCanvas=document.getElementById('intervalChart'); if(intervalCanvas) intervalCanvas.getContext('2d').clearRect(0,0,intervalCanvas.width,intervalCanvas.height);
+    if(typeof resetMediaCalibration==='function') resetMediaCalibration(true);
+    closeModal('newExperimentModal');
+  }catch(e){ console.error(e); alert('초기화 중 문제가 생겼습니다. 페이지를 새로고침한 뒤 다시 시도해 주세요.'); }
+}
+
+function clearAllExperimentRecords(){
+  if(!confirm('모든 기록을 삭제할까요?\n실험 데이터, 분석 상태, 실험노트, 보고서와 임시 저장 기록이 모두 삭제됩니다.')) return;
+  try{
+    // ArduLab이 이 브라우저에 저장한 로컬 기록을 비운다.
+    const keys=[];
+    for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k) keys.push(k); }
+    keys.filter(k=>/ardu|lab|experiment|note|report|backup|restore/i.test(k)).forEach(k=>localStorage.removeItem(k));
+    const skeys=[];
+    for(let i=0;i<sessionStorage.length;i++){ const k=sessionStorage.key(i); if(k) skeys.push(k); }
+    skeys.filter(k=>/ardu|lab|experiment|note|report|backup|restore/i.test(k)).forEach(k=>sessionStorage.removeItem(k));
+
+    // 화면상의 노트/보고서 입력값도 비운다.
+    document.querySelectorAll('#noteModal textarea,#noteModal input,#reportModal textarea,#reportModal input').forEach(el=>el.value='');
+    if(typeof noteText!=='undefined') noteText='';
+    if(typeof reportText!=='undefined') reportText='';
+
+    if(typeof rows!=='undefined') rows.length=0;
+    if(typeof dataRows!=='undefined' && Array.isArray(dataRows)) dataRows.length=0;
+    if(typeof allVars!=='undefined' && Array.isArray(allVars)){ allVars.length=0; allVars.push('time'); }
+    if(typeof selectedRange!=='undefined') selectedRange=null;
+    if(typeof graphState!=='undefined') graphState=null;
+    if(typeof intervalState!=='undefined') intervalState=null;
+    if(typeof startTime!=='undefined') startTime=null;
+    if(typeof sampleCount!=='undefined') sampleCount=0;
+    if(typeof renderTable==='function') renderTable();
+    if(typeof updateVarUI==='function') updateVarUI();
+    if(typeof refreshVars==='function') refreshVars();
+    const chart=document.getElementById('chart'); if(chart) chart.getContext('2d').clearRect(0,0,chart.width,chart.height);
+    const result=document.getElementById('result'); if(result) result.innerHTML='';
+    if(typeof resetMediaCalibration==='function') resetMediaCalibration(true);
+    closeModal('newExperimentModal');
+    alert('모든 기록을 삭제했습니다. 새 사용자가 실험을 시작할 수 있습니다.');
+  }catch(e){ console.error(e); alert('전체 삭제 중 문제가 생겼습니다.'); }
+}
+
+$('restartExperimentBtn').onclick=resetCurrentExperimentOnly;
+$('clearAllExperimentBtn').onclick=clearAllExperimentRecords;
+     // 'image' | 'video'
+let mediaObjectUrl = null;
+let mediaImage = new Image();
+let mediaVideo = document.createElement('video');
+mediaVideo.playsInline = true;
+mediaVideo.muted = true;
+let mediaTool = 'none';         // none | scale | axis | record
+let scaleClicks = [];
+let axisClicks = [];
+let mediaScale = null;          // 실제 단위 / canvas pixel
+let mediaUnit = 'cm';
+let mediaOrigin = null;
+let mediaXAxis = null;          // normalized screen-space x basis
+let mediaPoints = [];
+let mediaRaf = null;
+const mediaCanvas = $('mediaCanvas');
+const mediaCtx = mediaCanvas.getContext('2d');
+
+function resetMediaCalibration(clearPoints=true){
+  scaleClicks=[]; axisClicks=[]; mediaScale=null; mediaOrigin=null; mediaXAxis=null; mediaTool='none';
+  if(clearPoints) mediaPoints=[];
+  renderMediaPointTable();
+  drawMediaFrame();
+}
+
+function configureMediaCanvas(w,h){
+  const maxW=1280, maxH=760;
+  let s=Math.min(1,maxW/w,maxH/h);
+  mediaCanvas.width=Math.max(320,Math.round(w*s));
+  mediaCanvas.height=Math.max(180,Math.round(h*s));
+}
+
+function openMediaPicker(kind){
+  const input=$('mediaFileInput');
+  input.accept = kind==='image' ? 'image/*' : 'video/*';
+  input.dataset.kind=kind;
+  input.click();
+}
+$('loadImageBtn').onclick=()=>openMediaPicker('image');
+$('loadVideoBtn').onclick=()=>openMediaPicker('video');
+
+$('mediaFileInput').onchange=e=>{
+  const f=e.target.files?.[0]; if(!f)return;
+  if(mediaObjectUrl) URL.revokeObjectURL(mediaObjectUrl);
+  mediaObjectUrl=URL.createObjectURL(f);
+  mediaKind=e.target.dataset.kind;
+  resetMediaCalibration(true);
+
+  if(mediaKind==='image'){
+    $('videoControls').style.display='none';
+    mediaImage.onload=()=>{
+      configureMediaCanvas(mediaImage.naturalWidth||960,mediaImage.naturalHeight||540);
+      $('mediaStatus').textContent='사진 불러오기 완료';
+      drawMediaFrame();
+    };
+    mediaImage.src=mediaObjectUrl;
+  }else{
+    $('videoControls').style.display='flex';
+    mediaVideo.pause();
+    mediaVideo.src=mediaObjectUrl;
+    mediaVideo.onloadedmetadata=()=>{
+      configureMediaCanvas(mediaVideo.videoWidth||960,mediaVideo.videoHeight||540);
+      $('mediaStatus').textContent='영상 불러오기 완료';
+      $('videoTime').textContent='0.000 s';
+      drawMediaFrame();
+    };
+    mediaVideo.onplay=()=>{ $('videoPlayBtn').textContent='⏸ 정지'; animateVideo(); };
+    mediaVideo.onpause=()=>{ $('videoPlayBtn').textContent='▶ 재생'; cancelAnimationFrame(mediaRaf); drawMediaFrame(); };
+    mediaVideo.ontimeupdate=()=>{ $('videoTime').textContent=mediaVideo.currentTime.toFixed(3)+' s'; };
+  }
+  e.target.value='';
+};
+
+function animateVideo(){
+  drawMediaFrame();
+  if(!mediaVideo.paused&&!mediaVideo.ended) mediaRaf=requestAnimationFrame(animateVideo);
+}
+
+$('videoPlayBtn').onclick=()=>mediaVideo.paused?mediaVideo.play():mediaVideo.pause();
+function stepFrame(dir){
+  if(mediaKind!=='video')return;
+  mediaVideo.pause();
+  const fps=Math.max(1,+$('videoFps').value||30);
+  mediaVideo.currentTime=Math.max(0,Math.min(mediaVideo.duration||Infinity,mediaVideo.currentTime+dir/fps));
+  setTimeout(drawMediaFrame,30);
+}
+$('prevFrameBtn').onclick=()=>stepFrame(-1);
+$('nextFrameBtn').onclick=()=>stepFrame(1);
+
+$('setScaleBtn').onclick=()=>{
+  if(!mediaKind){alert('먼저 사진이나 영상을 불러와 주세요.');return}
+  const L=+$('scaleLength').value;
+  if(!(L>0)){alert('기준 길이를 숫자로 입력해 주세요.');return}
+  mediaUnit=$('scaleUnit').value.trim()||'unit';
+  scaleClicks=[]; mediaTool='scale';
+  $('mediaHint').textContent='기준 길이의 양 끝점을 차례로 클릭하세요. (2점)';
+};
+$('setAxisBtn').onclick=()=>{
+  if(!mediaScale){alert('먼저 기준 길이를 설정해 주세요.');return}
+  axisClicks=[]; mediaTool='axis';
+  $('mediaHint').textContent='좌표의 원점을 클릭한 뒤, +X축 방향의 두 번째 점을 클릭하세요.';
+};
+$('recordPointBtn').onclick=()=>{
+  if(!mediaOrigin||!mediaXAxis||!mediaScale){alert('먼저 기준 길이와 좌표축을 설정해 주세요.');return}
+  mediaTool='record';
+  $('mediaHint').textContent=mediaKind==='video'
+    ? '영상에서 추적할 물체의 위치를 클릭하세요. 현재 영상 시간이 함께 기록됩니다.'
+    : '사진에서 좌표를 얻고 싶은 점을 차례로 클릭하세요.';
+};
+
+function canvasPos(evt){
+  const r=mediaCanvas.getBoundingClientRect();
+  return {
+    x:(evt.clientX-r.left)*mediaCanvas.width/r.width,
+    y:(evt.clientY-r.top)*mediaCanvas.height/r.height
+  };
+}
+
+mediaCanvas.addEventListener('click',e=>{
+  if(!mediaKind)return;
+  const p=canvasPos(e);
+
+  if(mediaTool==='scale'){
+    scaleClicks.push(p);
+    if(scaleClicks.length===2){
+      const d=Math.hypot(scaleClicks[1].x-scaleClicks[0].x,scaleClicks[1].y-scaleClicks[0].y);
+      const L=+$('scaleLength').value;
+      if(d<2){scaleClicks=[];alert('두 점을 조금 더 떨어뜨려 선택해 주세요.');return}
+      mediaScale=L/d;
+      mediaTool='none';
+      $('mediaHint').textContent=`기준 설정 완료: ${fmt(L)} ${mediaUnit} = ${fmt(d)} px. 이제 좌표축을 설정하세요.`;
+    }
+  }else if(mediaTool==='axis'){
+    axisClicks.push(p);
+    if(axisClicks.length===2){
+      mediaOrigin=axisClicks[0];
+      const dx=axisClicks[1].x-mediaOrigin.x,dy=axisClicks[1].y-mediaOrigin.y,len=Math.hypot(dx,dy);
+      if(len<2){axisClicks=[];mediaOrigin=null;alert('+X 방향점을 원점에서 조금 더 떨어뜨려 선택해 주세요.');return}
+      mediaXAxis={x:dx/len,y:dy/len};
+      mediaTool='none';
+      $('mediaHint').textContent='좌표축 설정 완료. [점 기록]을 누른 뒤 측정할 점을 클릭하세요.';
+    }
+  }else if(mediaTool==='record'){
+    const q=screenToWorld(p);
+    const row={x:q.x,y:q.y,px:p.x,py:p.y};
+    if(mediaKind==='video') row.time=mediaVideo.currentTime;
+    mediaPoints.push(row);
+    renderMediaPointTable();
+    scheduleSave();
+  }
+  drawMediaFrame();
+});
+
+function screenToWorld(p){
+  const dx=p.x-mediaOrigin.x,dy=p.y-mediaOrigin.y;
+  const ux=mediaXAxis.x,uy=mediaXAxis.y;
+  // Cartesian +Y is 90 degrees counterclockwise from +X.
+  // In screen coordinates, y increases downward, hence (uy, -ux).
+  const vx=uy,vy=-ux;
+  return {
+    x:(dx*ux+dy*uy)*mediaScale,
+    y:(dx*vx+dy*vy)*mediaScale
+  };
+}
+
+function drawCross(ctx,p,size=6,color='#ff7a00'){
+  ctx.strokeStyle=color;ctx.lineWidth=2;ctx.beginPath();
+  ctx.moveTo(p.x-size,p.y);ctx.lineTo(p.x+size,p.y);
+  ctx.moveTo(p.x,p.y-size);ctx.lineTo(p.x,p.y+size);ctx.stroke();
+}
+
+function drawMediaFrame(){
+  const w=mediaCanvas.width,h=mediaCanvas.height;
+  mediaCtx.clearRect(0,0,w,h); mediaCtx.fillStyle='#111';mediaCtx.fillRect(0,0,w,h);
+
+  try{
+    if(mediaKind==='image'&&mediaImage.complete&&mediaImage.naturalWidth) mediaCtx.drawImage(mediaImage,0,0,w,h);
+    if(mediaKind==='video'&&mediaVideo.readyState>=2) mediaCtx.drawImage(mediaVideo,0,0,w,h);
+  }catch{}
+
+  if(scaleClicks.length){
+    scaleClicks.forEach(p=>drawCross(mediaCtx,p,7,'#f59e0b'));
+    if(scaleClicks.length===2){mediaCtx.strokeStyle='#f59e0b';mediaCtx.lineWidth=2;mediaCtx.beginPath();mediaCtx.moveTo(scaleClicks[0].x,scaleClicks[0].y);mediaCtx.lineTo(scaleClicks[1].x,scaleClicks[1].y);mediaCtx.stroke()}
+  }
+
+  if(mediaOrigin){
+    const u=mediaXAxis||{x:1,y:0},axisLen=Math.min(w,h)*.18;
+    mediaCtx.lineWidth=3;
+    mediaCtx.strokeStyle='#ef4444';mediaCtx.beginPath();mediaCtx.moveTo(mediaOrigin.x,mediaOrigin.y);mediaCtx.lineTo(mediaOrigin.x+u.x*axisLen,mediaOrigin.y+u.y*axisLen);mediaCtx.stroke();
+    const v={x:u.y,y:-u.x};
+    mediaCtx.strokeStyle='#2563eb';mediaCtx.beginPath();mediaCtx.moveTo(mediaOrigin.x,mediaOrigin.y);mediaCtx.lineTo(mediaOrigin.x+v.x*axisLen,mediaOrigin.y+v.y*axisLen);mediaCtx.stroke();
+    drawCross(mediaCtx,mediaOrigin,7,'#ffffff');
+    mediaCtx.font='bold 14px Arial';mediaCtx.fillStyle='#ef4444';mediaCtx.fillText('+X',mediaOrigin.x+u.x*axisLen+5,mediaOrigin.y+u.y*axisLen);
+    mediaCtx.fillStyle='#2563eb';mediaCtx.fillText('+Y',mediaOrigin.x+v.x*axisLen+5,mediaOrigin.y+v.y*axisLen);
+  }else if(axisClicks.length){
+    axisClicks.forEach(p=>drawCross(mediaCtx,p,7,'#ef4444'));
+  }
+
+  mediaPoints.forEach((p,i)=>{
+    mediaCtx.fillStyle='#00d4db';mediaCtx.beginPath();mediaCtx.arc(p.px,p.py,5,0,Math.PI*2);mediaCtx.fill();
+    mediaCtx.fillStyle='#fff';mediaCtx.font='bold 12px Arial';mediaCtx.fillText(String(i+1),p.px+7,p.py-7);
+  });
+}
+
+function renderMediaPointTable(){
+  if(mediaKind==='video'){
+    $('mediaPointHead').innerHTML='<tr><th>No.</th><th>time (s)</th><th>x ('+escapeHtml(mediaUnit)+')</th><th>y ('+escapeHtml(mediaUnit)+')</th></tr>';
+    $('mediaPointBody').innerHTML=mediaPoints.map((p,i)=>`<tr><td>${i+1}</td><td>${fmt(p.time)}</td><td>${fmt(p.x)}</td><td>${fmt(p.y)}</td></tr>`).join('');
+  }else{
+    $('mediaPointHead').innerHTML='<tr><th>No.</th><th>x ('+escapeHtml(mediaUnit)+')</th><th>y ('+escapeHtml(mediaUnit)+')</th></tr>';
+    $('mediaPointBody').innerHTML=mediaPoints.map((p,i)=>`<tr><td>${i+1}</td><td>${fmt(p.x)}</td><td>${fmt(p.y)}</td></tr>`).join('');
+  }
+}
+$('undoMediaPointBtn').onclick=()=>{mediaPoints.pop();renderMediaPointTable();drawMediaFrame();scheduleSave()};
+$('clearMediaPointsBtn').onclick=()=>{if(mediaPoints.length&&!confirm('기록한 측정점을 모두 지울까요?'))return;mediaPoints=[];renderMediaPointTable();drawMediaFrame();scheduleSave()};
+
+$('applyMediaDataBtn').onclick=()=>{
+  if(!mediaPoints.length){alert('먼저 측정점을 기록해 주세요.');return}
+  let rows,headers;
+  if(mediaKind==='video'){
+    rows=mediaPoints.map(p=>({time:+p.time.toFixed(6),x:p.x,y:p.y}));
+    headers=['time','x','y'];
+  }else{
+    rows=mediaPoints.map((p,i)=>({Point:i+1,x:p.x,y:p.y}));
+    headers=['Point','x','y'];
+  }
+  applyLoadedRows(rows,headers,mediaKind==='video'?'영상 분석 데이터':'사진 분석 데이터');
+  $('schemaMsg').textContent=`${mediaKind==='video'?'영상':'사진'}에서 측정한 ${rows.length}개 좌표를 ArduLab 데이터로 적용했습니다.`;
+  setInputMode('media');
+};
 
 $('guideBtn').onclick=()=>openModal('guideModal');
 $('copySetupPrompt').onclick=async()=>{try{await navigator.clipboard.writeText($('setupPrompt').textContent);alert('초기 세팅 프롬프트를 복사했습니다.')}catch{alert('복사하지 못했습니다. 프롬프트를 직접 선택해 복사해 주세요.')}};
