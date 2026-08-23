@@ -10,9 +10,18 @@
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,"Noto Sans KR",sans-serif}.wrap{width:min(1450px,calc(100% - 28px));margin:18px auto}.head{text-align:center;margin:6px 0 16px}.logo{font-size:42px;font-weight:900;margin:0}.logo .a{color:var(--a)}.logo .l{color:var(--o)}.by{font-size:12px;color:#999}.card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:15px;margin-bottom:13px;box-shadow:0 4px 16px #1e2d460a}.card h2{font-size:17px;margin:0 0 11px}.grid{display:grid;grid-template-columns:1fr 1.18fr;gap:13px}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.row>*{min-width:0}button,select,input,textarea{font:inherit}button{border:0;border-radius:9px;padding:9px 12px;font-weight:800;cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}.primary{background:var(--a);color:#fff}.orange{background:var(--o);color:#fff}.purple{background:var(--purple);color:#fff}.soft{background:#e8f5f5;color:#08767b}.gray{background:#edf0f4;color:#39414d}.danger{background:#fff0f0;color:#b83232}.small{padding:6px 9px;font-size:12px}select,input,textarea{border:1px solid var(--line);border-radius:8px;padding:8px;background:#fff}textarea{width:100%;resize:vertical}.status{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.stat{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:10px}.stat b{display:block;font-size:12px;margin-bottom:4px}.val{font-weight:900;color:var(--a)}.muted{color:var(--muted);font-size:13px;line-height:1.5}.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{background:#eaf7f7;color:#08767b;border-radius:999px;padding:6px 10px;font-weight:800;font-size:13px}.tableWrap{max-height:400px;overflow:auto;border:1px solid var(--line);border-radius:10px;background:#fff}table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:7px 9px;border-bottom:1px solid #edf0f4;text-align:center;white-space:nowrap}th{position:sticky;top:0;background:#eef7f7;color:#16686c;z-index:2}.excluded{opacity:.35;text-decoration:line-through}.controls{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.controls label{font-size:12px;font-weight:800}.controls select,.controls input{width:100%;margin-top:4px}canvas.graph{width:100%;height:410px;border:1px solid var(--line);border-radius:10px;background:#fff;touch-action:none;cursor:crosshair}.result{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:14px;min-height:130px;font-size:15px;line-height:1.65;overflow:auto}.analysisSection{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:9px 0}.analysisTitle{font-size:16px;font-weight:900;color:#08767b;margin-bottom:7px}.analysisTitle.reg{color:#6d28d9}.analysisGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 18px}.analysisItem b{color:#334155}.codeGuide{background:#f8fafc;border:1px solid var(--line);border-radius:9px;padding:10px;font-family:ui-monospace,Consolas,monospace;font-size:13px;white-space:pre-wrap}.footer{text-align:center;color:#aaa;font-size:12px;padding:8px}.banner{display:none;background:#fff9dd;border:1px solid #f0d46a;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:13px}.modal{display:none;position:fixed;inset:0;background:#0009;z-index:50;align-items:center;justify-content:center;padding:20px}.modal.show{display:flex}.modalBox{background:#fff;border-radius:15px;padding:17px;width:min(850px,96vw);max-height:92vh;overflow:auto;box-shadow:0 20px 60px #0005}.modalBox.large{width:min(1180px,97vw)}.modalHead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.modalHead h3{margin:0}.checkgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.checkitem{border:1px solid var(--line);border-radius:8px;padding:7px;background:#fafbfc}.sheetWrap{overflow:auto;max-height:500px;border:1px solid var(--line)}.sheet{min-width:700px}.sheet td,.sheet th{min-width:110px}.sheet td[contenteditable="true"]{background:#fff;text-align:left}.sheet .nameRow td{background:#eaf4f4;font-weight:700}.notegrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.notegrid .full{grid-column:1/-1}.tooltip{position:fixed;display:none;pointer-events:none;background:#fff;border:1px solid #cbd5e1;border-radius:8px;padding:7px 9px;font-size:12px;box-shadow:0 5px 20px #0002;z-index:80;white-space:pre-line}.inlineChecks{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.inlineChecks label{font-size:13px}.rangeGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.rangeGrid input{width:100%}.sampleList{display:grid;gap:8px}.sampleBtn{text-align:left;padding:12px;background:#f7fafb;border:1px solid var(--line)}
 @media(max-width:920px){.grid{grid-template-columns:1fr}.status{grid-template-columns:1fr 1fr}.checkgrid{grid-template-columns:1fr 1fr}.notegrid{grid-template-columns:1fr}.notegrid .full{grid-column:auto}.rangeGrid{grid-template-columns:1fr 1fr}}
 
-.modeChooser{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:13px}
-.modeBtn{padding:11px 18px;border:1px solid var(--line);background:#fff;color:#475569}
-.modeBtn.active{background:var(--a);color:#fff;border-color:var(--a)}
+.modeHub{background:linear-gradient(135deg,#eefafa,#f7fbff);border:1px solid #cfe7e8;border-radius:18px;padding:17px;margin-bottom:10px}
+.modeHubTitle{font-size:14px;font-weight:900;color:#315d60;margin-bottom:10px;text-align:center}
+.modeChooser{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.modeBtn{min-height:82px;padding:13px 14px;border:2px solid transparent;background:#fff;color:#334155;text-align:left;box-shadow:0 3px 12px #1e2d460d}
+.modeBtn .modeIcon{font-size:23px;display:block;margin-bottom:6px}
+.modeBtn .modeName{font-size:16px;font-weight:900;display:block}
+.modeBtn .modeDesc{font-size:11px;color:#7b8794;display:block;margin-top:3px;font-weight:600}
+.modeBtn.active{background:#e7f7f7;color:#08767b;border-color:#58b8bc;box-shadow:0 5px 16px #00979d1f}
+.modeBtn.active .modeDesc{color:#39777a}
+.commonActions{display:flex;justify-content:center;gap:7px;flex-wrap:wrap;padding:7px 4px 2px;border-top:1px dashed #d7e1e8;margin-top:12px}
+.commonActions button{padding:7px 11px;font-size:12px}
+@media(max-width:760px){.modeChooser{grid-template-columns:1fr}.modeBtn{min-height:auto}}
 .inputPanel{display:none}.inputPanel.active{display:block}
 .mediaStage{position:relative;width:100%;background:#111;border-radius:12px;overflow:hidden;border:1px solid var(--line);min-height:260px;display:flex;align-items:center;justify-content:center}
 #mediaCanvas{display:block;max-width:100%;height:auto;background:#111;cursor:crosshair}
@@ -29,13 +38,26 @@
 <header class="head"><h1 class="logo"><span class="a">Ardu</span><span class="l">Lab</span></h1><div class="by">Made by. PhyPark & GPT</div></header>
 <div id="restoreBanner" class="banner"></div>
 
-<section class="card">
+<section class="modeHub">
+  <div class="modeHubTitle">데이터 입력 방식을 먼저 선택하세요</div>
   <div class="modeChooser">
-    <button class="modeBtn active" data-input-mode="arduino">🔌 Arduino 실험</button>
-    <button class="modeBtn" data-input-mode="media">📷 사진·영상 분석</button>
-    <button class="modeBtn" data-input-mode="file">📂 파일·수동 데이터</button>
+    <button class="modeBtn active" data-input-mode="arduino">
+      <span class="modeIcon">🔌</span>
+      <span class="modeName">Arduino 실험</span>
+      <span class="modeDesc">센서 데이터를 시리얼 통신으로 수집</span>
+    </button>
+    <button class="modeBtn" data-input-mode="media">
+      <span class="modeIcon">📷</span>
+      <span class="modeName">사진·영상 분석</span>
+      <span class="modeDesc">사진과 영상에서 좌표 데이터를 측정</span>
+    </button>
+    <button class="modeBtn" data-input-mode="file">
+      <span class="modeIcon">📂</span>
+      <span class="modeName">파일·수동 데이터</span>
+      <span class="modeDesc">CSV·Excel·직접 입력 데이터 분석</span>
+    </button>
   </div>
-  <div class="row" style="justify-content:center">
+  <div class="commonActions">
     <button id="newExp" class="danger">새 실험</button>
     <button id="saveCsv" class="soft">CSV 저장</button>
     <button id="noteBtn" class="gray">실험노트 작성하기</button>
@@ -217,6 +239,31 @@ Arduino 코드를 작성하거나 수정할 때 시리얼 데이터는 ArduLab�
 <!-- 구간 직접 입력 -->
 <div id="manualIntervalModal" class="modal"><div class="modalBox"><div class="modalHead"><h3>구간 직접 입력</h3><button data-close="manualIntervalModal" class="gray">닫기</button></div><div class="row"><input id="intervalStart" placeholder="시작값"><input id="intervalEnd" placeholder="끝값"><button id="intervalApply" class="primary">적용</button></div></div></div>
 
+
+
+
+
+<div id="newExperimentModal" class="modal">
+  <div class="modalBox">
+    <div class="modalHead">
+      <h3>새 실험 시작</h3>
+      <button data-close="newExperimentModal" class="gray">닫기</button>
+    </div>
+
+    <div class="analysisSection">
+      <div class="analysisTitle">현재 실험 다시 시작</div>
+      <p class="muted">측정 데이터와 그래프·분석 상태만 초기화합니다. 실험노트와 보고서는 그대로 남겨 둡니다.</p>
+      <button id="restartExperimentBtn" class="primary">실험만 다시 시작</button>
+    </div>
+
+    <div class="analysisSection">
+      <div class="analysisTitle" style="color:#b91c1c">모든 기록 지우고 새로 시작</div>
+      <p class="muted">다른 사람이 사용하기 전에 현재 실험 데이터, 분석 상태, 실험노트, 보고서와 임시 저장 기록까지 모두 삭제합니다.</p>
+      <button id="clearAllExperimentBtn" class="danger">모든 기록 삭제</button>
+    </div>
+  </div>
+</div>
+
 <script>
 'use strict';
 const MAX_DATA=6000, TABLE_RENDER_LIMIT=500, TABLE_REFRESH_MS=150, SCHEMA_CONFIRM=3, TEMP_TTL=24*60*60*1000;
@@ -240,11 +287,38 @@ function refreshVarUI(){
 }
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function escapeAttr(s){return escapeHtml(s)}
 function parseLine(line){const out={};for(const p0 of line.trim().split(',')){const p=p0.trim(),i=p.indexOf(':');if(i<0)return null;const k=p.slice(0,i).trim(),v=Number(p.slice(i+1).trim());if(!/^[A-Za-z_][A-Za-z0-9_]*$/.test(k)||!Number.isFinite(v)||k in out)return null;out[k]=v}return Object.keys(out).length?out:null}
-function processSerialData(d){validDataAfterConnect=true;const schema=Object.keys(d).join('|');if(schema===lastSchema)sameSchema++;else{lastSchema=schema;sameSchema=1}if(sameSchema<SCHEMA_CONFIRM){$('schemaMsg').textContent=`감지된 변수: ${Object.keys(d).join(', ')} (${sameSchema}/${SCHEMA_CONFIRM})`;return}if(sourceVars.join('|')!==schema){sourceVars=Object.keys(d);allVars=['time',...sourceVars];if(!tableVars.length)tableVars=[...allVars];refreshVarUI()}$('schemaMsg').textContent='변수 인식 완료';if(collecting)addSerialRow(d)}
+function processSerialData(d){
+  validDataAfterConnect=true;
+  const schema=Object.keys(d).join('|');
+
+  if(schema===lastSchema) sameSchema++;
+  else{ lastSchema=schema; sameSchema=1; }
+
+  if(sameSchema<SCHEMA_CONFIRM){
+    $('schemaMsg').textContent=`감지된 변수: ${Object.keys(d).join(', ')} (${sameSchema}/${SCHEMA_CONFIRM})`;
+    return;
+  }
+
+  if(sourceVars.join('|')!==schema){
+    sourceVars=Object.keys(d);
+    allVars=['time',...sourceVars];
+
+    // Arduino의 새 변수 구성이 확정되면 이전 파일/실험에서 남은
+    // 표 변수 선택 상태를 현재 변수에 맞게 동기화합니다.
+    const validSelected=tableVars.filter(v=>allVars.includes(v));
+    tableVars=validSelected.length ? validSelected : [...allVars];
+
+    refreshVarUI();
+    renderTable();
+  }
+
+  $('schemaMsg').textContent='변수 인식 완료';
+  if(collecting) addSerialRow(d);
+}
 function addSerialRow(d){const now=performance.now();if(startTime===null){startTime=now;lastSample=now}const row={time:+((now-startTime)/1000).toFixed(3),...d};dataRows.push(row);if(dataRows.length>MAX_DATA){dataRows.shift();excluded=new Set([...excluded].filter(i=>i>0).map(i=>i-1))}if(lastSample!==null&&now>lastSample){totalDt+=(now-lastSample)/1000;dtCount++;const av=totalDt/dtCount;$('sampling').textContent=`${av.toFixed(3)} s / ${(1/av).toFixed(1)} Hz`}lastSample=now;updateCounts();markTableDirty();scheduleSave()}
 function updateCounts(){$('count').textContent=dataRows.length+'개';$('activeCount').textContent=getActiveRows().length+'개'}
 function markTableDirty(){tableDirty=true} function startTableTimer(){if(tableTimer)return;tableTimer=setInterval(()=>{if(tableDirty){renderTable();tableDirty=false}},TABLE_REFRESH_MS)}
-function renderTable(){const vars=tableVars.length?tableVars:allVars;$('thead').innerHTML='<tr><th>No.</th>'+vars.map(v=>`<th>${escapeHtml(v)}</th>`).join('')+'</tr>';const start=Math.max(0,dataRows.length-TABLE_RENDER_LIMIT),rows=[];for(let i=start;i<dataRows.length;i++){const r=dataRows[i],cls=excluded.has(i)?'excluded':'';rows.push(`<tr class="${cls}"><td>${i+1}</td>${vars.map(v=>`<td>${fmt(r[v])}</td>`).join('')}</tr>`)}$('tbody').innerHTML=rows.join('');const w=$('tableWrap');w.scrollTop=w.scrollHeight}
+function renderTable(){const valid=tableVars.filter(v=>allVars.includes(v));const vars=valid.length?valid:(allVars.length?allVars:['time']);$('thead').innerHTML='<tr><th>No.</th>'+vars.map(v=>`<th>${escapeHtml(v)}</th>`).join('')+'</tr>';const start=Math.max(0,dataRows.length-TABLE_RENDER_LIMIT),rows=[];for(let i=start;i<dataRows.length;i++){const r=dataRows[i],cls=excluded.has(i)?'excluded':'';rows.push(`<tr class="${cls}"><td>${i+1}</td>${vars.map(v=>`<td>${fmt(r[v])}</td>`).join('')}</tr>`)}$('tbody').innerHTML=rows.join('');const w=$('tableWrap');w.scrollTop=w.scrollHeight}
 async function readSerial(){const decoder=new TextDecoderStream(),closed=port.readable.pipeTo(decoder.writable);reader=decoder.readable.getReader();try{while(keepReading){const {value,done}=await reader.read();if(done)break;if(!value)continue;if(performance.now()<stabilizingUntil)continue;lineBuffer+=value;const lines=lineBuffer.split(/\r?\n/);lineBuffer=lines.pop();for(const line of lines){const d=parseLine(line);if(d)processSerialData(d)}}}catch(e){console.error(e);if(keepReading)handleConnectionLost('USB 연결이 끊겼거나 시리얼 통신에 오류가 발생했습니다.')}finally{try{reader?.releaseLock()}catch{}reader=null;try{await closed}catch{}}}
 $('connect').onclick=async()=>{if(!('serial'in navigator)){alert('Chrome 또는 Edge에서 실행해주세요.');return}try{port=await navigator.serial.requestPort();await port.open({baudRate:+$('baud').value});keepReading=true;validDataAfterConnect=false;lastSchema='';sameSchema=0;lineBuffer='';stabilizingUntil=performance.now()+2000;$('status').textContent='연결 안정화 중...';$('connect').disabled=true;$('disconnect').disabled=false;$('baud').disabled=true;readSerial();await sleep(2000);if(port){$('status').textContent='연결됨';$('schemaMsg').textContent='정상 데이터 수신 대기 중...'}clearTimeout(diagnosticTimer);diagnosticTimer=setTimeout(()=>{if(port&&!validDataAfterConnect)alert('아두이노에서 정상 데이터를 읽지 못했습니다.\n\n확인할 것:\n1. Arduino의 Serial.begin() 값과 보드레이트가 같은지\n2. 출력이 변수:값 형식인지 (예: temp:23.5,light:450)\n3. Arduino IDE의 시리얼 모니터가 닫혀 있는지')},5000)}catch(e){console.error(e);$('status').textContent='연결 실패'}};
 $('disconnect').onclick=()=>disconnectSerial(false);
@@ -469,8 +543,13 @@ function configureMediaCanvas(w,h){
 
 function openMediaPicker(kind){
   const input=$('mediaFileInput');
+  if(!input){
+    alert('파일 선택 기능을 초기화하지 못했습니다. 페이지를 새로고침해 주세요.');
+    return;
+  }
   input.accept = kind==='image' ? 'image/*' : 'video/*';
   input.dataset.kind=kind;
+  input.value='';
   input.click();
 }
 $('loadImageBtn').onclick=()=>openMediaPicker('image');
@@ -673,27 +752,6 @@ function downloadBlob(blob,name){const a=document.createElement('a');a.href=URL.
 window.addEventListener('beforeunload',e=>{if(collecting){e.preventDefault();e.returnValue=''}});
 (async function boot(){startTableTimer();renderTable();updateCounts();initManual();try{await initDB();await restoreTemp()}catch(e){console.warn('임시저장 초기화 실패',e)}})();
 </script>
-
-<div id="newExperimentModal" class="modal">
-  <div class="modalBox">
-    <div class="modalHead">
-      <h3>새 실험 시작</h3>
-      <button data-close="newExperimentModal" class="gray">닫기</button>
-    </div>
-
-    <div class="analysisSection">
-      <div class="analysisTitle">현재 실험 다시 시작</div>
-      <p class="muted">측정 데이터와 그래프·분석 상태만 초기화합니다. 실험노트와 보고서는 그대로 남겨 둡니다.</p>
-      <button id="restartExperimentBtn" class="primary">실험만 다시 시작</button>
-    </div>
-
-    <div class="analysisSection">
-      <div class="analysisTitle" style="color:#b91c1c">모든 기록 지우고 새로 시작</div>
-      <p class="muted">다른 사람이 사용하기 전에 현재 실험 데이터, 분석 상태, 실험노트, 보고서와 임시 저장 기록까지 모두 삭제합니다.</p>
-      <button id="clearAllExperimentBtn" class="danger">모든 기록 삭제</button>
-    </div>
-  </div>
-</div>
 
 </body>
 </html>
