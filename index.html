@@ -4,7 +4,66 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ArduLab Web</title>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js">
+function resetCurrentExperimentOnly(){
+  if(!confirm('현재 측정 데이터와 그래프·분석 결과를 지우고 실험을 다시 시작할까요?\n실험노트와 보고서는 유지됩니다.')) return;
+  try{
+    if(typeof rows!=='undefined') rows.length=0;
+    if(typeof dataRows!=='undefined' && Array.isArray(dataRows)) dataRows.length=0;
+    if(typeof allVars!=='undefined' && Array.isArray(allVars)){ allVars.length=0; allVars.push('time'); }
+    if(typeof selectedRange!=='undefined') selectedRange=null;
+    if(typeof graphState!=='undefined') graphState=null;
+    if(typeof intervalState!=='undefined') intervalState=null;
+    if(typeof startTime!=='undefined') startTime=null;
+    if(typeof sampleCount!=='undefined') sampleCount=0;
+    if(typeof renderTable==='function') renderTable();
+    if(typeof updateVarUI==='function') updateVarUI();
+    if(typeof refreshVars==='function') refreshVars();
+    const chart=document.getElementById('chart'); if(chart) chart.getContext('2d').clearRect(0,0,chart.width,chart.height);
+    const result=document.getElementById('result'); if(result) result.innerHTML='';
+    const intervalCanvas=document.getElementById('intervalChart'); if(intervalCanvas) intervalCanvas.getContext('2d').clearRect(0,0,intervalCanvas.width,intervalCanvas.height);
+    closeModal('newExperimentModal');
+  }catch(e){ console.error(e); alert('초기화 중 문제가 생겼습니다. 페이지를 새로고침한 뒤 다시 시도해 주세요.'); }
+}
+
+function clearAllExperimentRecords(){
+  if(!confirm('모든 기록을 삭제할까요?\n실험 데이터, 분석 상태, 실험노트, 보고서와 임시 저장 기록이 모두 삭제됩니다.')) return;
+  try{
+    // ArduLab이 이 브라우저에 저장한 로컬 기록을 비운다.
+    const keys=[];
+    for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k) keys.push(k); }
+    keys.filter(k=>/ardu|lab|experiment|note|report|backup|restore/i.test(k)).forEach(k=>localStorage.removeItem(k));
+    const skeys=[];
+    for(let i=0;i<sessionStorage.length;i++){ const k=sessionStorage.key(i); if(k) skeys.push(k); }
+    skeys.filter(k=>/ardu|lab|experiment|note|report|backup|restore/i.test(k)).forEach(k=>sessionStorage.removeItem(k));
+
+    // 화면상의 노트/보고서 입력값도 비운다.
+    document.querySelectorAll('#noteModal textarea,#noteModal input,#reportModal textarea,#reportModal input').forEach(el=>el.value='');
+    if(typeof noteText!=='undefined') noteText='';
+    if(typeof reportText!=='undefined') reportText='';
+
+    if(typeof rows!=='undefined') rows.length=0;
+    if(typeof dataRows!=='undefined' && Array.isArray(dataRows)) dataRows.length=0;
+    if(typeof allVars!=='undefined' && Array.isArray(allVars)){ allVars.length=0; allVars.push('time'); }
+    if(typeof selectedRange!=='undefined') selectedRange=null;
+    if(typeof graphState!=='undefined') graphState=null;
+    if(typeof intervalState!=='undefined') intervalState=null;
+    if(typeof startTime!=='undefined') startTime=null;
+    if(typeof sampleCount!=='undefined') sampleCount=0;
+    if(typeof renderTable==='function') renderTable();
+    if(typeof updateVarUI==='function') updateVarUI();
+    if(typeof refreshVars==='function') refreshVars();
+    const chart=document.getElementById('chart'); if(chart) chart.getContext('2d').clearRect(0,0,chart.width,chart.height);
+    const result=document.getElementById('result'); if(result) result.innerHTML='';
+    closeModal('newExperimentModal');
+    alert('모든 기록을 삭제했습니다. 새 사용자가 실험을 시작할 수 있습니다.');
+  }catch(e){ console.error(e); alert('전체 삭제 중 문제가 생겼습니다.'); }
+}
+
+$('restartExperimentBtn').onclick=resetCurrentExperimentOnly;
+$('clearAllExperimentBtn').onclick=clearAllExperimentRecords;
+
+</script>
 <style>
 :root{--a:#00979d;--o:#ff7a00;--bg:#f5f7fb;--card:#fff;--line:#dfe5ec;--text:#202630;--muted:#6d7684;--purple:#7c3aed}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,"Noto Sans KR",sans-serif}.wrap{width:min(1450px,calc(100% - 28px));margin:18px auto}.head{text-align:center;margin:6px 0 16px}.logo{font-size:42px;font-weight:900;margin:0}.logo .a{color:var(--a)}.logo .l{color:var(--o)}.by{font-size:12px;color:#999}.card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:15px;margin-bottom:13px;box-shadow:0 4px 16px #1e2d460a}.card h2{font-size:17px;margin:0 0 11px}.grid{display:grid;grid-template-columns:1fr 1.18fr;gap:13px}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.row>*{min-width:0}button,select,input,textarea{font:inherit}button{border:0;border-radius:9px;padding:9px 12px;font-weight:800;cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}.primary{background:var(--a);color:#fff}.orange{background:var(--o);color:#fff}.purple{background:var(--purple);color:#fff}.soft{background:#e8f5f5;color:#08767b}.gray{background:#edf0f4;color:#39414d}.danger{background:#fff0f0;color:#b83232}.small{padding:6px 9px;font-size:12px}select,input,textarea{border:1px solid var(--line);border-radius:8px;padding:8px;background:#fff}textarea{width:100%;resize:vertical}.status{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.stat{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:10px}.stat b{display:block;font-size:12px;margin-bottom:4px}.val{font-weight:900;color:var(--a)}.muted{color:var(--muted);font-size:13px;line-height:1.5}.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{background:#eaf7f7;color:#08767b;border-radius:999px;padding:6px 10px;font-weight:800;font-size:13px}.tableWrap{max-height:400px;overflow:auto;border:1px solid var(--line);border-radius:10px;background:#fff}table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:7px 9px;border-bottom:1px solid #edf0f4;text-align:center;white-space:nowrap}th{position:sticky;top:0;background:#eef7f7;color:#16686c;z-index:2}.excluded{opacity:.35;text-decoration:line-through}.controls{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.controls label{font-size:12px;font-weight:800}.controls select,.controls input{width:100%;margin-top:4px}canvas.graph{width:100%;height:410px;border:1px solid var(--line);border-radius:10px;background:#fff;touch-action:none;cursor:crosshair}.result{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:14px;min-height:130px;font-size:15px;line-height:1.65;overflow:auto}.analysisSection{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:9px 0}.analysisTitle{font-size:16px;font-weight:900;color:#08767b;margin-bottom:7px}.analysisTitle.reg{color:#6d28d9}.analysisGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 18px}.analysisItem b{color:#334155}.codeGuide{background:#f8fafc;border:1px solid var(--line);border-radius:9px;padding:10px;font-family:ui-monospace,Consolas,monospace;font-size:13px;white-space:pre-wrap}.footer{text-align:center;color:#aaa;font-size:12px;padding:8px}.banner{display:none;background:#fff9dd;border:1px solid #f0d46a;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:13px}.modal{display:none;position:fixed;inset:0;background:#0009;z-index:50;align-items:center;justify-content:center;padding:20px}.modal.show{display:flex}.modalBox{background:#fff;border-radius:15px;padding:17px;width:min(850px,96vw);max-height:92vh;overflow:auto;box-shadow:0 20px 60px #0005}.modalBox.large{width:min(1180px,97vw)}.modalHead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.modalHead h3{margin:0}.checkgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.checkitem{border:1px solid var(--line);border-radius:8px;padding:7px;background:#fafbfc}.sheetWrap{overflow:auto;max-height:500px;border:1px solid var(--line)}.sheet{min-width:700px}.sheet td,.sheet th{min-width:110px}.sheet td[contenteditable="true"]{background:#fff;text-align:left}.sheet .nameRow td{background:#eaf4f4;font-weight:700}.notegrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.notegrid .full{grid-column:1/-1}.tooltip{position:fixed;display:none;pointer-events:none;background:#fff;border:1px solid #cbd5e1;border-radius:8px;padding:7px 9px;font-size:12px;box-shadow:0 5px 20px #0002;z-index:80;white-space:pre-line}.inlineChecks{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.inlineChecks label{font-size:13px}.rangeGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.rangeGrid input{width:100%}.sampleList{display:grid;gap:8px}.sampleBtn{text-align:left;padding:12px;background:#f7fafb;border:1px solid var(--line)}
@@ -99,7 +158,7 @@ Arduino 코드를 작성하거나 수정할 때 시리얼 데이터는 ArduLab�
 <div style="margin-top:10px"><b style="font-size:13px">계산기</b><div id="calcKeypad" class="row" style="margin-top:6px">
 <button type="button" class="gray small" data-calc=" + ">＋</button><button type="button" class="gray small" data-calc=" - ">−</button><button type="button" class="gray small" data-calc=" * ">×</button><button type="button" class="gray small" data-calc=" / ">÷</button><button type="button" class="gray small" data-calc=" ** ">^</button>
 <button type="button" class="gray small" data-calc="(">(</button><button type="button" class="gray small" data-calc=")">)</button><button type="button" class="gray small" data-calc="sqrt(">√</button><button type="button" class="gray small" data-calc="abs(">abs</button><button type="button" class="gray small" data-calc="sin(">sin</button><button type="button" class="gray small" data-calc="cos(">cos</button><button type="button" class="gray small" data-calc="tan(">tan</button><button type="button" class="gray small" data-calc="log(">log</button><button type="button" class="gray small" data-calc="pi">π</button>
-<button type="button" class="soft small" id="calcDiffBtn">변화율 diff</button><button type="button" class="soft small" id="calcIntegBtn">누적 integ</button><button type="button" class="danger small" id="calcBack">⌫</button><button type="button" class="danger small" id="calcClear">전체 지우기</button>
+<button type="button" class="soft small" id="calcDiffBtn">미분</button><button type="button" class="soft small" id="calcIntegBtn">적분</button><button type="button" class="danger small" id="calcBack">⌫</button><button type="button" class="danger small" id="calcClear">전체 지우기</button>
 </div></div>
 <p class="muted">버튼을 눌러 계산식을 만들 수 있고, 필요하면 계산식 칸을 직접 수정할 수도 있습니다. diff/integ는 time 변수가 있을 때 사용합니다.</p><button id="calcApply" class="primary">변수 생성</button></div></div>
 
@@ -161,7 +220,7 @@ function dbGet(){return new Promise(res=>{if(!db)return res(null);const q=db.tra
 function dbClear(){if(!db)return;db.transaction('state','readwrite').objectStore('state').delete('current')}
 function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>dbPut({savedAt:Date.now(),dataRows,excluded:[...excluded],sourceVars,allVars,tableVars,note}),500)}
 async function restoreTemp(){const s=await dbGet();if(!s)return;if(Date.now()-s.savedAt>TEMP_TTL){dbClear();return}dataRows=Array.isArray(s.dataRows)?s.dataRows:[];excluded=new Set(s.excluded||[]);sourceVars=s.sourceVars||[];allVars=s.allVars||unionVars();tableVars=s.tableVars||[...allVars];note={...note,...(s.note||{})};refreshVarUI();loadNoteUI();updateCounts();renderTable();$('restoreBanner').style.display='block';$('restoreBanner').textContent=`직전 실험 임시자료를 복구했습니다. 마지막 저장: ${new Date(s.savedAt).toLocaleString()} · 새 학생이 시작할 때는 반드시 [새 실험]을 눌러주세요.`}
-$('newExp').onclick=async()=>{if((dataRows.length||Object.values(note).some(Boolean))&&!confirm('새 실험을 시작하면 현재 실험 데이터와 실험노트의 임시자료가 삭제됩니다.\n필요한 자료를 저장했는지 확인해 주세요.'))return;dataRows=[];excluded.clear();sourceVars=[];allVars=[];tableVars=[];selectedRange=null;graphState=null;intervalState=null;startTime=null;lastSample=null;totalDt=0;dtCount=0;note={title:'',design:'',x_name:'',x_description:'',y_name:'',y_description:'',observation:'',interpretation:'',error:'',question:''};dbClear();loadNoteUI();refreshVarUI();updateCounts();renderTable();clearCanvas($('chart'));$('sampling').textContent='-';$('result').textContent='분석 결과가 여기에 표시됩니다.';$('schemaMsg').textContent=port?'정상 데이터 수신 대기 중...':'변수 대기 중';$('restoreBanner').style.display='none';$('collect').textContent='▶ 수집 시작';collecting=false};
+$('newExp').onclick=()=>openModal('newExperimentModal');dbClear();loadNoteUI();refreshVarUI();updateCounts();renderTable();clearCanvas($('chart'));$('sampling').textContent='-';$('result').textContent='분석 결과가 여기에 표시됩니다.';$('schemaMsg').textContent=port?'정상 데이터 수신 대기 중...':'변수 대기 중';$('restoreBanner').style.display='none';$('collect').textContent='▶ 수집 시작';collecting=false};
 
 // 파일 불러오기 / 저장
 $('loadFile').onclick=()=>$('fileInput').click();$('fileInput').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{if(f.name.toLowerCase().endsWith('.xlsx'))await loadXlsx(f);else loadCsvText(await f.text());}catch(err){console.error(err);alert('파일을 읽지 못했습니다: '+err.message)}e.target.value=''};
@@ -266,5 +325,27 @@ function downloadBlob(blob,name){const a=document.createElement('a');a.href=URL.
 window.addEventListener('beforeunload',e=>{if(collecting){e.preventDefault();e.returnValue=''}});
 (async function boot(){startTableTimer();renderTable();updateCounts();initManual();try{await initDB();await restoreTemp()}catch(e){console.warn('임시저장 초기화 실패',e)}})();
 </script>
+
+<div id="newExperimentModal" class="modal">
+  <div class="modalBox">
+    <div class="modalHead">
+      <h3>새 실험 시작</h3>
+      <button data-close="newExperimentModal" class="gray">닫기</button>
+    </div>
+
+    <div class="analysisSection">
+      <div class="analysisTitle">현재 실험 다시 시작</div>
+      <p class="muted">측정 데이터와 그래프·분석 상태만 초기화합니다. 실험노트와 보고서는 그대로 남겨 둡니다.</p>
+      <button id="restartExperimentBtn" class="primary">실험만 다시 시작</button>
+    </div>
+
+    <div class="analysisSection">
+      <div class="analysisTitle" style="color:#b91c1c">모든 기록 지우고 새로 시작</div>
+      <p class="muted">다른 사람이 사용하기 전에 현재 실험 데이터, 분석 상태, 실험노트, 보고서와 임시 저장 기록까지 모두 삭제합니다.</p>
+      <button id="clearAllExperimentBtn" class="danger">모든 기록 삭제</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
