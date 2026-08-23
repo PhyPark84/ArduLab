@@ -37,6 +37,19 @@
 .stepBtn.step-disabled{background:#edf0f4;color:#9aa3ad;cursor:not-allowed}
 .stepBtn.step-neutral{background:#e8f5f5;color:#08767b}
 
+
+.graphSeriesList{display:grid;gap:8px;margin-top:9px}
+.graphSeriesRow{display:grid;grid-template-columns:auto minmax(130px,1.2fr) auto auto minmax(105px,.8fr) auto;gap:7px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:8px;background:#fbfcfd}
+.seriesSwatch{width:14px;height:14px;border-radius:50%;display:inline-block;box-shadow:0 0 0 2px #fff,0 0 0 3px currentColor}
+.seriesLabel{font-size:12px;font-weight:900}
+.seriesMini{font-size:12px;display:flex;gap:5px;align-items:center;white-space:nowrap}
+.seriesMini input[type=number]{width:58px;padding:6px}
+.seriesMini select{padding:6px}
+.seriesRemove{padding:6px 9px}
+@media(max-width:760px){
+  .graphSeriesRow{grid-template-columns:auto 1fr auto}
+}
+
 </style>
 </head>
 <body>
@@ -166,11 +179,28 @@
 <section class="card"><h2>🧮 데이터 처리</h2><div class="row"><button id="tableVarsBtn" class="gray">표 변수 선택</button><button id="calcVarBtn" class="soft">계산 변수 추가</button><button id="maVarBtn" class="soft">이동평균 변수 생성</button><button id="outlierBtn" class="soft">이상값 제외</button><button id="outlierReset" class="gray">이상값 초기화</button></div><p class="muted">이상값은 실제 삭제하지 않고 분석에서만 제외합니다.</p></section>
 </div><div>
 <section class="card"><h2>📈 그래프 / 분석</h2>
-<div class="controls"><label>X축<select id="xVar"></select></label><label>Y축<select id="yVar"></select></label><label>회귀<select id="regType"><option value="none">없음</option><option value="linear">1차 회귀</option><option value="quadratic">2차 회귀</option></select></label><label>이동평균선 n<input id="maN" type="number" min="1" value="1"></label></div>
-<div class="inlineChecks" style="margin-top:9px"><label><input id="smoothCheck" type="checkbox"> 부드러운 선 표시</label><label><input id="slopeCheck" type="checkbox"> 좌표/국소 기울기 표시</label><label><input id="customRangeCheck" type="checkbox"> 축 범위 직접 지정</label></div>
+<div class="controls" style="grid-template-columns:1fr">
+  <label>X축 (공통)<select id="xVar"></select></label>
+</div>
+
+<div id="graphSeriesList" class="graphSeriesList"></div>
+
+<div class="row" style="margin-top:8px">
+  <button id="addGraphSeriesBtn" class="soft">＋ 그래프 추가</button>
+  <span class="muted">Y축 그래프는 최대 3개까지 겹쳐 볼 수 있습니다. 분석은 ●로 선택한 Y변수를 기준으로 합니다.</span>
+</div>
+
+<div style="display:none">
+  <select id="yVar"></select>
+  <select id="regType"><option value="none">없음</option><option value="linear">1차 회귀</option><option value="quadratic">2차 회귀</option></select>
+  <input id="maN" type="number" min="1" value="1">
+  <input id="smoothCheck" type="checkbox">
+</div>
+
+<div class="inlineChecks" style="margin-top:9px"><label><input id="slopeCheck" type="checkbox"> 좌표/국소 기울기 표시</label><label><input id="customRangeCheck" type="checkbox"> 축 범위 직접 지정</label></div>
 <div id="axisRangeBox" style="display:none;margin-top:8px">
-<div class="rangeGrid"><input id="xMin" placeholder="X 최소"><input id="xMax" placeholder="X 최대"><input id="yMin" placeholder="Y 최소"><input id="yMax" placeholder="Y 최대"></div>
-<div class="row" style="margin-top:7px"><button id="axisApplyBtn" class="primary small">입력완료</button><span class="muted">빈칸은 데이터에 맞춰 자동 범위를 사용합니다. 이 설정은 전체 그래프의 표시 범위만 바꿉니다.</span></div>
+<div class="rangeGrid"><input id="xMin" placeholder="X 최소"><input id="xMax" placeholder="X 최대"><input id="yMin" placeholder="분석 Y 최소"><input id="yMax" placeholder="분석 Y 최대"></div>
+<div class="row" style="margin-top:7px"><button id="axisApplyBtn" class="primary small">입력완료</button><span class="muted">빈칸은 자동 범위를 사용합니다. X 범위는 전체 그래프에, Y 범위는 현재 분석 대상으로 선택한 Y축에 적용됩니다.</span></div>
 </div>
 <div class="row" style="margin:10px 0"><button id="drawBtn" class="primary">그래프 그리기</button><button id="manualIntervalBtn" class="soft">구간 직접 입력</button><button id="intervalBtn" class="soft">구간 그래프</button><button id="clearInterval" class="gray">구간 해제</button><button id="pngBtn" class="soft">그래프 PNG 저장</button></div>
 <canvas id="chart" class="graph" width="950" height="410"></canvas><p class="muted">그래프를 그린 뒤 점에 마우스를 올리면 좌표를 볼 수 있습니다. 좌우로 드래그하면 구간을 선택합니다.</p><div id="result" class="result">분석 결과가 여기에 표시됩니다.</div>
@@ -295,6 +325,7 @@ function refreshVarUI(){
  for(const id of ['xVar','yVar','outlierVar','maVarSelect','noteX','noteY']){const el=$(id),old=el.value;el.innerHTML=allVars.map(v=>`<option value="${escapeAttr(v)}">${escapeHtml(v)}</option>`).join('');if(allVars.includes(old))el.value=old}
  if(allVars.length){if(!$('xVar').value)$('xVar').value=allVars[0];if(!$('yVar').value||$('yVar').value===$('xVar').value)$('yVar').value=allVars.find(v=>v!==$('xVar').value)||allVars[0]}
  if(note.x_name&&allVars.includes(note.x_name))$('noteX').value=note.x_name;if(note.y_name&&allVars.includes(note.y_name))$('noteY').value=note.y_name;
+ if(typeof refreshGraphSeriesOptions==='function')refreshGraphSeriesOptions();
  $('collect').disabled=!(port&&sourceVars.length);
 }
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function escapeAttr(s){return escapeHtml(s)}
@@ -395,54 +426,393 @@ function mean(a){return a.reduce((s,x)=>s+x,0)/a.length}function median(a){const
 function linearReg(x,y){if(x.length<2)return null;const mx=mean(x),my=mean(y),den=x.reduce((s,v)=>s+(v-mx)**2,0);if(!den)return null;const a=x.reduce((s,v,i)=>s+(v-mx)*(y[i]-my),0)/den,b=my-a*mx,ss=y.reduce((s,v)=>s+(v-my)**2,0),er=y.reduce((s,v,i)=>s+(v-(a*x[i]+b))**2,0);return{type:'linear',a,b,r2:ss?1-er/ss:1}}
 function solve3(A,b){A=A.map(r=>[...r]);b=[...b];for(let i=0;i<3;i++){let m=i;for(let j=i+1;j<3;j++)if(Math.abs(A[j][i])>Math.abs(A[m][i]))m=j;[A[i],A[m]]=[A[m],A[i]];[b[i],b[m]]=[b[m],b[i]];if(Math.abs(A[i][i])<1e-12)return null;const d=A[i][i];for(let k=i;k<3;k++)A[i][k]/=d;b[i]/=d;for(let j=0;j<3;j++)if(j!==i){const f=A[j][i];for(let k=i;k<3;k++)A[j][k]-=f*A[i][k];b[j]-=f*b[i]}}return b}
 function quadReg(x,y){if(x.length<3)return null;const n=x.length,s1=x.reduce((a,v)=>a+v,0),s2=x.reduce((a,v)=>a+v*v,0),s3=x.reduce((a,v)=>a+v**3,0),s4=x.reduce((a,v)=>a+v**4,0),sy=y.reduce((a,v)=>a+v,0),sxy=x.reduce((a,v,i)=>a+v*y[i],0),sx2y=x.reduce((a,v,i)=>a+v*v*y[i],0),sol=solve3([[s4,s3,s2],[s3,s2,s1],[s2,s1,n]],[sx2y,sxy,sy]);if(!sol)return null;const[a,b,c]=sol,my=mean(y),ss=y.reduce((s,v)=>s+(v-my)**2,0),er=y.reduce((s,v,i)=>s+(v-(a*x[i]**2+b*x[i]+c))**2,0);return{type:'quadratic',a,b,c,r2:ss?1-er/ss:1}}
-function getGraphPoints(useRange=true){const xv=$('xVar').value,yv=$('yVar').value;let pts=[];dataRows.forEach((r,i)=>{if(!excluded.has(i)&&Number.isFinite(r[xv])&&Number.isFinite(r[yv]))pts.push({x:r[xv],y:r[yv],rowIndex:i})});if(useRange&&selectedRange)pts=pts.filter(p=>p.x>=selectedRange[0]&&p.x<=selectedRange[1]);return{xv,yv,pts}}
-function axisConfig(pts){let xs=pts.map(p=>p.x),ys=pts.map(p=>p.y),xmin=Math.min(...xs),xmax=Math.max(...xs),ymin=Math.min(...ys),ymax=Math.max(...ys);if(xmin===xmax){xmin-=1;xmax+=1}if(ymin===ymax){ymin-=1;ymax+=1}if($('customRangeCheck').checked){const vals=[+$('xMin').value,+$('xMax').value,+$('yMin').value,+$('yMax').value];if(Number.isFinite(vals[0]))xmin=vals[0];if(Number.isFinite(vals[1]))xmax=vals[1];if(Number.isFinite(vals[2]))ymin=vals[2];if(Number.isFinite(vals[3]))ymax=vals[3]}return{xmin,xmax,ymin,ymax}}
+
+// ============================================================
+// 다중 그래프: 공통 X + 최대 3개 독립 Y축
+// 그래프 비교는 최대 3개, 세부 분석은 한 번에 하나의 Y변수에 집중합니다.
+// ============================================================
+const GRAPH_COLORS=['#00979d','#e05a47','#7c3aed'];
+let graphSeriesRows=[];
+let graphSeriesSeq=0;
+
+function graphVarOptions(selected=''){
+  return allVars.map(v=>`<option value="${escapeAttr(v)}" ${v===selected?'selected':''}>${escapeHtml(v)}</option>`).join('');
+}
+function defaultYVar(exclude=[]){
+  const x=$('xVar').value;
+  return allVars.find(v=>v!==x&&!exclude.includes(v)) || allVars.find(v=>v!==x) || allVars[0] || '';
+}
+function addGraphSeries(initial=null){
+  if(graphSeriesRows.length>=3){alert('그래프는 최대 3개까지 추가할 수 있습니다.');return}
+  const used=graphSeriesRows.map(s=>s.y);
+  graphSeriesRows.push({
+    id:++graphSeriesSeq,
+    y:initial?.y || defaultYVar(used),
+    smooth:initial?.smooth || false,
+    maN:initial?.maN || 5,
+    regression:initial?.regression || 'none',
+    active:graphSeriesRows.length===0
+  });
+  renderGraphSeriesRows();
+}
+function removeGraphSeries(id){
+  if(graphSeriesRows.length<=1)return;
+  const removed=graphSeriesRows.find(s=>s.id===id);
+  graphSeriesRows=graphSeriesRows.filter(s=>s.id!==id);
+  if(removed?.active&&graphSeriesRows.length)graphSeriesRows[0].active=true;
+  renderGraphSeriesRows();
+  if(graphState)drawGraph();
+}
+function renderGraphSeriesRows(){
+  const box=$('graphSeriesList');if(!box)return;
+  if(!graphSeriesRows.length){addGraphSeries();return}
+  box.innerHTML=graphSeriesRows.map((s,i)=>{
+    const color=GRAPH_COLORS[i];
+    return `<div class="graphSeriesRow" data-series-id="${s.id}">
+      <span class="seriesSwatch" style="background:${color};color:${color}"></span>
+      <label class="seriesLabel">Y${i+1}<select class="seriesY" style="width:100%;margin-top:3px">${graphVarOptions(s.y)}</select></label>
+      <label class="seriesMini"><input class="seriesActive" type="radio" name="seriesActive" ${s.active?'checked':''}> 분석</label>
+      <label class="seriesMini"><input class="seriesSmooth" type="checkbox" ${s.smooth?'checked':''}> 이동평균 <input class="seriesMaN" type="number" min="2" value="${s.maN}"></label>
+      <label class="seriesMini">회귀 <select class="seriesReg">
+        <option value="none" ${s.regression==='none'?'selected':''}>없음</option>
+        <option value="linear" ${s.regression==='linear'?'selected':''}>1차</option>
+        <option value="quadratic" ${s.regression==='quadratic'?'selected':''}>2차</option>
+      </select></label>
+      ${graphSeriesRows.length>1?'<button class="seriesRemove danger small">삭제</button>':'<span></span>'}
+    </div>`;
+  }).join('');
+
+  box.querySelectorAll('.graphSeriesRow').forEach((el,i)=>{
+    const s=graphSeriesRows[i];
+    el.querySelector('.seriesY').onchange=e=>{s.y=e.target.value;syncLegacyGraphControls();if(graphState)drawGraph()};
+    el.querySelector('.seriesActive').onchange=()=>{graphSeriesRows.forEach(x=>x.active=false);s.active=true;syncLegacyGraphControls();renderGraphSeriesRows();if(graphState){drawGraph();analyze()}};
+    el.querySelector('.seriesSmooth').onchange=e=>{s.smooth=e.target.checked;syncLegacyGraphControls();if(graphState)renderGraph(graphState,null,selectedRange)};
+    el.querySelector('.seriesMaN').onchange=e=>{const n=Number(e.target.value);s.maN=Number.isInteger(n)&&n>=2?n:5;e.target.value=s.maN;syncLegacyGraphControls();if(graphState)renderGraph(graphState,null,selectedRange)};
+    el.querySelector('.seriesReg').onchange=e=>{s.regression=e.target.value;syncLegacyGraphControls();if(graphState){renderGraph(graphState,null,selectedRange);analyze()}};
+    const del=el.querySelector('.seriesRemove');if(del)del.onclick=()=>removeGraphSeries(s.id);
+  });
+  $('addGraphSeriesBtn').disabled=graphSeriesRows.length>=3;
+  syncLegacyGraphControls();
+}
+function refreshGraphSeriesOptions(){
+  if(!graphSeriesRows.length){addGraphSeries();return}
+  const x=$('xVar').value;
+  graphSeriesRows.forEach((s,i)=>{
+    if(!allVars.includes(s.y)||s.y===x){
+      s.y=defaultYVar(graphSeriesRows.filter((_,j)=>j!==i).map(r=>r.y));
+    }
+  });
+  renderGraphSeriesRows();
+}
+function getActiveSeries(){return graphSeriesRows.find(s=>s.active)||graphSeriesRows[0]||null}
+function syncLegacyGraphControls(){
+  const s=getActiveSeries();if(!s)return;
+  if($('yVar'))$('yVar').value=s.y;
+  if($('regType'))$('regType').value=s.regression;
+  if($('smoothCheck'))$('smoothCheck').checked=s.smooth;
+  if($('maN'))$('maN').value=s.maN;
+}
+$('addGraphSeriesBtn').onclick=()=>addGraphSeries();
+
+function pointsForSeries(xv,yv,useRange=false){
+  let pts=[];
+  dataRows.forEach((r,i)=>{
+    if(!excluded.has(i)&&Number.isFinite(r[xv])&&Number.isFinite(r[yv]))pts.push({x:r[xv],y:r[yv],rowIndex:i});
+  });
+  if(useRange&&selectedRange)pts=pts.filter(p=>p.x>=selectedRange[0]&&p.x<=selectedRange[1]);
+  return pts;
+}
+function getGraphPoints(useRange=true){
+  const s=getActiveSeries(),xv=$('xVar').value,yv=s?.y||$('yVar').value;
+  return{xv,yv,pts:pointsForSeries(xv,yv,useRange)};
+}
+function yAxisFromPoints(pts,applyCustom=false){
+  const ys=pts.map(p=>p.y);let ymin=Math.min(...ys),ymax=Math.max(...ys);
+  if(ymin===ymax){ymin-=1;ymax+=1}
+  if(applyCustom&&$('customRangeCheck').checked){
+    const a=$('yMin').value.trim(),b=$('yMax').value.trim();
+    if(a!==''&&Number.isFinite(Number(a)))ymin=Number(a);
+    if(b!==''&&Number.isFinite(Number(b)))ymax=Number(b);
+    if(ymin===ymax){ymin-=1;ymax+=1}
+  }
+  return{ymin,ymax};
+}
+function getXaxisConfig(seriesData){
+  const xs=seriesData.flatMap(s=>s.pts.map(p=>p.x));let xmin=Math.min(...xs),xmax=Math.max(...xs);
+  if(xmin===xmax){xmin-=1;xmax+=1}
+  if($('customRangeCheck').checked){
+    const a=$('xMin').value.trim(),b=$('xMax').value.trim();
+    if(a!==''&&Number.isFinite(Number(a)))xmin=Number(a);
+    if(b!==''&&Number.isFinite(Number(b)))xmax=Number(b);
+  }
+  return{xmin,xmax};
+}
 $('customRangeCheck').onchange=()=>{$('axisRangeBox').style.display=$('customRangeCheck').checked?'block':'none'};
-$('axisApplyBtn').onclick=()=>{if(!graphState){alert('먼저 그래프를 그려주세요.');return}const {xv,yv,pts}=getGraphPoints(false);if(!pts.length)return;graphState=makeGraphState($('chart'),xv,yv,pts,axisConfig(pts));renderGraph(graphState,null,selectedRange);analyze()};
-function niceTicks(min,max,target=6){const span=max-min;if(!(span>0))return[min,max];const raw=span/target,pow=Math.pow(10,Math.floor(Math.log10(raw))),q=raw/pow;let step=(q<=1?1:q<=2?2:q<=5?5:10)*pow;let start=Math.ceil(min/step)*step,end=Math.floor(max/step)*step,out=[];for(let v=start;v<=end+step*1e-9;v+=step)out.push(Math.abs(v)<step*1e-10?0:v);if(!out.length)out=[min,max];return out}
+$('axisApplyBtn').onclick=()=>{if(!graphState){alert('먼저 그래프를 그려주세요.');return}drawGraph()};
+
+function niceTicks(min,max,target=6){
+  const span=max-min;if(!(span>0))return[min,max];
+  const raw=span/target,pow=Math.pow(10,Math.floor(Math.log10(raw))),q=raw/pow;
+  const step=(q<=1?1:q<=2?2:q<=5?5:10)*pow;
+  let start=Math.ceil(min/step)*step,end=Math.floor(max/step)*step,out=[];
+  for(let v=start;v<=end+step*1e-9;v+=step)out.push(Math.abs(v)<step*1e-10?0:v);
+  return out.length?out:[min,max];
+}
 function clearCanvas(c){c.getContext('2d').clearRect(0,0,c.width,c.height)}
-function drawGraph(){const {xv,yv,pts}=getGraphPoints(false);if(!pts.length){alert('그래프를 그릴 데이터가 없습니다.');return}graphState=makeGraphState($('chart'),xv,yv,pts,axisConfig(pts));renderGraph(graphState,null,selectedRange);analyze();}
-function makeGraphState(canvas,xv,yv,pts,axis){const pad={l:62,r:25,t:28,b:50},X=x=>pad.l+(x-axis.xmin)/(axis.xmax-axis.xmin)*(canvas.width-pad.l-pad.r),Y=y=>canvas.height-pad.b-(y-axis.ymin)/(axis.ymax-axis.ymin)*(canvas.height-pad.t-pad.b);return{canvas,xv,yv,pts,axis,pad,X,Y}}
-function smoothPoints(pts,n){if(n<=1)return pts;const out=[];for(let i=0;i<pts.length;i++){const w=pts.slice(Math.max(0,i-n+1),i+1);out.push({x:pts[i].x,y:mean(w.map(p=>p.y))})}return out}
-function renderGraph(st,hoverIndex=null,range=null){const c=st.canvas,ctx=c.getContext('2d'),{xmin,xmax,ymin,ymax}=st.axis,{l,r,t,b}=st.pad;clearCanvas(c);
- const xt=niceTicks(xmin,xmax,7),yt=niceTicks(ymin,ymax,6);
- ctx.font='12px Arial';ctx.lineWidth=1;
- for(const v of xt){const px=st.X(v);if(px<l-1||px>c.width-r+1)continue;ctx.strokeStyle='#e7edf3';ctx.beginPath();ctx.moveTo(px,t);ctx.lineTo(px,c.height-b);ctx.stroke();ctx.fillStyle='#64748b';ctx.textAlign='center';ctx.fillText(fmt(v),px,c.height-b+20)}
- for(const v of yt){const py=st.Y(v);if(py<t-1||py>c.height-b+1)continue;ctx.strokeStyle='#e7edf3';ctx.beginPath();ctx.moveTo(l,py);ctx.lineTo(c.width-r,py);ctx.stroke();ctx.fillStyle='#64748b';ctx.textAlign='right';ctx.fillText(fmt(v),l-8,py+4)}
- ctx.strokeStyle='#94a3b8';ctx.beginPath();ctx.moveTo(l,t);ctx.lineTo(l,c.height-b);ctx.lineTo(c.width-r,c.height-b);ctx.stroke();
- ctx.fillStyle='#334155';ctx.font='bold 13px Arial';ctx.textAlign='left';ctx.fillText(st.yv,8,18);ctx.textAlign='right';ctx.fillText(st.xv,c.width-10,c.height-10);
- if(range){ctx.fillStyle='#00979d18';const a=Math.max(xmin,range[0]),bb=Math.min(xmax,range[1]);if(bb>=a)ctx.fillRect(st.X(a),t,st.X(bb)-st.X(a),c.height-b-t)}
- ctx.fillStyle='#00979d';for(const p of st.pts){const x=st.X(p.x),y=st.Y(p.y);if(x<l||x>c.width-r||y<t||y>c.height-b)continue;ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fill()}
- if($('smoothCheck').checked){const n=Math.max(2,+$('maN').value||5),sp=smoothPoints(st.pts,n).filter(p=>p.x>=xmin&&p.x<=xmax);ctx.strokeStyle='#ff7a00';ctx.lineWidth=2;ctx.beginPath();let begun=false;for(const p of sp){const yy=st.Y(p.y);if(yy<t||yy>c.height-b)continue;if(begun)ctx.lineTo(st.X(p.x),yy);else{ctx.moveTo(st.X(p.x),yy);begun=true}}ctx.stroke()}
- // 회귀선은 선택 구간이 있으면 선택 구간 데이터만 사용한다.
- let regPts=st.pts;if(range)regPts=regPts.filter(p=>p.x>=range[0]&&p.x<=range[1]);
- const rt=$('regType').value,x=regPts.map(p=>p.x),y=regPts.map(p=>p.y);let reg=rt==='linear'?linearReg(x,y):rt==='quadratic'?quadReg(x,y):null;
- if(reg&&x.length){const rxmin=Math.max(xmin,Math.min(...x)),rxmax=Math.min(xmax,Math.max(...x));ctx.strokeStyle='#7c3aed';ctx.lineWidth=2;ctx.beginPath();for(let i=0;i<=180;i++){const xx=rxmin+(rxmax-rxmin)*i/180,yy=reg.type==='linear'?reg.a*xx+reg.b:reg.a*xx*xx+reg.b*xx+reg.c;i?ctx.lineTo(st.X(xx),st.Y(yy)):ctx.moveTo(st.X(xx),st.Y(yy))}ctx.stroke()}
- if(hoverIndex!==null&&st.pts[hoverIndex])drawTangentOverlay(st,hoverIndex)}
-function drawTangentOverlay(st,i){if(!$('slopeCheck').checked)return;const p=st.pts[i],i1=i<=0?0:i-1,i2=i>=st.pts.length-1?st.pts.length-1:i+1;if(i1===i2)return;const dx=st.pts[i2].x-st.pts[i1].x;if(dx===0)return;const slope=(st.pts[i2].y-st.pts[i1].y)/dx,span=(st.axis.xmax-st.axis.xmin)*.08,xa=p.x-span,xb=p.x+span,ya=p.y+slope*(xa-p.x),yb=p.y+slope*(xb-p.x),ctx=st.canvas.getContext('2d');ctx.strokeStyle='#8e44ad';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(st.X(xa),st.Y(ya));ctx.lineTo(st.X(xb),st.Y(yb));ctx.stroke();ctx.fillStyle='#8e44ad';ctx.font='bold 13px Arial';ctx.fillText('기울기: '+fmt(slope),st.pad.l+10,st.pad.t+18)}
-function nearestPoint(st,px,py){let best=-1,bd=12;st.pts.forEach((p,i)=>{const d=Math.hypot(st.X(p.x)-px,st.Y(p.y)-py);if(d<bd){bd=d;best=i}});return best}
-function bindGraphEvents(canvas,isInterval=false){canvas.addEventListener('pointermove',e=>{const st=isInterval?intervalState:graphState;if(!st)return;if(!isInterval&&dragStartPx!==null){$('tooltip').style.display='none';return}const r=canvas.getBoundingClientRect(),px=(e.clientX-r.left)*canvas.width/r.width,py=(e.clientY-r.top)*canvas.height/r.height,i=nearestPoint(st,px,py);if(i>=0){renderGraph(st,i,isInterval?null:selectedRange);const p=st.pts[i],tip=$('tooltip');tip.style.display='block';tip.style.left=(e.clientX+14)+'px';tip.style.top=(e.clientY+14)+'px';let txt=`${st.xv}: ${fmt(p.x)}\n${st.yv}: ${fmt(p.y)}`;if($('slopeCheck').checked){const i1=i<=0?0:i-1,i2=i>=st.pts.length-1?st.pts.length-1:i+1,dx=st.pts[i2].x-st.pts[i1].x;if(dx)txt+=`\n기울기: ${fmt((st.pts[i2].y-st.pts[i1].y)/dx)}`}tip.textContent=txt}else{$('tooltip').style.display='none';renderGraph(st,null,isInterval?null:selectedRange)}});canvas.addEventListener('pointerleave',()=>{$('tooltip').style.display='none';const st=isInterval?intervalState:graphState;if(st)renderGraph(st,null,isInterval?null:selectedRange)});if(!isInterval){canvas.addEventListener('pointerdown',e=>{if(!graphState)return;const r=canvas.getBoundingClientRect();dragStartPx=(e.clientX-r.left)*canvas.width/r.width;canvas.setPointerCapture?.(e.pointerId)});canvas.addEventListener('pointermove',e=>{if(dragStartPx===null||!graphState)return;const r=canvas.getBoundingClientRect(),end=(e.clientX-r.left)*canvas.width/r.width,start=dragStartPx,inv=px=>graphState.axis.xmin+(px-graphState.pad.l)/(canvas.width-graphState.pad.l-graphState.pad.r)*(graphState.axis.xmax-graphState.axis.xmin);let a=inv(Math.min(start,end)),b=inv(Math.max(start,end));renderGraph(graphState,null,[a,b]);const ctx=canvas.getContext('2d');ctx.fillStyle='#08767b';ctx.font='bold 13px Arial';ctx.fillText(`선택 중: ${fmt(a)} ~ ${fmt(b)}`,graphState.pad.l+10,graphState.pad.t+18)});canvas.addEventListener('pointerup',e=>{if(dragStartPx===null||!graphState)return;const r=canvas.getBoundingClientRect(),end=(e.clientX-r.left)*canvas.width/r.width,start=dragStartPx;dragStartPx=null;try{canvas.releasePointerCapture?.(e.pointerId)}catch{}if(Math.abs(end-start)<5){renderGraph(graphState,null,selectedRange);return}const inv=px=>graphState.axis.xmin+(px-graphState.pad.l)/(canvas.width-graphState.pad.l-graphState.pad.r)*(graphState.axis.xmax-graphState.axis.xmin);let a=inv(Math.min(start,end)),b=inv(Math.max(start,end));selectedRange=[a,b];renderGraph(graphState,null,selectedRange);analyze()})}}
-bindGraphEvents($('chart'),false);bindGraphEvents($('intervalChart'),true);$('drawBtn').onclick=drawGraph;$('smoothCheck').onchange=()=>{if(graphState)renderGraph(graphState,null,selectedRange)};$('slopeCheck').onchange=()=>{if(graphState)renderGraph(graphState,null,selectedRange);if(intervalState)renderGraph(intervalState)};$('regType').onchange=()=>{if(graphState){renderGraph(graphState,null,selectedRange);analyze()}};
-function analyze(){const {xv,yv,pts}=getGraphPoints(true);if(!pts.length){$('result').innerHTML='<div class="analysisSection">분석할 데이터가 없습니다.</div>';return''}const x=pts.map(p=>p.x),y=pts.map(p=>p.y),mn=Math.min(...y),mx=Math.max(...y),mi=y.indexOf(mn),ma=y.indexOf(mx),scope=selectedRange?`선택 구간 분석 · ${fmt(selectedRange[0])} ~ ${fmt(selectedRange[1])}`:'전체 구간 분석';
- let html=`<div class="analysisSection"><div class="analysisTitle">${scope}</div><div class="analysisGrid"><div class="analysisItem"><b>X 변수</b> ${escapeHtml(xv)}</div><div class="analysisItem"><b>Y 변수</b> ${escapeHtml(yv)}</div><div class="analysisItem"><b>데이터 개수</b> ${y.length}개</div><div class="analysisItem"><b>X 범위</b> ${fmt(Math.min(...x))} ~ ${fmt(Math.max(...x))}</div></div></div>`;
- html+=`<div class="analysisSection"><div class="analysisTitle">기초 통계</div><div class="analysisGrid"><div class="analysisItem"><b>평균</b> ${fmt(mean(y))}</div><div class="analysisItem"><b>중앙값</b> ${fmt(median(y))}</div><div class="analysisItem"><b>표준편차</b> ${fmt(stdev(y))}</div><div class="analysisItem"><b>범위</b> ${fmt(mx-mn)}</div><div class="analysisItem"><b>최소값</b> ${fmt(mn)} (x=${fmt(x[mi])})</div><div class="analysisItem"><b>최대값</b> ${fmt(mx)} (x=${fmt(x[ma])})</div><div class="analysisItem"><b>전체 변화량</b> ${fmt(y[y.length-1]-y[0])}</div></div></div>`;
- const rt=$('regType').value,r=rt==='linear'?linearReg(x,y):rt==='quadratic'?quadReg(x,y):null;
- if(r?.type==='linear')html+=`<div class="analysisSection"><div class="analysisTitle reg">1차 회귀</div><div class="analysisGrid"><div class="analysisItem"><b>회귀식</b> y = ${fmt(r.a)}x + ${fmt(r.b)}</div><div class="analysisItem"><b>기울기</b> ${fmt(r.a)}</div><div class="analysisItem"><b>절편</b> ${fmt(r.b)}</div><div class="analysisItem"><b>R²</b> ${fmt(r.r2)}</div></div></div>`;
- if(r?.type==='quadratic')html+=`<div class="analysisSection"><div class="analysisTitle reg">2차 회귀</div><div class="analysisGrid"><div class="analysisItem"><b>회귀식</b> y = ${fmt(r.a)}x² + ${fmt(r.b)}x + ${fmt(r.c)}</div><div class="analysisItem"><b>R²</b> ${fmt(r.r2)}</div></div></div>`;
- $('result').innerHTML=html;
- let text=`[${scope}]\nX 변수: ${xv}\nY 변수: ${yv}\n데이터 개수: ${y.length}개\nX 범위: ${fmt(Math.min(...x))} ~ ${fmt(Math.max(...x))}\n\n[기초 통계]\n평균: ${fmt(mean(y))}\n중앙값: ${fmt(median(y))}\n표준편차: ${fmt(stdev(y))}\n최소값: ${fmt(mn)} (x=${fmt(x[mi])})\n최대값: ${fmt(mx)} (x=${fmt(x[ma])})\n범위: ${fmt(mx-mn)}\n전체 변화량: ${fmt(y[y.length-1]-y[0])}`;
- if(r?.type==='linear')text+=`\n\n[1차 회귀]\ny = ${fmt(r.a)}x + ${fmt(r.b)}\n기울기: ${fmt(r.a)}\n절편: ${fmt(r.b)}\nR²: ${fmt(r.r2)}`;
- if(r?.type==='quadratic')text+=`\n\n[2차 회귀]\ny = ${fmt(r.a)}x² + ${fmt(r.b)}x + ${fmt(r.c)}\nR²: ${fmt(r.r2)}`;
- return text}
-$('clearInterval').onclick=()=>{selectedRange=null;if(graphState)renderGraph(graphState,null,null);analyze()};$('manualIntervalBtn').onclick=()=>openModal('manualIntervalModal');$('intervalApply').onclick=()=>{let a=+$('intervalStart').value,b=+$('intervalEnd').value;if(!Number.isFinite(a)||!Number.isFinite(b)){alert('숫자를 입력하세요.');return}if(a>b)[a,b]=[b,a];selectedRange=[a,b];closeModal('manualIntervalModal');if(graphState)renderGraph(graphState,null,selectedRange);analyze()};$('intervalBtn').onclick=openIntervalGraph;
-function openIntervalGraph(){if(!selectedRange){alert('먼저 그래프에서 구간을 드래그하거나 직접 입력해 주세요.');return}const{xv,yv,pts}=getGraphPoints(true);if(!pts.length){alert('선택 구간에 데이터가 없습니다.');return}const axis={xmin:Math.min(...pts.map(p=>p.x)),xmax:Math.max(...pts.map(p=>p.x)),ymin:Math.min(...pts.map(p=>p.y)),ymax:Math.max(...pts.map(p=>p.y))};if(axis.xmin===axis.xmax){axis.xmin-=1;axis.xmax+=1}if(axis.ymin===axis.ymax){axis.ymin-=1;axis.ymax+=1}intervalState=makeGraphState($('intervalChart'),xv,yv,pts,axis);renderGraph(intervalState);$('intervalResult').textContent=analyze();openModal('intervalModal')}
-$('pngBtn').onclick=()=>saveCanvas($('chart'),`ArduLab_graph_${stamp()}.png`);$('intervalPng').onclick=()=>saveCanvas($('intervalChart'),`ArduLab_interval_${stamp()}.png`);function saveCanvas(c,name){if(!c.getContext('2d'))return;c.toBlob(b=>downloadBlob(b,name))}
+function makeMultiGraphState(canvas,xv,seriesData,xAxis){
+  const pad={l:110,r:95,t:48,b:52},plotH=canvas.height-pad.t-pad.b,plotW=canvas.width-pad.l-pad.r;
+  const X=x=>pad.l+(x-xAxis.xmin)/(xAxis.xmax-xAxis.xmin)*plotW,active=getActiveSeries();
+  const series=seriesData.map((sd,i)=>{
+    const axis=yAxisFromPoints(sd.pts,sd.config.id===active?.id);
+    const Y=y=>canvas.height-pad.b-(y-axis.ymin)/(axis.ymax-axis.ymin)*plotH;
+    return{...sd,color:GRAPH_COLORS[i],axis,Y,index:i};
+  });
+  return{canvas,xv,xAxis,pad,X,series};
+}
+function drawGraph(){
+  const xv=$('xVar').value,configs=graphSeriesRows.filter(s=>s.y&&allVars.includes(s.y)).slice(0,3);
+  const seriesData=configs.map(config=>({config,pts:pointsForSeries(xv,config.y,false)})).filter(s=>s.pts.length);
+  if(!seriesData.length){alert('그래프를 그릴 데이터가 없습니다.');return}
+  graphState=makeMultiGraphState($('chart'),xv,seriesData,getXaxisConfig(seriesData));
+  renderGraph(graphState,null,selectedRange);analyze();
+}
+function smoothPoints(pts,n){
+  if(n<=1)return pts;const out=[];
+  for(let i=0;i<pts.length;i++){const w=pts.slice(Math.max(0,i-n+1),i+1);out.push({x:pts[i].x,y:mean(w.map(p=>p.y))})}
+  return out;
+}
+function axisXPosition(st,i){if(i===0)return st.pad.l;if(i===1)return st.canvas.width-st.pad.r;return 45}
+
+function renderGraph(st,hover=null,range=null){
+  const c=st.canvas,ctx=c.getContext('2d'),{xmin,xmax}=st.xAxis,{l,r,t,b}=st.pad;clearCanvas(c);
+
+  for(const v of niceTicks(xmin,xmax,7)){
+    const px=st.X(v);if(px<l-1||px>c.width-r+1)continue;
+    ctx.strokeStyle='#e7edf3';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(px,t);ctx.lineTo(px,c.height-b);ctx.stroke();
+    ctx.fillStyle='#64748b';ctx.font='12px Arial';ctx.textAlign='center';ctx.fillText(fmt(v),px,c.height-b+20);
+  }
+
+  const active=getActiveSeries(),activeSeries=st.series.find(s=>s.config.id===active?.id)||st.series[0];
+  if(activeSeries){
+    for(const v of niceTicks(activeSeries.axis.ymin,activeSeries.axis.ymax,6)){
+      const py=activeSeries.Y(v);ctx.strokeStyle='#edf1f5';ctx.beginPath();ctx.moveTo(l,py);ctx.lineTo(c.width-r,py);ctx.stroke();
+    }
+  }
+
+  if(range){
+    const a=Math.max(xmin,range[0]),bb=Math.min(xmax,range[1]);
+    if(bb>=a){ctx.fillStyle='#00979d18';ctx.fillRect(st.X(a),t,st.X(bb)-st.X(a),c.height-b-t)}
+  }
+
+  ctx.strokeStyle='#94a3b8';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(l,c.height-b);ctx.lineTo(c.width-r,c.height-b);ctx.stroke();
+  ctx.fillStyle='#334155';ctx.font='bold 13px Arial';ctx.textAlign='right';ctx.fillText(st.xv,c.width-r,c.height-10);
+
+  st.series.forEach((s,i)=>{
+    const ax=axisXPosition(st,i),right=i===1;
+    ctx.strokeStyle=s.color;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(ax,t);ctx.lineTo(ax,c.height-b);ctx.stroke();
+    ctx.fillStyle=s.color;ctx.font='11px Arial';
+    niceTicks(s.axis.ymin,s.axis.ymax,5).forEach(v=>{
+      const py=s.Y(v);ctx.strokeStyle=s.color;ctx.beginPath();
+      if(right){ctx.moveTo(ax,py);ctx.lineTo(ax+5,py);ctx.stroke();ctx.textAlign='left';ctx.fillText(fmt(v),ax+8,py+4)}
+      else{ctx.moveTo(ax-5,py);ctx.lineTo(ax,py);ctx.stroke();ctx.textAlign='right';ctx.fillText(fmt(v),ax-8,py+4)}
+    });
+    ctx.font='bold 12px Arial';
+    if(i===0){ctx.textAlign='left';ctx.fillText(s.config.y,st.pad.l+4,t-15)}
+    else if(i===1){ctx.textAlign='right';ctx.fillText(s.config.y,c.width-st.pad.r-4,t-15)}
+    else{ctx.textAlign='left';ctx.fillText(s.config.y,8,t-15)}
+  });
+
+  let lx=l;
+  st.series.forEach(s=>{
+    ctx.fillStyle=s.color;ctx.fillRect(lx,t-35,13,4);
+    ctx.font=s.config.active?'bold 12px Arial':'12px Arial';ctx.textAlign='left';
+    ctx.fillText(`${s.config.active?'● ':''}${s.config.y}`,lx+18,t-30);
+    lx+=Math.max(115,ctx.measureText(s.config.y).width+65);
+  });
+
+  st.series.forEach(s=>{
+    ctx.fillStyle=s.color;
+    for(const p of s.pts){
+      const px=st.X(p.x),py=s.Y(p.y);if(px<l||px>c.width-r||py<t||py>c.height-b)continue;
+      ctx.beginPath();ctx.arc(px,py,s.config.active?3.2:2.5,0,Math.PI*2);ctx.fill();
+    }
+
+    if(s.config.smooth){
+      const sp=smoothPoints(s.pts,Math.max(2,Number(s.config.maN)||5));
+      ctx.strokeStyle=s.color;ctx.lineWidth=2;ctx.setLineDash([]);ctx.beginPath();let begun=false;
+      for(const p of sp){
+        const px=st.X(p.x),py=s.Y(p.y);if(px<l||px>c.width-r||py<t||py>c.height-b)continue;
+        begun?ctx.lineTo(px,py):(ctx.moveTo(px,py),begun=true);
+      }
+      ctx.stroke();
+    }
+
+    let regPts=s.pts;if(range)regPts=regPts.filter(p=>p.x>=range[0]&&p.x<=range[1]);
+    const xs=regPts.map(p=>p.x),ys=regPts.map(p=>p.y);
+    const reg=s.config.regression==='linear'?linearReg(xs,ys):s.config.regression==='quadratic'?quadReg(xs,ys):null;
+    if(reg&&xs.length){
+      const rxmin=Math.max(xmin,Math.min(...xs)),rxmax=Math.min(xmax,Math.max(...xs));
+      ctx.strokeStyle=s.color;ctx.lineWidth=2.3;ctx.setLineDash([8,5]);ctx.beginPath();
+      for(let k=0;k<=180;k++){
+        const xx=rxmin+(rxmax-rxmin)*k/180,yy=reg.type==='linear'?reg.a*xx+reg.b:reg.a*xx*xx+reg.b*xx+reg.c;
+        k?ctx.lineTo(st.X(xx),s.Y(yy)):ctx.moveTo(st.X(xx),s.Y(yy));
+      }
+      ctx.stroke();ctx.setLineDash([]);
+    }
+  });
+
+  if(hover)drawTangentOverlay(st,hover);
+}
+
+function drawTangentOverlay(st,hover){
+  if(!$('slopeCheck').checked)return;
+  const s=st.series[hover.seriesIndex];if(!s?.config.active)return;
+  const i=hover.pointIndex,p=s.pts[i],i1=i<=0?0:i-1,i2=i>=s.pts.length-1?s.pts.length-1:i+1;
+  if(i1===i2)return;const dx=s.pts[i2].x-s.pts[i1].x;if(dx===0)return;
+  const slope=(s.pts[i2].y-s.pts[i1].y)/dx,span=(st.xAxis.xmax-st.xAxis.xmin)*.08;
+  const xa=p.x-span,xb=p.x+span,ya=p.y+slope*(xa-p.x),yb=p.y+slope*(xb-p.x),ctx=st.canvas.getContext('2d');
+  ctx.strokeStyle=s.color;ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(st.X(xa),s.Y(ya));ctx.lineTo(st.X(xb),s.Y(yb));ctx.stroke();
+  ctx.fillStyle=s.color;ctx.font='bold 13px Arial';ctx.textAlign='left';ctx.fillText('기울기: '+fmt(slope),st.pad.l+10,st.pad.t+18);
+}
+
+function nearestPoint(st,px,py){
+  let best=null,bd=12;
+  st.series.forEach((s,si)=>s.pts.forEach((p,pi)=>{
+    const d=Math.hypot(st.X(p.x)-px,s.Y(p.y)-py);
+    if(d<bd){bd=d;best={seriesIndex:si,pointIndex:pi}}
+  }));
+  return best;
+}
+
+function bindGraphEvents(canvas,isInterval=false){
+  canvas.addEventListener('pointermove',e=>{
+    const st=isInterval?intervalState:graphState;if(!st)return;
+    if(!isInterval&&dragStartPx!==null){$('tooltip').style.display='none';return}
+    const r=canvas.getBoundingClientRect(),px=(e.clientX-r.left)*canvas.width/r.width,py=(e.clientY-r.top)*canvas.height/r.height;
+    const hit=nearestPoint(st,px,py);
+    if(hit){
+      renderGraph(st,hit,isInterval?null:selectedRange);
+      const s=st.series[hit.seriesIndex],p=s.pts[hit.pointIndex],tip=$('tooltip');
+      tip.style.display='block';tip.style.left=(e.clientX+14)+'px';tip.style.top=(e.clientY+14)+'px';
+      let txt=`${st.xv}: ${fmt(p.x)}\n${s.config.y}: ${fmt(p.y)}`;
+      if($('slopeCheck').checked&&s.config.active){
+        const i=hit.pointIndex,i1=i<=0?0:i-1,i2=i>=s.pts.length-1?s.pts.length-1:i+1,dx=s.pts[i2].x-s.pts[i1].x;
+        if(dx)txt+=`\n기울기: ${fmt((s.pts[i2].y-s.pts[i1].y)/dx)}`;
+      }
+      tip.textContent=txt;
+    }else{$('tooltip').style.display='none';renderGraph(st,null,isInterval?null:selectedRange)}
+  });
+
+  canvas.addEventListener('pointerleave',()=>{
+    $('tooltip').style.display='none';const st=isInterval?intervalState:graphState;
+    if(st)renderGraph(st,null,isInterval?null:selectedRange);
+  });
+
+  if(!isInterval){
+    canvas.addEventListener('pointerdown',e=>{
+      if(!graphState)return;
+      const r=canvas.getBoundingClientRect();dragStartPx=(e.clientX-r.left)*canvas.width/r.width;
+      canvas.setPointerCapture?.(e.pointerId);
+    });
+    canvas.addEventListener('pointermove',e=>{
+      if(dragStartPx===null||!graphState)return;
+      const r=canvas.getBoundingClientRect(),end=(e.clientX-r.left)*canvas.width/r.width,start=dragStartPx;
+      const inv=px=>graphState.xAxis.xmin+(px-graphState.pad.l)/(canvas.width-graphState.pad.l-graphState.pad.r)*(graphState.xAxis.xmax-graphState.xAxis.xmin);
+      let a=inv(Math.min(start,end)),b=inv(Math.max(start,end));
+      renderGraph(graphState,null,[a,b]);
+      const ctx=canvas.getContext('2d');ctx.fillStyle='#08767b';ctx.font='bold 13px Arial';ctx.textAlign='left';
+      ctx.fillText(`선택 중: ${fmt(a)} ~ ${fmt(b)}`,graphState.pad.l+10,graphState.pad.t+18);
+    });
+    canvas.addEventListener('pointerup',e=>{
+      if(dragStartPx===null||!graphState)return;
+      const r=canvas.getBoundingClientRect(),end=(e.clientX-r.left)*canvas.width/r.width,start=dragStartPx;
+      dragStartPx=null;try{canvas.releasePointerCapture?.(e.pointerId)}catch{}
+      if(Math.abs(end-start)<5){renderGraph(graphState,null,selectedRange);return}
+      const inv=px=>graphState.xAxis.xmin+(px-graphState.pad.l)/(canvas.width-graphState.pad.l-graphState.pad.r)*(graphState.xAxis.xmax-graphState.xAxis.xmin);
+      let a=inv(Math.min(start,end)),b=inv(Math.max(start,end));
+      selectedRange=[a,b];renderGraph(graphState,null,selectedRange);analyze();
+    });
+  }
+}
+
+bindGraphEvents($('chart'),false);
+bindGraphEvents($('intervalChart'),true);
+$('drawBtn').onclick=drawGraph;
+$('slopeCheck').onchange=()=>{if(graphState)renderGraph(graphState,null,selectedRange);if(intervalState)renderGraph(intervalState,null,null)};
+
+function analyze(){
+  const s=getActiveSeries();
+  if(!s){$('result').innerHTML='<div class="analysisSection">분석할 Y변수를 선택해 주세요.</div>';return''}
+  const xv=$('xVar').value,yv=s.y,pts=pointsForSeries(xv,yv,true);
+  if(!pts.length){$('result').innerHTML='<div class="analysisSection">분석할 데이터가 없습니다.</div>';return''}
+
+  const x=pts.map(p=>p.x),y=pts.map(p=>p.y),mn=Math.min(...y),mx=Math.max(...y),mi=y.indexOf(mn),ma=y.indexOf(mx);
+  const scope=selectedRange?`선택 구간 분석 · ${fmt(selectedRange[0])} ~ ${fmt(selectedRange[1])}`:'전체 구간 분석';
+  const color=GRAPH_COLORS[Math.max(0,graphSeriesRows.indexOf(s))];
+
+  let out=`<div class="analysisSection"><div class="analysisTitle">${scope}</div><div class="analysisGrid">
+    <div class="analysisItem"><b>X 변수</b> ${escapeHtml(xv)}</div>
+    <div class="analysisItem"><b>분석 Y 변수</b> <span style="color:${color};font-weight:900">${escapeHtml(yv)}</span></div>
+    <div class="analysisItem"><b>데이터 개수</b> ${y.length}개</div>
+    <div class="analysisItem"><b>X 범위</b> ${fmt(Math.min(...x))} ~ ${fmt(Math.max(...x))}</div></div></div>`;
+
+  out+=`<div class="analysisSection"><div class="analysisTitle">기초 통계</div><div class="analysisGrid">
+    <div class="analysisItem"><b>평균</b> ${fmt(mean(y))}</div><div class="analysisItem"><b>중앙값</b> ${fmt(median(y))}</div>
+    <div class="analysisItem"><b>표준편차</b> ${fmt(stdev(y))}</div><div class="analysisItem"><b>범위</b> ${fmt(mx-mn)}</div>
+    <div class="analysisItem"><b>최소값</b> ${fmt(mn)} (x=${fmt(x[mi])})</div><div class="analysisItem"><b>최대값</b> ${fmt(mx)} (x=${fmt(x[ma])})</div>
+    <div class="analysisItem"><b>전체 변화량</b> ${fmt(y[y.length-1]-y[0])}</div></div></div>`;
+
+  const reg=s.regression==='linear'?linearReg(x,y):s.regression==='quadratic'?quadReg(x,y):null;
+  if(reg?.type==='linear')out+=`<div class="analysisSection"><div class="analysisTitle reg">1차 회귀</div><div class="analysisGrid">
+    <div class="analysisItem"><b>회귀식</b> y = ${fmt(reg.a)}x + ${fmt(reg.b)}</div><div class="analysisItem"><b>기울기</b> ${fmt(reg.a)}</div>
+    <div class="analysisItem"><b>절편</b> ${fmt(reg.b)}</div><div class="analysisItem"><b>R²</b> ${fmt(reg.r2)}</div></div></div>`;
+  if(reg?.type==='quadratic')out+=`<div class="analysisSection"><div class="analysisTitle reg">2차 회귀</div><div class="analysisGrid">
+    <div class="analysisItem"><b>회귀식</b> y = ${fmt(reg.a)}x² + ${fmt(reg.b)}x + ${fmt(reg.c)}</div><div class="analysisItem"><b>R²</b> ${fmt(reg.r2)}</div></div></div>`;
+  $('result').innerHTML=out;
+
+  let text=`[${scope}]\nX 변수: ${xv}\n분석 Y 변수: ${yv}\n데이터 개수: ${y.length}개\nX 범위: ${fmt(Math.min(...x))} ~ ${fmt(Math.max(...x))}\n\n[기초 통계]\n평균: ${fmt(mean(y))}\n중앙값: ${fmt(median(y))}\n표준편차: ${fmt(stdev(y))}\n최소값: ${fmt(mn)} (x=${fmt(x[mi])})\n최대값: ${fmt(mx)} (x=${fmt(x[ma])})\n범위: ${fmt(mx-mn)}\n전체 변화량: ${fmt(y[y.length-1]-y[0])}`;
+  if(reg?.type==='linear')text+=`\n\n[1차 회귀]\ny = ${fmt(reg.a)}x + ${fmt(reg.b)}\n기울기: ${fmt(reg.a)}\n절편: ${fmt(reg.b)}\nR²: ${fmt(reg.r2)}`;
+  if(reg?.type==='quadratic')text+=`\n\n[2차 회귀]\ny = ${fmt(reg.a)}x² + ${fmt(reg.b)}x + ${fmt(reg.c)}\nR²: ${fmt(reg.r2)}`;
+  return text;
+}
+
+$('clearInterval').onclick=()=>{selectedRange=null;if(graphState)renderGraph(graphState,null,null);analyze()};
+$('manualIntervalBtn').onclick=()=>openModal('manualIntervalModal');
+$('intervalApply').onclick=()=>{
+  let a=+$('intervalStart').value,b=+$('intervalEnd').value;
+  if(!Number.isFinite(a)||!Number.isFinite(b)){alert('숫자를 입력하세요.');return}
+  if(a>b)[a,b]=[b,a];
+  selectedRange=[a,b];closeModal('manualIntervalModal');
+  if(graphState)renderGraph(graphState,null,selectedRange);analyze();
+};
+$('intervalBtn').onclick=openIntervalGraph;
+
+function openIntervalGraph(){
+  if(!selectedRange){alert('먼저 그래프에서 구간을 드래그하거나 직접 입력해 주세요.');return}
+  const s=getActiveSeries();if(!s)return;
+  const xv=$('xVar').value,pts=pointsForSeries(xv,s.y,true);
+  if(!pts.length){alert('선택 구간에 데이터가 없습니다.');return}
+  const sd=[{config:{...s,active:true},pts}];
+  let xmin=Math.min(...pts.map(p=>p.x)),xmax=Math.max(...pts.map(p=>p.x));
+  if(xmin===xmax){xmin-=1;xmax+=1}
+  intervalState=makeMultiGraphState($('intervalChart'),xv,sd,{xmin,xmax});
+  renderGraph(intervalState,null,null);
+  $('intervalResult').textContent=analyze();
+  openModal('intervalModal');
+}
+
+$('pngBtn').onclick=()=>saveCanvas($('chart'),`ArduLab_graph_${stamp()}.png`);
+$('intervalPng').onclick=()=>saveCanvas($('intervalChart'),`ArduLab_interval_${stamp()}.png`);
+function saveCanvas(c,name){if(!c.getContext('2d'))return;c.toBlob(b=>downloadBlob(b,name))}
+
+addGraphSeries();
+$('xVar').addEventListener('change',()=>{refreshGraphSeriesOptions();if(graphState)drawGraph()});
 
 // 실험노트 자동저장 + 프롬프트
 const noteMap={noteTitle:'title',noteDesign:'design',noteX:'x_name',noteXDesc:'x_description',noteY:'y_name',noteYDesc:'y_description',noteObs:'observation',noteInterp:'interpretation',noteError:'error',noteQuestion:'question'};
 function loadNoteUI(){for(const[id,key]of Object.entries(noteMap)){if($(id).tagName==='SELECT'){if(allVars.includes(note[key]))$(id).value=note[key]}else $(id).value=note[key]||''}}
 $('noteBtn').onclick=()=>{refreshVarUI();loadNoteUI();openModal('noteModal')};for(const[id,key]of Object.entries(noteMap)){$(id).addEventListener('input',()=>{note[key]=$(id).value;scheduleSave()});$(id).addEventListener('change',()=>{note[key]=$(id).value;scheduleSave()})}
-$('promptBtn').onclick=()=>{const oldX=$('xVar').value,oldY=$('yVar').value;if(note.x_name&&allVars.includes(note.x_name))$('xVar').value=note.x_name;if(note.y_name&&allVars.includes(note.y_name))$('yVar').value=note.y_name;const summary=analyze()||'분석 결과 없음';$('xVar').value=oldX;$('yVar').value=oldY;const intervalText=selectedRange?`${fmt(selectedRange[0])} ~ ${fmt(selectedRange[1])}`:'전체 데이터 사용';const prompt=`다음은 내가 수행한 과학 실험과 데이터 분석 결과입니다.\n\n[실험 제목]\n${note.title}\n\n[실험 설계 요약]\n${note.design}\n\n[활용 변수]\n- X축 변수: ${note.x_name}\n- Y축 변수: ${note.y_name}\n\n[변수 설명]\n[X 변수]\n${note.x_name}\n${note.x_description}\n\n[Y 변수]\n${note.y_name}\n${note.y_description}\n\n[분석 범위]\n- ${intervalText}\n\n[데이터 요약 및 회귀 분석]\n${summary}\n\n[실험 관찰 내용]\n${note.observation}\n\n[내가 먼저 해석한 실험 결과]\n${note.interpretation}\n\n[오차 원인]\n${note.error}\n\n[궁금한 점]\n${note.question}\n\n---\n너는 과학 선생님이자 탐구 활동 협업자의 역할을 해줘.\n\n중요한 규칙:\n- 완성된 보고서나 정답을 대신 써주지 마.\n- 내 해석을 바탕으로 피드백만 해줘.\n- 내가 스스로 고칠 수 있도록 힌트와 질문 중심으로 답해줘.\n- 데이터로 뒷받침되지 않는 주장이 있으면 알려줘.\n- 과학적으로 더 정확하게 표현할 수 있는 방향을 제안해줘.\n\n검토해 줬으면 하는 내용:\n1. 내 해석에서 논리적으로 부족한 부분\n2. 데이터와 연결이 약한 주장\n3. 그래프 경향에 대한 더 나은 설명 방향\n4. 오차 원인으로 생각해볼 수 있는 점\n5. 실험을 개선하기 위한 아이디어\n6. 보고서에 쓰기 전에 내가 스스로 보완해야 할 질문`;$('promptResult').style.display='block';$('promptResult').textContent=prompt;$('copyPrompt').disabled=false};$('copyPrompt').onclick=async()=>{await navigator.clipboard.writeText($('promptResult').textContent);alert('프롬프트를 복사했습니다.')};
+$('promptBtn').onclick=()=>{const summary=analyze()||'분석 결과 없음';const intervalText=selectedRange?`${fmt(selectedRange[0])} ~ ${fmt(selectedRange[1])}`:'전체 데이터 사용';const prompt=`다음은 내가 수행한 과학 실험과 데이터 분석 결과입니다.\n\n[실험 제목]\n${note.title}\n\n[실험 설계 요약]\n${note.design}\n\n[활용 변수]\n- X축 변수: ${note.x_name}\n- Y축 변수: ${note.y_name}\n\n[변수 설명]\n[X 변수]\n${note.x_name}\n${note.x_description}\n\n[Y 변수]\n${note.y_name}\n${note.y_description}\n\n[분석 범위]\n- ${intervalText}\n\n[데이터 요약 및 회귀 분석]\n${summary}\n\n[실험 관찰 내용]\n${note.observation}\n\n[내가 먼저 해석한 실험 결과]\n${note.interpretation}\n\n[오차 원인]\n${note.error}\n\n[궁금한 점]\n${note.question}\n\n---\n너는 과학 선생님이자 탐구 활동 협업자의 역할을 해줘.\n\n중요한 규칙:\n- 완성된 보고서나 정답을 대신 써주지 마.\n- 내 해석을 바탕으로 피드백만 해줘.\n- 내가 스스로 고칠 수 있도록 힌트와 질문 중심으로 답해줘.\n- 데이터로 뒷받침되지 않는 주장이 있으면 알려줘.\n- 과학적으로 더 정확하게 표현할 수 있는 방향을 제안해줘.\n\n검토해 줬으면 하는 내용:\n1. 내 해석에서 논리적으로 부족한 부분\n2. 데이터와 연결이 약한 주장\n3. 그래프 경향에 대한 더 나은 설명 방향\n4. 오차 원인으로 생각해볼 수 있는 점\n5. 실험을 개선하기 위한 아이디어\n6. 보고서에 쓰기 전에 내가 스스로 보완해야 할 질문`;$('promptResult').style.display='block';$('promptResult').textContent=prompt;$('copyPrompt').disabled=false};$('copyPrompt').onclick=async()=>{await navigator.clipboard.writeText($('promptResult').textContent);alert('프롬프트를 복사했습니다.')};
 
 
 // ============================================================
