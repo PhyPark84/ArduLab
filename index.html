@@ -93,7 +93,7 @@
     <button id="disconnect" class="gray" disabled>연결 해제</button>
     <button id="collect" class="orange" disabled>▶ 수집 시작</button>
   </div>
-  <p class="muted">Arduino 출력 형식: <b>freq:500,sound:372</b> · 데이터는 즉시 내부 저장되고 표는 약 0.15초 간격으로 갱신됩니다. 버튼 입력 등으로 데이터가 늦게 발생하는 실험도 그대로 기다립니다. Arduino 연결 후 바로 [수집 시작]을 눌러 대기할 수 있습니다.</p>
+  <p class="muted">Arduino 출력 형식: <b>freq:500,sound:372</b> · 데이터는 즉시 내부 저장되고 표는 약 0.15초 간격으로 갱신됩니다. 버튼 입력 등으로 데이터가 늦게 발생하는 실험도 그대로 기다립니다. Arduino 연결이 완료되면 자동으로 수집 대기 상태가 되며, 첫 정상 데이터부터 바로 저장합니다.</p>
 </section>
 
 <section id="mediaInputPanel" class="card inputPanel">
@@ -332,10 +332,10 @@ Arduino 코드를 작성하거나 수정할 때 시리얼 데이터는 ArduLab�
 
 <script>
 'use strict';
-const MAX_DATA=6000, TABLE_RENDER_LIMIT=500, TABLE_REFRESH_MS=150, SCHEMA_CONFIRM=3;
+const MAX_DATA=6000, TABLE_RENDER_LIMIT=500, TABLE_REFRESH_MS=150;
 const $=id=>document.getElementById(id); const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-let port=null,reader=null,keepReading=false,collecting=false,lineBuffer='',sourceVars=[],allVars=[],tableVars=[],lastSchema='',sameSchema=0,validDataAfterConnect=false,pendingSchemaRows=[];
-let dataRows=[],excluded=new Set(),startTime=null,lastSample=null,totalDt=0,dtCount=0,tableDirty=false,tableTimer=null,diagnosticTimer=null,stabilizingUntil=0;
+let port=null,reader=null,keepReading=false,collecting=false,lineBuffer='',sourceVars=[],allVars=[],tableVars=[];
+let dataRows=[],excluded=new Set(),startTime=null,lastSample=null,totalDt=0,dtCount=0,tableDirty=false,tableTimer=null;
 let selectedRange=null,graphState=null,intervalState=null,dragStartPx=null,hoverMain=null,hoverInterval=null;
 let note={title:'',design:'',x_name:'',x_description:'',y_name:'',y_description:'',observation:'',interpretation:'',error:'',question:''};
 function fmt(n){if(!Number.isFinite(n))return '';const a=Math.abs(n);if(a>=10000||a>0&&a<0.0001)return n.toExponential(3);return n.toFixed(4).replace(/0+$/,'').replace(/\.$/,'')}
@@ -350,81 +350,113 @@ function refreshVarUI(){
  if(allVars.length){if(!$('xVar').value)$('xVar').value=allVars[0];if(!$('yVar').value||$('yVar').value===$('xVar').value)$('yVar').value=allVars.find(v=>v!==$('xVar').value)||allVars[0]}
  if(note.x_name&&allVars.includes(note.x_name))$('noteX').value=note.x_name;if(note.y_name&&allVars.includes(note.y_name))$('noteY').value=note.y_name;
  if(typeof refreshGraphSeriesOptions==='function')refreshGraphSeriesOptions();
- $('collect').disabled=!port;
+ $('collect').disabled=!(port&&port.readable);
 }
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function escapeAttr(s){return escapeHtml(s)}
 function parseLine(line){const out={};for(const p0 of line.trim().split(',')){const p=p0.trim(),i=p.indexOf(':');if(i<0)return null;const k=p.slice(0,i).trim(),v=Number(p.slice(i+1).trim());if(!/^[A-Za-z_][A-Za-z0-9_]*$/.test(k)||!Number.isFinite(v)||k in out)return null;out[k]=v}return Object.keys(out).length?out:null}
 function processSerialData(d){
-  validDataAfterConnect=true;
-  const schema=Object.keys(d).join('|');
-
-  if(schema===lastSchema){
-    sameSchema++;
-  }else{
-    lastSchema=schema;
-    sameSchema=1;
-    pendingSchemaRows=[];
-  }
-
-  // 아직 스키마 확정 전이라도 첫 데이터부터 임시 보관
-  if(!sourceVars.length || sourceVars.join('|')!==schema){
-    pendingSchemaRows.push({data:d,time:performance.now()});
-  }
-
-  if(sameSchema<SCHEMA_CONFIRM){
-    $('schemaMsg').textContent=`감지된 변수: ${Object.keys(d).join(', ')} (${sameSchema}/${SCHEMA_CONFIRM})`;
-    $('status').textContent=collecting?'수집 준비 · 데이터 확인 중':'연결됨 · 데이터 수신 확인';
-    return;
-  }
-
-  const isNewSchema=sourceVars.join('|')!==schema;
-  if(isNewSchema){
-    sourceVars=Object.keys(d);
+  const keys=Object.keys(d);
+  if(!keys.length)return;
+  const schema=keys.join('|');
+  if(!sourceVars.length){
+    sourceVars=[...keys];
     allVars=['time',...sourceVars];
-
-    const validSelected=tableVars.filter(v=>allVars.includes(v));
-    tableVars=validSelected.length?validSelected:[...allVars];
-
+    tableVars=[...allVars];
     refreshVarUI();
     renderTable();
-
-    // 수집 중이었다면 스키마 확인에 사용한 첫 샘플들도 모두 저장
-    if(collecting&&pendingSchemaRows.length){
-      const buffered=[...pendingSchemaRows];
-      pendingSchemaRows=[];
-      buffered.forEach(item=>addSerialRow(item.data,item.time));
-    }else{
-      pendingSchemaRows=[];
-    }
-  }else if(collecting){
-    addSerialRow(d);
+    $('schemaMsg').textContent='변수 인식 완료: '+sourceVars.join(', ');
+  }else if(sourceVars.join('|')!==schema){
+    $('schemaMsg').textContent='현재 변수 형식과 다른 데이터 줄을 건너뛰었습니다. 현재 변수: '+sourceVars.join(', ');
+    return;
   }
-
-  $('schemaMsg').textContent='변수 인식 완료';
-  $('status').textContent=collecting?'데이터 수집 중':'연결됨 · 데이터 수신 확인';
+  if(collecting)addSerialRow(d);
+  $('status').textContent=collecting?'데이터 수집 중':'연결됨 · 수집 중지';
 }
 function addSerialRow(d,receivedAt=null){$('status').textContent='데이터 수집 중';const now=receivedAt??performance.now();if(startTime===null){startTime=now;lastSample=now}const row={time:+((now-startTime)/1000).toFixed(3),...d};dataRows.push(row);if(dataRows.length>MAX_DATA){dataRows.shift();excluded=new Set([...excluded].filter(i=>i>0).map(i=>i-1))}if(lastSample!==null&&now>lastSample){totalDt+=(now-lastSample)/1000;dtCount++;const av=totalDt/dtCount;$('sampling').textContent=`${av.toFixed(3)} s / ${(1/av).toFixed(1)} Hz`}lastSample=now;updateCounts();markTableDirty();scheduleSave()}
 function updateCounts(){$('count').textContent=dataRows.length+'개';$('activeCount').textContent=getActiveRows().length+'개'}
 function markTableDirty(){tableDirty=true} function startTableTimer(){if(tableTimer)return;tableTimer=setInterval(()=>{if(tableDirty){renderTable();tableDirty=false}},TABLE_REFRESH_MS)}
 function renderTable(){const valid=tableVars.filter(v=>allVars.includes(v));const vars=valid.length?valid:(allVars.length?allVars:['time']);$('thead').innerHTML='<tr><th>No.</th>'+vars.map(v=>`<th>${escapeHtml(v)}</th>`).join('')+'</tr>';const start=Math.max(0,dataRows.length-TABLE_RENDER_LIMIT),rows=[];for(let i=start;i<dataRows.length;i++){const r=dataRows[i],cls=excluded.has(i)?'excluded':'';rows.push(`<tr class="${cls}"><td>${i+1}</td>${vars.map(v=>`<td>${fmt(r[v])}</td>`).join('')}</tr>`)}$('tbody').innerHTML=rows.join('');const w=$('tableWrap');w.scrollTop=w.scrollHeight}
-async function readSerial(){const decoder=new TextDecoderStream(),closed=port.readable.pipeTo(decoder.writable);reader=decoder.readable.getReader();try{while(keepReading){const {value,done}=await reader.read();if(done)break;if(!value)continue;if(performance.now()<stabilizingUntil)continue;lineBuffer+=value;const lines=lineBuffer.split(/\r?\n/);lineBuffer=lines.pop();for(const line of lines){
-  if(!line.trim()) continue;
-  const d=parseLine(line);
-  if(d) processSerialData(d);
-  else $('schemaMsg').textContent='데이터 형식을 인식하지 못한 줄이 있습니다. 형식: 변수명:값,변수명:값';
-}}}catch(e){console.error(e);if(keepReading)handleConnectionLost('USB 연결이 끊겼거나 시리얼 통신에 오류가 발생했습니다.')}finally{try{reader?.releaseLock()}catch{}reader=null;try{await closed}catch{}}}
-$('connect').onclick=async()=>{if(!('serial'in navigator)){alert('Chrome 또는 Edge에서 실행해주세요.');return}try{port=await navigator.serial.requestPort();await port.open({baudRate:+$('baud').value});keepReading=true;validDataAfterConnect=false;lastSchema='';sameSchema=0;pendingSchemaRows=[];lineBuffer='';stabilizingUntil=performance.now()+2000;$('status').textContent='연결 안정화 중...';$('connect').disabled=true;$('disconnect').disabled=false;$('baud').disabled=true;$('collect').disabled=false;readSerial();await sleep(2000);if(port){$('status').textContent='연결됨 · 데이터 대기 중';$('schemaMsg').textContent='데이터가 들어올 때까지 기다리는 중입니다.'}}catch(e){console.error(e);$('status').textContent='연결 실패'}};
+async function readSerial(){
+  const decoder=new TextDecoder();
+  try{
+    while(port&&port.readable&&keepReading){
+      reader=port.readable.getReader();
+      try{
+        while(keepReading){
+          const {value,done}=await reader.read();
+          if(done)break;
+          if(!value)continue;
+          lineBuffer+=decoder.decode(value,{stream:true});
+          const lines=lineBuffer.split(/\r?\n/);
+          lineBuffer=lines.pop()||'';
+          for(const line of lines){
+            if(!line.trim())continue;
+            const d=parseLine(line);
+            if(d)processSerialData(d);
+            else $('schemaMsg').textContent='데이터 형식을 인식하지 못했습니다. 형식: 변수명:값,변수명:값';
+          }
+        }
+      }finally{
+        try{reader.releaseLock()}catch{}
+        reader=null;
+      }
+    }
+  }catch(e){
+    if(keepReading)await disconnectSerial(true);
+  }
+}
+$('connect').onclick=async()=>{
+  if(!('serial'in navigator)){alert('Chrome 또는 Edge에서 실행해주세요.');return}
+  let selectedPort=null;
+  try{
+    selectedPort=await navigator.serial.requestPort();
+    await selectedPort.open({baudRate:+$('baud').value});
+    port=selectedPort;
+    keepReading=true;
+    collecting=true;
+    lineBuffer='';
+    sourceVars=[];allVars=[];tableVars=[];
+    startTime=null;lastSample=null;totalDt=0;dtCount=0;
+    $('connect').disabled=true;
+    $('disconnect').disabled=false;
+    $('baud').disabled=true;
+    $('collect').disabled=false;
+    $('collect').textContent='■ 수집 중지';
+    $('status').textContent='연결됨 · 데이터 대기 중';
+    $('schemaMsg').textContent='정상 형식의 첫 데이터를 기다리는 중입니다.';
+    refreshVarUI();
+    readSerial();
+  }catch(e){
+    collecting=false;keepReading=false;reader=null;port=null;
+    $('connect').disabled=false;$('disconnect').disabled=true;$('baud').disabled=false;
+    $('collect').disabled=true;$('collect').textContent='▶ 수집 시작';
+    if(e?.name==='NotFoundError'){
+      $('status').textContent='연결 안 됨';$('schemaMsg').textContent='포트 선택이 취소되었습니다.';
+    }else{
+      $('status').textContent='연결 실패';
+      $('schemaMsg').textContent='포트를 열 수 없습니다. Arduino IDE 시리얼 모니터/플로터, 다른 ArduLab 탭, USB 연결을 확인하세요.';
+    }
+    try{if(selectedPort?.readable||selectedPort?.writable)await selectedPort.close()}catch{}
+  }
+};
 $('disconnect').onclick=()=>disconnectSerial(false);
-async function disconnectSerial(lost=false){keepReading=false;collecting=false;pendingSchemaRows=[];try{await reader?.cancel()}catch{}try{await port?.close()}catch{}port=null;$('status').textContent=lost?'연결 끊김 (데이터 유지)':'연결 해제';$('connect').disabled=false;$('disconnect').disabled=true;$('baud').disabled=false;$('collect').disabled=true;$('collect').textContent='▶ 수집 시작'}
+async function disconnectSerial(lost=false){
+  keepReading=false;collecting=false;
+  try{if(reader){await reader.cancel();reader.releaseLock()}}catch{}
+  reader=null;const p=port;port=null;
+  try{if(p)await p.close()}catch{}
+  $('connect').disabled=false;$('disconnect').disabled=true;$('baud').disabled=false;
+  $('collect').disabled=true;$('collect').textContent='▶ 수집 시작';
+  $('status').textContent=lost?'연결 끊김':'연결 안 됨';
+  $('schemaMsg').textContent=lost?'USB 연결이 끊어졌습니다. 수집된 데이터는 유지됩니다.':'변수 대기 중';
+}
 function handleConnectionLost(msg){disconnectSerial(true);alert(msg+'\n수집된 데이터는 유지됩니다.')}
 if('serial'in navigator)navigator.serial.addEventListener('disconnect',e=>{if(port&&e.target===port)handleConnectionLost('Arduino가 분리되었습니다.')});
 $('collect').onclick=()=>{
+  if(!port||!port.readable)return;
   collecting=!collecting;
-  if(collecting&&dataRows.length===0){startTime=null;lastSample=null;totalDt=0;dtCount=0}
   $('collect').textContent=collecting?'■ 수집 중지':'▶ 계속 실험하기';
-  $('status').textContent=collecting
-    ? (sourceVars.length?'데이터 수집 중':'수집 준비 · 데이터 대기 중')
-    : '데이터 수집 중지';
+  $('status').textContent=collecting?(sourceVars.length?'데이터 수집 중':'연결됨 · 데이터 대기 중'):'연결됨 · 수집 중지';
 };
 
 // 현재 세션 동안에는 JS 메모리에만 유지합니다.
@@ -980,9 +1012,6 @@ function resetWholeExperiment(){
   lastSample=null;
   totalDt=0;
   dtCount=0;
-  lastSchema='';
-  sameSchema=0;
-  pendingSchemaRows=[];
 
   note={title:'',design:'',x_name:'',x_description:'',y_name:'',y_description:'',observation:'',interpretation:'',error:'',question:''};
   loadNoteUI();
@@ -1007,9 +1036,9 @@ function resetWholeExperiment(){
   $('schemaMsg').textContent=port?'데이터가 들어올 때까지 기다리는 중입니다.':'변수 대기 중';
   $('status').textContent=port?'연결됨 · 데이터 대기 중':'연결 안 됨';
 
-  collecting=false;
-  $('collect').textContent='▶ 수집 시작';
-  $('collect').disabled=!port;
+  collecting=!!(port&&port.readable);
+  $('collect').textContent=collecting?'■ 수집 중지':'▶ 수집 시작';
+  $('collect').disabled=!(port&&port.readable);
 
   closeModal('newExperimentModal');
 }
