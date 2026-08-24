@@ -26,6 +26,12 @@
 .mediaStage{position:relative;width:100%;background:#111;border-radius:12px;overflow:hidden;border:1px solid var(--line);min-height:260px;display:flex;align-items:center;justify-content:center}
 #mediaCanvas{display:block;max-width:100%;height:auto;background:#111;cursor:crosshair}
 .mediaControls{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin:9px 0}
+.mediaTargetBox,.mediaStepBox{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px;background:#fbfcfd}
+.mediaTargetBox{background:#f8fbfc}
+.mediaStepBox{background:#fff}
+.mediaTargetTitle{font-size:13px;font-weight:900;color:#334155;margin-bottom:4px}
+.scaleLabelTag{display:inline-block;padding:3px 7px;border-radius:7px;background:#111;color:#fff;font:bold 13px Arial}
+
 .mediaControls input{width:110px}
 .mediaHint{background:#eef8f8;border:1px solid #cfe8e8;border-radius:9px;padding:9px 11px;color:#315d60;font-size:13px;line-height:1.5}
 .mediaTableWrap{max-height:230px;overflow:auto;border:1px solid var(--line);border-radius:9px;margin-top:9px}
@@ -46,8 +52,13 @@
 .seriesMini input[type=number]{width:58px;padding:6px}
 .seriesMini select{padding:6px}
 .seriesRemove{padding:6px 9px}
+.xSeriesRow{border-color:#d7dde3;background:#fff}
+.xSeriesSwatch{background:#111;color:#111}
+.xCommonBadge{font-weight:800;color:#111}
+
 @media(max-width:760px){
   .graphSeriesRow{grid-template-columns:auto 1fr auto}
+  .xSeriesRow span:nth-child(n+4){display:none}
 }
 
 </style>
@@ -95,7 +106,7 @@
     <button id="disconnect" class="gray" disabled>연결 해제</button>
     <button id="collect" class="orange" disabled>▶ 수집 시작</button>
   </div>
-  <p class="muted">Arduino 출력 형식: <b>freq:500,sound:372</b> · 데이터는 즉시 내부 저장되고 표는 약 0.15초 간격으로 갱신됩니다. 버튼 입력 등으로 데이터가 늦게 발생하는 실험도 그대로 기다립니다. Arduino 연결이 완료되면 자동으로 수집 대기 상태가 되며, 첫 정상 데이터부터 바로 저장합니다.</p>
+  
 </section>
 
 <section id="mediaInputPanel" class="card inputPanel">
@@ -107,30 +118,33 @@
     <span id="mediaStatus" class="mediaStatus">사진 또는 영상을 불러와 주세요.</span>
   </div>
 
-  <div class="mediaControls">
-    <label>기록 대상
-      <select id="mediaTargetSelect">
-        <option value="1">대상 1</option>
-        <option value="2">대상 2</option>
-        <option value="3">대상 3</option>
-      </select>
-    </label>
-    <label>대상 이름 <input id="mediaTargetName" value="대상1" placeholder="예: 왼쪽 물체"></label>
-    <button id="applyTargetNameBtn" class="gray small">이름 적용</button>
-    <label>기준 길이 <input id="scaleLength" type="number" min="0" step="any" placeholder="예: 30"></label>
-    <label>단위
-      <select id="scaleUnit">
-        <option value="mm">mm</option>
-        <option value="cm" selected>cm</option>
-        <option value="m">m</option>
-      </select>
-    </label>
-    <button id="setScaleBtn" class="stepBtn step-active">① 기준 길이 설정</button>
-    <button id="setAxisBtn" class="stepBtn step-disabled">② 좌표축 설정</button>
-    <button id="recordPointBtn" class="stepBtn step-disabled">③ 점 기록</button>
-    <button id="undoMediaPointBtn" class="stepBtn step-disabled">마지막 점 취소</button>
-    <button id="clearMediaPointsBtn" class="stepBtn step-disabled">측정점 지우기</button>
+  
+  <div class="mediaTargetBox">
+    <div class="mediaTargetTitle">기록 대상 설정</div>
+    <div class="mediaControls">
+      <label>기록 대상
+        <select id="mediaTargetSelect">
+          <option value="1">대상 1</option>
+          <option value="2">대상 2</option>
+          <option value="3">대상 3</option>
+        </select>
+      </label>
+      <label>대상 이름 <input id="mediaTargetName" value="대상1" placeholder="예: 왼쪽 물체"></label>
+      <button id="applyTargetNameBtn" class="gray small">이름 적용</button>
+    </div>
   </div>
+
+  <div class="mediaStepBox">
+    <div class="mediaTargetTitle">측정 단계</div>
+    <div class="mediaControls">
+      <button id="setScaleBtn" class="stepBtn step-disabled">① 기준 길이 설정</button>
+      <button id="setAxisBtn" class="stepBtn step-disabled">② 좌표축 설정</button>
+      <button id="recordPointBtn" class="stepBtn step-disabled">③ 점 기록</button>
+      <button id="undoMediaPointBtn" class="stepBtn step-disabled">마지막 점 취소</button>
+      <button id="clearMediaPointsBtn" class="stepBtn step-disabled">측정점 지우기</button>
+    </div>
+  </div>
+
 
   <div id="videoControls" class="mediaControls" style="display:none">
     <button id="videoPlayBtn" class="soft">▶ 재생</button>
@@ -189,8 +203,17 @@
 <section class="card"><h2>🧮 데이터 처리</h2><div class="row"><button id="tableVarsBtn" class="gray">표 변수 선택</button><button id="calcVarBtn" class="soft">계산 변수 추가</button><button id="maVarBtn" class="soft">이동평균 변수 생성</button><button id="outlierBtn" class="soft">이상값 제외</button><button id="outlierReset" class="gray">이상값 초기화</button></div><p class="muted">이상값은 실제 삭제하지 않고 분석에서만 제외합니다.</p></section>
 </div><div>
 <section class="card"><h2>📈 그래프 / 분석</h2>
-<div class="controls" style="grid-template-columns:1fr">
-  <label>X축 (공통)<select id="xVar"></select></label>
+<div class="graphSeriesList" style="margin-top:0">
+  <div class="graphSeriesRow xSeriesRow">
+    <span class="seriesSwatch xSeriesSwatch" title="공통 X축"></span>
+    <label class="seriesLabel">X축 (공통)
+      <select id="xVar" style="width:100%;margin-top:3px"></select>
+    </label>
+    <span class="seriesMini xCommonBadge">공통축</span>
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
 </div>
 
 <div id="graphSeriesList" class="graphSeriesList"></div>
@@ -256,6 +279,32 @@ Arduino 코드를 작성하거나 수정할 때 시리얼 데이터는 ArduLab�
 앞으로 내가 요청하는 Arduino 실험 코드는 이 규칙을 유지해서 작성해줘.</div>
 <button id="copySetupPrompt" class="primary" style="margin-top:9px">초기 프롬프트 복사</button></div>
 </div></div>
+
+<!-- 기준 길이 입력 -->
+<div id="scaleInputModal" class="modal">
+  <div class="modalBox">
+    <div class="modalHead">
+      <h3>기준 길이 입력</h3>
+      <button data-close="scaleInputModal" class="gray">닫기</button>
+    </div>
+    <p class="muted">방금 선택한 두 점 사이의 실제 길이를 입력하세요.</p>
+    <div class="controls">
+      <label>기준 길이
+        <input id="scaleLengthPopup" type="text" inputmode="decimal" placeholder="예: 30">
+      </label>
+      <label>단위
+        <select id="scaleUnitPopup">
+          <option value="mm">mm</option>
+          <option value="cm" selected>cm</option>
+          <option value="m">m</option>
+        </select>
+      </label>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button id="scaleApplyPopup" class="primary">적용</button>
+    </div>
+  </div>
+</div>
 
 <!-- 표 변수 선택 -->
 <div id="tableVarsModal" class="modal"><div class="modalBox"><div class="modalHead"><h3>표에 표시할 변수 선택</h3><button data-close="tableVarsModal" class="gray">닫기</button></div><div id="tableVarChecks" class="checkgrid"></div><div class="row" style="margin-top:12px"><button id="selectAllVars" class="soft">전체 선택</button><button id="clearAllVars" class="gray">전체 해제</button><button id="applyTableVars" class="primary">적용</button></div></div></div>
@@ -1055,6 +1104,8 @@ let mediaTool = 'none';         // none | scale | axis | record
 let scaleClicks = [];
 let axisClicks = [];
 let mediaScale = null;          // 실제 단위 / canvas pixel
+let mediaScaleLength=null;          // 표시용 실제 길이
+let pendingScaleClicks=null;        // 두 점 클릭 후 팝업 입력 대기
 let mediaUnit = 'cm';
 let mediaOrigin = null;
 let mediaXAxis = null;          // normalized screen-space x basis
@@ -1090,8 +1141,8 @@ function updateMediaStepUI(){
   }else if(!scaleDone){
     setStepState(
       'setScaleBtn',
-      mediaTool==='scale' ? 'working' : 'active',
-      mediaTool==='scale' ? '● 기준 길이 두 점 선택 중' : '① 기준 길이 설정'
+      (mediaTool==='scale'||mediaTool==='scaleInput') ? 'working' : 'active',
+      mediaTool==='scaleInput' ? '● 기준 길이 입력 중' : (mediaTool==='scale' ? '● 기준 길이 두 점 선택 중' : '① 기준 길이 설정')
     );
     setStepState('setAxisBtn','disabled','② 좌표축 설정');
     setStepState('recordPointBtn','disabled','③ 점 기록');
@@ -1157,7 +1208,7 @@ function clearAllMediaPoints(){
 }
 
 function resetMediaCalibration(clearPoints=true){
-  scaleClicks=[]; axisClicks=[]; mediaScale=null; mediaOrigin=null; mediaXAxis=null; mediaTool='none';
+  scaleClicks=[]; axisClicks=[]; mediaScale=null; mediaScaleLength=null; pendingScaleClicks=null; mediaOrigin=null; mediaXAxis=null; mediaTool='none';
   if(clearPoints) clearAllMediaPoints();
   renderMediaPointTable();
   drawMediaFrame();
@@ -1231,8 +1282,18 @@ $('mediaFileInput').onchange=e=>{
       configureMediaCanvas(mediaVideo.videoWidth||960,mediaVideo.videoHeight||540);
       $('mediaStatus').textContent='영상 불러오기 완료';
       $('videoTime').textContent='0.000 s';
-      drawMediaFrame();
-      updateMediaStepUI();
+
+      // 첫 프레임을 즉시 보여준다.
+      const firstTime=(mediaVideo.duration&&mediaVideo.duration>0.02)?0.01:0;
+      const drawFirst=()=>{
+        $('videoTime').textContent=mediaVideo.currentTime.toFixed(3)+' s';
+        drawMediaFrame();
+        updateMediaStepUI();
+      };
+      mediaVideo.addEventListener('seeked',drawFirst,{once:true});
+      try{mediaVideo.currentTime=firstTime}catch{drawFirst()}
+      // 일부 브라우저에서 seeked가 늦는 경우 대비
+      setTimeout(()=>{if(mediaKind==='video')drawMediaFrame()},120);
     };
     mediaVideo.onplay=()=>{ $('videoPlayBtn').textContent='⏸ 정지'; animateVideo(); };
     mediaVideo.onpause=()=>{ $('videoPlayBtn').textContent='▶ 재생'; cancelAnimationFrame(mediaRaf); drawMediaFrame(); };
@@ -1264,18 +1325,61 @@ $('nextFrameBtn').onclick=()=>stepFrame(1);
 
 $('setScaleBtn').onclick=()=>{
   if(!mediaKind){alert('먼저 사진이나 영상을 불러와 주세요.');return}
-  const L=validatePositiveNumber($('scaleLength').value,'기준 길이',false);
-  if(L===null)return;
-  mediaUnit=$('scaleUnit').value;
-  scaleClicks=[]; mediaTool='scale';
-  $('mediaHint').textContent='기준 길이의 양 끝점을 차례로 클릭하세요. (2점)';
+
+  // 재설정 시 기존 기준선/텍스트와 좌표축을 지운 뒤 다시 시작
+  mediaScale=null;
+  mediaScaleLength=null;
+  pendingScaleClicks=null;
+  scaleClicks=[];
+  axisClicks=[];
+  mediaOrigin=null;
+  mediaXAxis=null;
+  mediaTool='scale';
+
+  $('mediaHint').textContent='기준 길이로 사용할 선의 양 끝점을 차례로 클릭하세요. (2점)';
   updateMediaStepUI();
+  drawMediaFrame();
 };
+
+$('scaleApplyPopup').onclick=()=>{
+  const raw=$('scaleLengthPopup').value.trim();
+  const L=Number(raw);
+  if(!Number.isFinite(L)||L<=0){
+    alert('기준 길이는 0보다 큰 숫자로 입력해 주세요.');
+    return;
+  }
+  if(!pendingScaleClicks||pendingScaleClicks.length!==2){
+    alert('기준 길이 두 점을 다시 선택해 주세요.');
+    closeModal('scaleInputModal');
+    mediaTool='scale';
+    updateMediaStepUI();
+    return;
+  }
+  const d=Math.hypot(
+    pendingScaleClicks[1].x-pendingScaleClicks[0].x,
+    pendingScaleClicks[1].y-pendingScaleClicks[0].y
+  );
+  mediaUnit=$('scaleUnitPopup').value;
+  mediaScaleLength=L;
+  mediaScale=L/d;
+  scaleClicks=[...pendingScaleClicks];
+  pendingScaleClicks=null;
+  mediaTool='none';
+  closeModal('scaleInputModal');
+  $('mediaHint').textContent=`기준 길이 설정 완료: ${fmt(L)} ${mediaUnit}. 이제 좌표축을 설정하세요.`;
+  updateMediaStepUI();
+  drawMediaFrame();
+};
+
 $('setAxisBtn').onclick=()=>{
   if(!mediaScale){alert('먼저 기준 길이를 설정해 주세요.');return}
-  axisClicks=[]; mediaTool='axis';
+  axisClicks=[];
+  mediaOrigin=null;
+  mediaXAxis=null;
+  mediaTool='axis';
   $('mediaHint').textContent='좌표의 원점을 클릭한 뒤, +X축 방향의 두 번째 점을 클릭하세요.';
   updateMediaStepUI();
+  drawMediaFrame();
 };
 $('recordPointBtn').onclick=()=>{
   if(!mediaOrigin||!mediaXAxis||!mediaScale){alert('먼저 기준 길이와 좌표축을 설정해 주세요.');return}
@@ -1302,12 +1406,15 @@ mediaCanvas.addEventListener('click',e=>{
     scaleClicks.push(p);
     if(scaleClicks.length===2){
       const d=Math.hypot(scaleClicks[1].x-scaleClicks[0].x,scaleClicks[1].y-scaleClicks[0].y);
-      const L=+$('scaleLength').value;
-      if(d<2){scaleClicks=[];alert('두 점을 조금 더 떨어뜨려 선택해 주세요.');return}
-      mediaScale=L/d;
-      mediaTool='none';
-      $('mediaHint').textContent=`기준 설정 완료: ${fmt(L)} ${mediaUnit} = ${fmt(d)} px. 이제 좌표축을 설정하세요.`;
+      if(d<2){scaleClicks=[];alert('두 점을 조금 더 떨어뜨려 선택해 주세요.');drawMediaFrame();return}
+      pendingScaleClicks=[...scaleClicks];
+      mediaTool='scaleInput';
+      $('scaleLengthPopup').value='';
+      $('scaleUnitPopup').value=mediaUnit||'cm';
+      $('mediaHint').textContent='선택한 두 점의 실제 길이를 입력하세요.';
       updateMediaStepUI();
+      drawMediaFrame();
+      openModal('scaleInputModal');
     }
   }else if(mediaTool==='axis'){
     axisClicks.push(p);
@@ -1362,7 +1469,27 @@ function drawMediaFrame(){
 
   if(scaleClicks.length){
     scaleClicks.forEach(p=>drawCross(mediaCtx,p,7,'#f59e0b'));
-    if(scaleClicks.length===2){mediaCtx.strokeStyle='#f59e0b';mediaCtx.lineWidth=2;mediaCtx.beginPath();mediaCtx.moveTo(scaleClicks[0].x,scaleClicks[0].y);mediaCtx.lineTo(scaleClicks[1].x,scaleClicks[1].y);mediaCtx.stroke()}
+    if(scaleClicks.length===2){
+      mediaCtx.strokeStyle='#f59e0b';
+      mediaCtx.lineWidth=3;
+      mediaCtx.beginPath();
+      mediaCtx.moveTo(scaleClicks[0].x,scaleClicks[0].y);
+      mediaCtx.lineTo(scaleClicks[1].x,scaleClicks[1].y);
+      mediaCtx.stroke();
+
+      if(mediaScale&&mediaScaleLength){
+        const mx=(scaleClicks[0].x+scaleClicks[1].x)/2;
+        const my=(scaleClicks[0].y+scaleClicks[1].y)/2;
+        const label=`${fmt(mediaScaleLength)} ${mediaUnit}`;
+        mediaCtx.font='bold 14px Arial';
+        const tw=mediaCtx.measureText(label).width;
+        mediaCtx.fillStyle='#111';
+        mediaCtx.fillRect(mx-tw/2-6,my-25,tw+12,22);
+        mediaCtx.fillStyle='#fff';
+        mediaCtx.textAlign='center';
+        mediaCtx.fillText(label,mx,my-9);
+      }
+    }
   }
 
   if(mediaOrigin){
