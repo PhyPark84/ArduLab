@@ -35,6 +35,10 @@
 .mediaControls input{width:110px}
 .mediaHint{background:#eef8f8;border:1px solid #cfe8e8;border-radius:9px;padding:9px 11px;color:#315d60;font-size:13px;line-height:1.5}
 .mediaTableWrap{max-height:230px;overflow:auto;border:1px solid var(--line);border-radius:9px;margin-top:9px}
+.videoTimeline{display:grid;grid-template-columns:auto minmax(180px,1fr) auto;gap:10px;align-items:center;margin:8px 0 4px}
+.videoTimeline input[type=range]{width:100%;accent-color:var(--a)}
+.videoTimeline span{font-size:12px;font-weight:800;color:#475569;white-space:nowrap}
+
 .mediaStatus{font-weight:800;color:#08767b}
 .stepBtn{transition:.15s}
 .stepBtn.step-active{background:#ff7a00;color:#fff}
@@ -130,28 +134,42 @@
         </select>
       </label>
       <label>대상 이름 <input id="mediaTargetName" value="대상1" placeholder="예: 왼쪽 물체"></label>
-      <button id="applyTargetNameBtn" class="gray small">이름 적용</button>
+      
     </div>
   </div>
 
   <div class="mediaStepBox">
     <div class="mediaTargetTitle">측정 단계</div>
     <div class="mediaControls">
-      <button id="setScaleBtn" class="stepBtn step-disabled">① 기준 길이 설정</button>
-      <button id="setAxisBtn" class="stepBtn step-disabled">② 좌표축 설정</button>
-      <button id="recordPointBtn" class="stepBtn step-disabled">③ 점 기록</button>
+      <button id="setScaleBtn" class="stepBtn step-disabled">기준 길이 설정</button>
+      <button id="setAxisBtn" class="stepBtn step-disabled">좌표축 설정</button>
+      <button id="recordPointBtn" class="stepBtn step-disabled">점 기록</button>
       <button id="undoMediaPointBtn" class="stepBtn step-disabled">마지막 점 취소</button>
       <button id="clearMediaPointsBtn" class="stepBtn step-disabled">측정점 지우기</button>
     </div>
   </div>
 
 
-  <div id="videoControls" class="mediaControls" style="display:none">
-    <button id="videoPlayBtn" class="soft">▶ 재생</button>
-    <button id="prevFrameBtn" class="gray">◀ 이전 프레임</button>
-    <button id="nextFrameBtn" class="gray">다음 프레임 ▶</button>
-    <label>FPS <input id="videoFps" type="number" min="1" step="1" value="30"></label>
-    <span id="videoTime" class="muted">0.000 s</span>
+  <div id="videoControls" style="display:none">
+    <div class="mediaControls">
+      <button id="videoPlayBtn" class="soft">▶ 재생</button>
+      <button id="prevFrameBtn" class="gray">◀ 이전 프레임</button>
+      <button id="nextFrameBtn" class="gray">다음 프레임 ▶</button>
+      <label>FPS <input id="videoFps" type="number" min="1" step="1" value="30"></label>
+      <label class="seriesMini">
+        <input id="autoAdvanceCheck" type="checkbox" checked>
+        점 기록 후 자동 이동
+      </label>
+      <label>이동 프레임
+        <input id="autoAdvanceFrames" type="number" min="1" step="1" value="1">
+      </label>
+    </div>
+    <div class="videoTimeline">
+      <span id="videoCurrentLabel">0.000 s</span>
+      <input id="videoSeek" type="range" min="0" max="1000" step="1" value="0">
+      <span id="videoDurationLabel">0.000 s</span>
+    </div>
+    <div id="videoTime" class="muted" style="display:none">0.000 s</div>
   </div>
 
   <div id="mediaHint" class="mediaHint">
@@ -1135,33 +1153,38 @@ function updateMediaStepUI(){
   const hasPoints=allMediaPointCount()>0;
 
   if(!hasMedia){
-    setStepState('setScaleBtn','disabled','① 기준 길이 설정');
-    setStepState('setAxisBtn','disabled','② 좌표축 설정');
-    setStepState('recordPointBtn','disabled','③ 점 기록');
-  }else if(!scaleDone){
-    setStepState(
-      'setScaleBtn',
-      (mediaTool==='scale'||mediaTool==='scaleInput') ? 'working' : 'active',
-      mediaTool==='scaleInput' ? '● 기준 길이 입력 중' : (mediaTool==='scale' ? '● 기준 길이 두 점 선택 중' : '① 기준 길이 설정')
-    );
-    setStepState('setAxisBtn','disabled','② 좌표축 설정');
-    setStepState('recordPointBtn','disabled','③ 점 기록');
-  }else if(!axisDone){
-    setStepState('setScaleBtn','done','✓ 기준 길이 설정');
-    setStepState(
-      'setAxisBtn',
-      mediaTool==='axis' ? 'working' : 'active',
-      mediaTool==='axis' ? '● 원점과 X축 방향 선택 중' : '② 좌표축 설정'
-    );
-    setStepState('recordPointBtn','disabled','③ 점 기록');
+    setStepState('setScaleBtn','disabled','기준 길이 설정');
+    setStepState('setAxisBtn','disabled','좌표축 설정');
+    setStepState('recordPointBtn','disabled','점 기록');
   }else{
-    setStepState('setScaleBtn','done','✓ 기준 길이 설정');
-    setStepState('setAxisBtn','done','✓ 좌표축 설정');
-    setStepState(
-      'recordPointBtn',
-      mediaTool==='record' ? 'working' : 'active',
-      mediaTool==='record' ? '● 점 기록 중' : '③ 점 기록'
-    );
+    // 기준 길이와 좌표축은 서로 독립적으로 언제든 설정/재설정 가능
+    if(mediaTool==='scale'){
+      setStepState('setScaleBtn','working','● 기준 길이 두 점 선택 중');
+    }else if(mediaTool==='scaleInput'){
+      setStepState('setScaleBtn','working','● 기준 길이 입력 중');
+    }else if(scaleDone){
+      setStepState('setScaleBtn','done','✓ 기준 길이 설정');
+    }else{
+      setStepState('setScaleBtn','active','기준 길이 설정');
+    }
+
+    if(mediaTool==='axis'){
+      setStepState('setAxisBtn','working','● 원점과 X축 방향 선택 중');
+    }else if(axisDone){
+      setStepState('setAxisBtn','done','✓ 좌표축 설정');
+    }else{
+      setStepState('setAxisBtn','active','좌표축 설정');
+    }
+
+    if(scaleDone&&axisDone){
+      setStepState(
+        'recordPointBtn',
+        mediaTool==='record'?'working':'active',
+        mediaTool==='record'?'● 점 기록 중':'점 기록'
+      );
+    }else{
+      setStepState('recordPointBtn','disabled','점 기록');
+    }
   }
 
   setStepState('undoMediaPointBtn',hasPoints?'neutral':'disabled','마지막 점 취소');
@@ -1238,21 +1261,37 @@ function openMediaPicker(kind){
   input.click();
 }
 
+
+function applyCurrentTargetName(){
+  const id=currentMediaTargetId();
+  const el=$('mediaTargetName');
+  if(!el)return;
+  const name=el.value.trim();
+  if(!name){
+    el.value=mediaTargetNames[id]||`대상${id}`;
+    return;
+  }
+  mediaTargetNames[id]=name;
+  renderMediaPointTable();
+  drawMediaFrame();
+  scheduleSave();
+}
+$('mediaTargetName').addEventListener('change',applyCurrentTargetName);
+$('mediaTargetName').addEventListener('blur',applyCurrentTargetName);
+$('mediaTargetName').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    e.preventDefault();
+    applyCurrentTargetName();
+    e.target.blur();
+  }
+});
+
 $('mediaTargetSelect').onchange=()=>{
   syncCurrentMediaPoints();
   $('mediaTargetName').value=currentMediaTargetName();
   renderMediaPointTable();
   drawMediaFrame();
   updateMediaStepUI();
-};
-$('applyTargetNameBtn').onclick=()=>{
-  const id=currentMediaTargetId();
-  const name=$('mediaTargetName').value.trim();
-  if(!name){alert('대상 이름을 입력해 주세요.');return}
-  mediaTargetNames[id]=name;
-  renderMediaPointTable();
-  drawMediaFrame();
-  scheduleSave();
 };
 
 $('loadImageBtn').onclick=()=>openMediaPicker('image');
@@ -1281,12 +1320,12 @@ $('mediaFileInput').onchange=e=>{
     mediaVideo.onloadedmetadata=()=>{
       configureMediaCanvas(mediaVideo.videoWidth||960,mediaVideo.videoHeight||540);
       $('mediaStatus').textContent='영상 불러오기 완료';
-      $('videoTime').textContent='0.000 s';
+      $('videoTime').textContent='0.000 s';$('videoCurrentLabel').textContent='0.000 s';$('videoDurationLabel').textContent=(Number.isFinite(mediaVideo.duration)?mediaVideo.duration:0).toFixed(3)+' s';$('videoSeek').value=0;
 
       // 첫 프레임을 즉시 보여준다.
       const firstTime=(mediaVideo.duration&&mediaVideo.duration>0.02)?0.01:0;
       const drawFirst=()=>{
-        $('videoTime').textContent=mediaVideo.currentTime.toFixed(3)+' s';
+        updateVideoTimeline();
         drawMediaFrame();
         updateMediaStepUI();
       };
@@ -1297,13 +1336,32 @@ $('mediaFileInput').onchange=e=>{
     };
     mediaVideo.onplay=()=>{ $('videoPlayBtn').textContent='⏸ 정지'; animateVideo(); };
     mediaVideo.onpause=()=>{ $('videoPlayBtn').textContent='▶ 재생'; cancelAnimationFrame(mediaRaf); drawMediaFrame(); };
-    mediaVideo.ontimeupdate=()=>{ $('videoTime').textContent=mediaVideo.currentTime.toFixed(3)+' s'; };
+    mediaVideo.ontimeupdate=()=>{updateVideoTimeline();};
   }
   e.target.value='';
 };
 
+
+function updateVideoTimeline(){
+  if(mediaKind!=='video')return;
+  const duration=Number.isFinite(mediaVideo.duration)?mediaVideo.duration:0;
+  const current=mediaVideo.currentTime||0;
+  const ratio=duration>0?current/duration:0;
+  $('videoSeek').value=Math.max(0,Math.min(1000,Math.round(ratio*1000)));
+  $('videoCurrentLabel').textContent=current.toFixed(3)+' s';
+  $('videoDurationLabel').textContent=duration.toFixed(3)+' s';
+  $('videoTime').textContent=current.toFixed(3)+' s';
+}
+$('videoSeek').addEventListener('input',()=>{
+  if(mediaKind!=='video'||!Number.isFinite(mediaVideo.duration)||mediaVideo.duration<=0)return;
+  mediaVideo.pause();
+  mediaVideo.currentTime=(+$('videoSeek').value/1000)*mediaVideo.duration;
+});
+$('videoSeek').addEventListener('change',()=>setTimeout(()=>{drawMediaFrame();updateVideoTimeline()},30));
+
 function animateVideo(){
   drawMediaFrame();
+  updateVideoTimeline();
   if(!mediaVideo.paused&&!mediaVideo.ended) mediaRaf=requestAnimationFrame(animateVideo);
 }
 
@@ -1318,7 +1376,7 @@ function stepFrame(dir){
   if(fps===null)return;
   mediaVideo.pause();
   mediaVideo.currentTime=Math.max(0,Math.min(mediaVideo.duration||Infinity,mediaVideo.currentTime+dir/fps));
-  setTimeout(drawMediaFrame,30);
+  setTimeout(()=>{drawMediaFrame();updateVideoTimeline()},30);
 }
 $('prevFrameBtn').onclick=()=>stepFrame(-1);
 $('nextFrameBtn').onclick=()=>stepFrame(1);
@@ -1326,14 +1384,11 @@ $('nextFrameBtn').onclick=()=>stepFrame(1);
 $('setScaleBtn').onclick=()=>{
   if(!mediaKind){alert('먼저 사진이나 영상을 불러와 주세요.');return}
 
-  // 재설정 시 기존 기준선/텍스트와 좌표축을 지운 뒤 다시 시작
+  // 기준 길이만 재설정한다. 기존 좌표축은 유지한다.
   mediaScale=null;
   mediaScaleLength=null;
   pendingScaleClicks=null;
   scaleClicks=[];
-  axisClicks=[];
-  mediaOrigin=null;
-  mediaXAxis=null;
   mediaTool='scale';
 
   $('mediaHint').textContent='기준 길이로 사용할 선의 양 끝점을 차례로 클릭하세요. (2점)';
@@ -1366,23 +1421,29 @@ $('scaleApplyPopup').onclick=()=>{
   pendingScaleClicks=null;
   mediaTool='none';
   closeModal('scaleInputModal');
-  $('mediaHint').textContent=`기준 길이 설정 완료: ${fmt(L)} ${mediaUnit}. 이제 좌표축을 설정하세요.`;
+  $('mediaHint').textContent=`기준 길이 설정 완료: ${fmt(L)} ${mediaUnit}. 좌표축도 설정되면 점 기록을 시작할 수 있습니다.`;
   updateMediaStepUI();
   drawMediaFrame();
 };
 
 $('setAxisBtn').onclick=()=>{
-  if(!mediaScale){alert('먼저 기준 길이를 설정해 주세요.');return}
+  if(!mediaKind){alert('먼저 사진이나 영상을 불러와 주세요.');return}
+
+  // 좌표축만 재설정한다. 기존 기준 길이는 유지한다.
   axisClicks=[];
   mediaOrigin=null;
   mediaXAxis=null;
   mediaTool='axis';
+
   $('mediaHint').textContent='좌표의 원점을 클릭한 뒤, +X축 방향의 두 번째 점을 클릭하세요.';
   updateMediaStepUI();
   drawMediaFrame();
 };
 $('recordPointBtn').onclick=()=>{
-  if(!mediaOrigin||!mediaXAxis||!mediaScale){alert('먼저 기준 길이와 좌표축을 설정해 주세요.');return}
+  if(!mediaScale||!mediaOrigin||!mediaXAxis){
+    alert('점 기록 전에 기준 길이와 좌표축을 모두 설정해 주세요.');
+    return;
+  }
   mediaTool='record';
   updateMediaStepUI();
   $('mediaHint').textContent=mediaKind==='video'
@@ -1397,6 +1458,33 @@ function canvasPos(evt){
     y:(evt.clientY-r.top)*mediaCanvas.height/r.height
   };
 }
+
+
+function getAutoAdvanceFrames(){
+  const n=Number($('autoAdvanceFrames')?.value);
+  if(!Number.isInteger(n)||n<1){
+    alert('이동 프레임 수는 1 이상의 정수로 입력해 주세요.');
+    return null;
+  }
+  return n;
+}
+function autoAdvanceAfterPoint(){
+  if(mediaKind!=='video'||!$('autoAdvanceCheck')?.checked)return;
+  const frames=getAutoAdvanceFrames();
+  if(frames===null)return;
+  const fps=validatePositiveNumber($('videoFps').value,'FPS',true);
+  if(fps===null)return;
+  mediaVideo.pause();
+  mediaVideo.currentTime=Math.min(mediaVideo.duration||Infinity,mediaVideo.currentTime+frames/fps);
+  setTimeout(()=>{drawMediaFrame();updateVideoTimeline()},35);
+}
+$('autoAdvanceFrames').addEventListener('change',()=>{
+  const n=Number($('autoAdvanceFrames').value);
+  if(!Number.isInteger(n)||n<1){
+    alert('이동 프레임 수는 1 이상의 정수로 입력해 주세요.');
+    $('autoAdvanceFrames').value=1;
+  }
+});
 
 mediaCanvas.addEventListener('click',e=>{
   if(!mediaKind)return;
@@ -1424,7 +1512,7 @@ mediaCanvas.addEventListener('click',e=>{
       if(len<2){axisClicks=[];mediaOrigin=null;alert('+X 방향점을 원점에서 조금 더 떨어뜨려 선택해 주세요.');return}
       mediaXAxis={x:dx/len,y:dy/len};
       mediaTool='none';
-      $('mediaHint').textContent='좌표축 설정 완료. [점 기록]을 누른 뒤 측정할 점을 클릭하세요.';
+      $('mediaHint').textContent=mediaScale?'좌표축 설정 완료. 이제 점 기록을 시작할 수 있습니다.':'좌표축 설정 완료. 기준 길이도 설정되면 점 기록을 시작할 수 있습니다.';
       updateMediaStepUI();
     }
   }else if(mediaTool==='record'){
@@ -1436,6 +1524,7 @@ mediaCanvas.addEventListener('click',e=>{
     renderMediaPointTable();
     updateMediaStepUI();
     scheduleSave();
+    autoAdvanceAfterPoint();
   }
   drawMediaFrame();
 });
