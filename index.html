@@ -7,7 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{--a:#00979d;--o:#ff7a00;--bg:#f5f7fb;--card:#fff;--line:#dfe5ec;--text:#202630;--muted:#6d7684;--purple:#7c3aed}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,"Noto Sans KR",sans-serif}.wrap{width:min(1450px,calc(100% - 28px));margin:18px auto}.head{text-align:center;margin:6px 0 16px}.logo{font-size:42px;font-weight:900;margin:0}.logo .a{color:var(--a)}.logo .l{color:var(--o)}.by{font-size:12px;color:#999}.card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:15px;margin-bottom:13px;box-shadow:0 4px 16px #1e2d460a}.card h2{font-size:17px;margin:0 0 11px}.grid{display:grid;grid-template-columns:1fr 1.18fr;gap:13px}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.row>*{min-width:0}button,select,input,textarea{font:inherit}button{border:0;border-radius:9px;padding:9px 12px;font-weight:800;cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}.primary{background:var(--a);color:#fff}.orange{background:var(--o);color:#fff}.purple{background:var(--purple);color:#fff}.soft{background:#e8f5f5;color:#08767b}.gray{background:#edf0f4;color:#39414d}.danger{background:#fff0f0;color:#b83232}.small{padding:6px 9px;font-size:12px}select,input,textarea{border:1px solid var(--line);border-radius:8px;padding:8px;background:#fff}textarea{width:100%;resize:vertical}.status{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.stat{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:10px}.stat b{display:block;font-size:12px;margin-bottom:4px}.val{font-weight:900;color:var(--a)}.muted{color:var(--muted);font-size:13px;line-height:1.5}.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{background:#eaf7f7;color:#08767b;border-radius:999px;padding:6px 10px;font-weight:800;font-size:13px}.tableWrap{max-height:400px;overflow:auto;border:1px solid var(--line);border-radius:10px;background:#fff}table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:7px 9px;border-bottom:1px solid #edf0f4;text-align:center;white-space:nowrap}th{position:sticky;top:0;background:#eef7f7;color:#16686c;z-index:2}.excluded{opacity:.35;text-decoration:line-through}.controls{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.controls label{font-size:12px;font-weight:800}.controls select,.controls input{width:100%;margin-top:4px}canvas.graph{width:100%;height:410px;border:1px solid var(--line);border-radius:10px;background:#fff;touch-action:none;cursor:crosshair}.result{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:14px;min-height:130px;font-size:15px;line-height:1.65;overflow:auto}.analysisSection{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:9px 0}.analysisTitle{font-size:16px;font-weight:900;color:#08767b;margin-bottom:7px}.analysisTitle.reg{color:#6d28d9}.analysisGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 18px}.analysisItem b{color:#334155}.codeGuide{background:#f8fafc;border:1px solid var(--line);border-radius:9px;padding:10px;font-family:ui-monospace,Consolas,monospace;font-size:13px;white-space:pre-wrap}.footer{text-align:center;color:#aaa;font-size:12px;padding:8px}.banner{display:none;background:#fff9dd;border:1px solid #f0d46a;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:13px}.modal{display:none;position:fixed;inset:0;background:#0009;z-index:50;align-items:center;justify-content:center;padding:20px}.modal.show{display:flex}.modalBox{background:#fff;border-radius:15px;padding:17px;width:min(850px,96vw);max-height:92vh;overflow:auto;box-shadow:0 20px 60px #0005}.modalBox.large{width:min(1180px,97vw)}.modalHead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.modalHead h3{margin:0}.checkgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.checkitem{border:1px solid var(--line);border-radius:8px;padding:7px;background:#fafbfc}.sheetWrap{overflow:auto;max-height:500px;border:1px solid var(--line)}.sheet{min-width:700px}.sheet td,.sheet th{min-width:110px}.sheet td[contenteditable="true"]{background:#fff;text-align:left}.sheet .nameRow td{background:#eaf4f4;font-weight:700}.notegrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.notegrid .full{grid-column:1/-1}.tooltip{position:fixed;display:none;pointer-events:none;background:#fff;border:1px solid #cbd5e1;border-radius:8px;padding:7px 9px;font-size:12px;box-shadow:0 5px 20px #0002;z-index:80;white-space:pre-line}.inlineChecks{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.inlineChecks label{font-size:13px}.rangeGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.rangeGrid input{width:100%}.sampleList{display:grid;gap:8px}.sampleBtn{text-align:left;padding:12px;background:#f7fafb;border:1px solid var(--line)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,"Noto Sans KR",sans-serif}.wrap{width:min(1450px,calc(100% - 28px));margin:18px auto}.head{text-align:center;margin:6px 0 16px}.logo{font-size:42px;font-weight:900;margin:0}.logo .a{color:var(--a)}.logo .l{color:var(--o)}.by{font-size:12px;color:#999}.card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:15px;margin-bottom:13px;box-shadow:0 4px 16px #1e2d460a}.card h2{font-size:17px;margin:0 0 11px}.grid{display:grid;grid-template-columns:1fr 1.18fr;gap:13px}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.row>*{min-width:0}button,select,input,textarea{font:inherit}button{border:0;border-radius:9px;padding:9px 12px;font-weight:800;cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}.primary{background:var(--a);color:#fff}.orange{background:var(--o);color:#fff}.purple{background:var(--purple);color:#fff}.soft{background:#e8f5f5;color:#08767b}.gray{background:#edf0f4;color:#39414d}.danger{background:#fff0f0;color:#b83232}.small{padding:6px 9px;font-size:12px}select,input,textarea{border:1px solid var(--line);border-radius:8px;padding:8px;background:#fff}textarea{width:100%;resize:vertical}.status{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.stat{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:10px}.stat b{display:block;font-size:12px;margin-bottom:4px}.val{font-weight:900;color:var(--a)}.muted{color:var(--muted);font-size:13px;line-height:1.5}.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{background:#eaf7f7;color:#08767b;border-radius:999px;padding:6px 10px;font-weight:800;font-size:13px}.tableWrap{max-height:400px;overflow:auto;border:1px solid var(--line);border-radius:10px;background:#fff}table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:7px 9px;border-bottom:1px solid #edf0f4;text-align:center;white-space:nowrap}th{position:sticky;top:0;background:#eef7f7;color:#16686c;z-index:2}.excluded{opacity:.35;text-decoration:line-through}.controls{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.controls label{font-size:12px;font-weight:800}.controls select,.controls input{width:100%;margin-top:4px}canvas.graph{width:100%;height:500px;border:1px solid var(--line);border-radius:10px;background:#fff;touch-action:none;cursor:crosshair}.result{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:14px;min-height:130px;font-size:15px;line-height:1.65;overflow:auto}.analysisSection{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:9px 0}.analysisTitle{font-size:16px;font-weight:900;color:#08767b;margin-bottom:7px}.analysisTitle.reg{color:#6d28d9}.analysisGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 18px}.analysisItem b{color:#334155}.codeGuide{background:#f8fafc;border:1px solid var(--line);border-radius:9px;padding:10px;font-family:ui-monospace,Consolas,monospace;font-size:13px;white-space:pre-wrap}.footer{text-align:center;color:#aaa;font-size:12px;padding:8px}.banner{display:none;background:#fff9dd;border:1px solid #f0d46a;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:13px}.modal{display:none;position:fixed;inset:0;background:#0009;z-index:50;align-items:center;justify-content:center;padding:20px}.modal.show{display:flex}.modalBox{background:#fff;border-radius:15px;padding:17px;width:min(850px,96vw);max-height:92vh;overflow:auto;box-shadow:0 20px 60px #0005}.modalBox.large{width:min(1180px,97vw)}.modalHead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.modalHead h3{margin:0}.checkgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.checkitem{border:1px solid var(--line);border-radius:8px;padding:7px;background:#fafbfc}.sheetWrap{overflow:auto;max-height:500px;border:1px solid var(--line)}.sheet{min-width:700px}.sheet td,.sheet th{min-width:110px}.sheet td[contenteditable="true"]{background:#fff;text-align:left}.sheet .nameRow td{background:#eaf4f4;font-weight:700}.notegrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.notegrid .full{grid-column:1/-1}.tooltip{position:fixed;display:none;pointer-events:none;background:#fff;border:1px solid #cbd5e1;border-radius:8px;padding:7px 9px;font-size:12px;box-shadow:0 5px 20px #0002;z-index:80;white-space:pre-line}.inlineChecks{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.inlineChecks label{font-size:13px}.rangeGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.rangeGrid input{width:100%}.sampleList{display:grid;gap:8px}.sampleBtn{text-align:left;padding:12px;background:#f7fafb;border:1px solid var(--line)}
 @media(max-width:920px){.grid{grid-template-columns:1fr}.status{grid-template-columns:1fr 1fr}.checkgrid{grid-template-columns:1fr 1fr}.notegrid{grid-template-columns:1fr}.notegrid .full{grid-column:auto}.rangeGrid{grid-template-columns:1fr 1fr}}
 
 .modeHub{background:linear-gradient(135deg,#eefafa,#f7fbff);border:1px solid #cfe7e8;border-radius:18px;padding:17px;margin-bottom:10px}
@@ -107,6 +107,15 @@
   </div>
 
   <div class="mediaControls">
+    <label>기록 대상
+      <select id="mediaTargetSelect">
+        <option value="1">대상 1</option>
+        <option value="2">대상 2</option>
+        <option value="3">대상 3</option>
+      </select>
+    </label>
+    <label>대상 이름 <input id="mediaTargetName" value="대상1" placeholder="예: 왼쪽 물체"></label>
+    <button id="applyTargetNameBtn" class="gray small">이름 적용</button>
     <label>기준 길이 <input id="scaleLength" type="number" min="0" step="any" placeholder="예: 30"></label>
     <label>단위
       <select id="scaleUnit">
@@ -131,7 +140,7 @@
   </div>
 
   <div id="mediaHint" class="mediaHint">
-    순서: 자료 불러오기 → 기준 길이 입력 후 두 점 클릭 → 원점과 +X 방향 점 클릭 → 점 기록.
+    순서: 자료 불러오기 → 기준 길이 입력 후 두 점 클릭 → 원점과 +X 방향 점 클릭 → 기록 대상 선택 → 점 기록.
     영상은 원하는 프레임으로 이동한 뒤 물체 위치를 클릭하세요.
   </div>
 
@@ -203,7 +212,7 @@
 <div class="row" style="margin-top:7px"><button id="axisApplyBtn" class="primary small">입력완료</button><span class="muted">빈칸은 자동 범위를 사용합니다. X 범위는 전체 그래프에, Y 범위는 현재 분석 대상으로 선택한 Y축에 적용됩니다.</span></div>
 </div>
 <div class="row" style="margin:10px 0"><button id="drawBtn" class="primary">그래프 그리기</button><button id="manualIntervalBtn" class="soft">구간 직접 입력</button><button id="intervalBtn" class="soft">구간 그래프</button><button id="clearInterval" class="gray">구간 해제</button><button id="pngBtn" class="soft">그래프 PNG 저장</button></div>
-<canvas id="chart" class="graph" width="950" height="410"></canvas><p class="muted">그래프를 그린 뒤 점에 마우스를 올리면 좌표를 볼 수 있습니다. 좌우로 드래그하면 구간을 선택합니다.</p><div id="result" class="result">분석 결과가 여기에 표시됩니다.</div>
+<canvas id="chart" class="graph" width="1050" height="500"></canvas><p class="muted">그래프를 그린 뒤 점에 마우스를 올리면 좌표를 볼 수 있습니다. 좌우로 드래그하면 구간을 선택합니다.</p><div id="result" class="result">분석 결과가 여기에 표시됩니다.</div>
 </section></div></div>
 <div class="footer">ArduLab Web · Python 자유분석 기능 제외</div>
 </div>
@@ -256,6 +265,28 @@ Arduino 코드를 작성하거나 수정할 때 시리얼 데이터는 ArduLab�
 <!-- 수동 입력 -->
 <div id="manualModal" class="modal"><div class="modalBox large"><div class="modalHead"><h3>데이터 수동입력</h3><button data-close="manualModal" class="gray">닫기</button></div><p class="muted">첫 행은 변수명입니다. 셀을 직접 편집하거나 Excel/Sheets에서 범위를 복사해 붙여넣을 수 있습니다.</p><div class="sheetWrap"><table id="manualSheet" class="sheet"></table></div><div class="row" style="margin-top:10px"><button id="manualExample" class="soft">옴의 법칙 예시</button><button id="addRows" class="gray">행 10개 추가</button><button id="addCols" class="gray">열 3개 추가</button><button id="manualClear" class="gray">전체 지우기</button><button id="manualApply" class="primary">적용</button></div></div></div>
 
+<!-- 미분 / 적분 변수 선택 -->
+<div id="calculusModal" class="modal">
+  <div class="modalBox">
+    <div class="modalHead">
+      <h3 id="calculusTitle">미분</h3>
+      <button data-close="calculusModal" class="gray">닫기</button>
+    </div>
+    <p class="muted" id="calculusHelp">미분할 Y 변수와 기준이 되는 X 변수를 선택하세요.</p>
+    <div class="controls">
+      <label>X 변수
+        <select id="calculusX"></select>
+      </label>
+      <label>Y 변수
+        <select id="calculusY"></select>
+      </label>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button id="calculusInsertBtn" class="primary">계산식에 넣기</button>
+    </div>
+  </div>
+</div>
+
 <!-- 계산 변수 -->
 <div id="calcModal" class="modal"><div class="modalBox"><div class="modalHead"><h3>계산 변수 추가</h3><button data-close="calcModal" class="gray">닫기</button></div><label>새 변수 이름<input id="calcName" style="width:100%;margin-top:4px" placeholder="speed"></label><label style="display:block;margin-top:9px">계산식<input id="calcExpr" style="width:100%;margin-top:4px" placeholder="아래 버튼을 눌러 계산식을 만들어 보세요."></label>
 <div style="margin-top:10px"><b style="font-size:13px">변수</b><div id="calcVarButtons" class="row" style="margin-top:6px"></div></div>
@@ -264,7 +295,7 @@ Arduino 코드를 작성하거나 수정할 때 시리얼 데이터는 ArduLab�
 <button type="button" class="gray small" data-calc="(">(</button><button type="button" class="gray small" data-calc=")">)</button><button type="button" class="gray small" data-calc="sqrt(">√</button><button type="button" class="gray small" data-calc="abs(">abs</button><button type="button" class="gray small" data-calc="sin(">sin</button><button type="button" class="gray small" data-calc="cos(">cos</button><button type="button" class="gray small" data-calc="tan(">tan</button><button type="button" class="gray small" data-calc="log(">log</button><button type="button" class="gray small" data-calc="pi">π</button>
 <button type="button" class="soft small" id="calcDiffBtn">미분</button><button type="button" class="soft small" id="calcIntegBtn">적분</button><button type="button" class="danger small" id="calcBack">⌫</button><button type="button" class="danger small" id="calcClear">전체 지우기</button>
 </div></div>
-<p class="muted">버튼을 눌러 계산식을 만들 수 있고, 필요하면 계산식 칸을 직접 수정할 수도 있습니다. diff/integ는 time 변수가 있을 때 사용합니다.</p><button id="calcApply" class="primary">변수 생성</button></div></div>
+<p class="muted">버튼을 눌러 계산식을 만들 수 있고, 필요하면 계산식 칸을 직접 수정할 수도 있습니다. 미분/적분 버튼을 누르면 X 변수와 Y 변수를 직접 선택할 수 있습니다.</p><button id="calcApply" class="primary">변수 생성</button></div></div>
 
 <!-- 이동평균 변수 -->
 <div id="maModal" class="modal"><div class="modalBox"><div class="modalHead"><h3>이동평균 변수 생성</h3><button data-close="maModal" class="gray">닫기</button></div><label>변수<select id="maVarSelect" style="width:100%;margin-top:4px"></select></label><label style="display:block;margin-top:9px">이동평균 개수 n<input id="maVarN" type="number" min="2" value="5" style="width:100%;margin-top:4px"></label><button id="maCreate" class="primary" style="margin-top:10px">생성</button></div></div>
@@ -276,7 +307,7 @@ Arduino 코드를 작성하거나 수정할 때 시리얼 데이터는 ArduLab�
 <div id="noteModal" class="modal"><div class="modalBox large"><div class="modalHead"><h3>실험노트</h3><button data-close="noteModal" class="gray">닫기</button></div><p class="muted">작성 내용은 별도 저장 버튼 없이 자동 임시저장됩니다.</p><div class="notegrid"><label>실험 제목<textarea id="noteTitle" rows="2"></textarea></label><label>실험 설계 요약<textarea id="noteDesign" rows="2"></textarea></label><label>X 변수<select id="noteX" style="width:100%;margin-top:4px"></select><textarea id="noteXDesc" rows="3" placeholder="X 변수 설명"></textarea></label><label>Y 변수<select id="noteY" style="width:100%;margin-top:4px"></select><textarea id="noteYDesc" rows="3" placeholder="Y 변수 설명"></textarea></label><label>실험 관찰 내용<textarea id="noteObs" rows="3"></textarea></label><label>결과 해석<textarea id="noteInterp" rows="4"></textarea></label><label>오차 원인<textarea id="noteError" rows="3"></textarea></label><label>궁금한 점<textarea id="noteQuestion" rows="3"></textarea></label></div><div class="row" style="margin-top:10px"><button id="promptBtn" class="primary">AI 협업 프롬프트 만들기</button><button id="copyPrompt" class="soft" disabled>프롬프트 복사</button></div><div id="promptResult" class="result" style="display:none;margin-top:10px"></div></div></div>
 
 <!-- 구간 그래프 -->
-<div id="intervalModal" class="modal"><div class="modalBox large"><div class="modalHead"><h3>구간 그래프</h3><button data-close="intervalModal" class="gray">닫기</button></div><canvas id="intervalChart" class="graph" width="1050" height="470"></canvas><div id="intervalResult" class="result" style="margin-top:10px"></div><div class="row" style="margin-top:9px"><button id="intervalPng" class="soft">구간 그래프 PNG 저장</button></div></div></div>
+<div id="intervalModal" class="modal"><div class="modalBox large"><div class="modalHead"><h3>구간 그래프</h3><button data-close="intervalModal" class="gray">닫기</button></div><canvas id="intervalChart" class="graph" width="1100" height="520"></canvas><div id="intervalResult" class="result" style="margin-top:10px"></div><div class="row" style="margin-top:9px"><button id="intervalPng" class="soft">구간 그래프 PNG 저장</button></div></div></div>
 
 <!-- 구간 직접 입력 -->
 <div id="manualIntervalModal" class="modal"><div class="modalBox"><div class="modalHead"><h3>구간 직접 입력</h3><button data-close="manualIntervalModal" class="gray">닫기</button></div><div class="row"><input id="intervalStart" placeholder="시작값"><input id="intervalEnd" placeholder="끝값"><button id="intervalApply" class="primary">적용</button></div></div></div>
@@ -375,7 +406,7 @@ function initDB(){return new Promise((res,rej)=>{const q=indexedDB.open('ArduLab
 function dbPut(v){if(!db)return;const tx=db.transaction('state','readwrite');tx.objectStore('state').put(v,'current')}
 function dbGet(){return new Promise(res=>{if(!db)return res(null);const q=db.transaction('state').objectStore('state').get('current');q.onsuccess=()=>res(q.result||null);q.onerror=()=>res(null)})}
 function dbClear(){if(!db)return;db.transaction('state','readwrite').objectStore('state').delete('current')}
-function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>dbPut({savedAt:Date.now(),dataRows,excluded:[...excluded],sourceVars,allVars,tableVars,note,mediaMeta:{kind:mediaKind,scale:mediaScale,unit:mediaUnit,origin:mediaOrigin,xAxis:mediaXAxis,points:mediaPoints}}),500)}
+function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>dbPut({savedAt:Date.now(),dataRows,excluded:[...excluded],sourceVars,allVars,tableVars,note,mediaMeta:{kind:mediaKind,scale:mediaScale,unit:mediaUnit,origin:mediaOrigin,xAxis:mediaXAxis,pointsByTarget:mediaPointsByTarget,targetNames:mediaTargetNames}}),500)}
 async function restoreTemp(){const s=await dbGet();if(!s)return;if(Date.now()-s.savedAt>TEMP_TTL){dbClear();return}dataRows=Array.isArray(s.dataRows)?s.dataRows:[];excluded=new Set(s.excluded||[]);sourceVars=s.sourceVars||[];allVars=s.allVars||unionVars();tableVars=s.tableVars||[...allVars];note={...note,...(s.note||{})};refreshVarUI();loadNoteUI();updateCounts();renderTable();$('restoreBanner').style.display='block';$('restoreBanner').textContent=`직전 실험 임시자료를 복구했습니다. 마지막 저장: ${new Date(s.savedAt).toLocaleString()} · 새 학생이 시작할 때는 반드시 [새 실험]을 눌러주세요.`}
 $('newExp').onclick=()=>openModal('newExperimentModal');
 
@@ -407,13 +438,80 @@ function refreshCalcButtons(){const box=$('calcVarButtons');box.innerHTML=allVar
 function insertCalcToken(token){const el=$('calcExpr'),start=el.selectionStart??el.value.length,end=el.selectionEnd??el.value.length;el.value=el.value.slice(0,start)+token+el.value.slice(end);const p=start+token.length;el.focus();el.setSelectionRange(p,p)}
 $('calcVarBtn').onclick=()=>{refreshCalcButtons();openModal('calcModal')};
 document.querySelectorAll('#calcKeypad [data-calc]').forEach(b=>b.onclick=()=>insertCalcToken(b.dataset.calc));
-$('calcDiffBtn').onclick=()=>{const v=allVars.find(x=>x!=='time')||allVars[0];if(!v){alert('먼저 데이터 변수가 필요합니다.');return}insertCalcToken(`diff("${v}")`)};
-$('calcIntegBtn').onclick=()=>{const v=allVars.find(x=>x!=='time')||allVars[0];if(!v){alert('먼저 데이터 변수가 필요합니다.');return}insertCalcToken(`integ("${v}")`)};
+let calculusMode='diff';
+
+function openCalculusPicker(mode){
+  calculusMode=mode;
+  if(allVars.length<2){
+    alert('미분/적분에 사용할 데이터 변수가 부족합니다.');
+    return;
+  }
+
+  const xSel=$('calculusX'),ySel=$('calculusY');
+  xSel.innerHTML=allVars.map(v=>`<option value="${escapeAttr(v)}">${escapeHtml(v)}</option>`).join('');
+  ySel.innerHTML=allVars.map(v=>`<option value="${escapeAttr(v)}">${escapeHtml(v)}</option>`).join('');
+
+  // time이 있으면 X의 편리한 초기 위치로만 보여주되,
+  // 학생이 반드시 선택해서 결정할 수 있도록 한다.
+  if(allVars.includes('time')) xSel.value='time';
+
+  const firstY=allVars.find(v=>v!==xSel.value) || allVars[0];
+  if(firstY) ySel.value=firstY;
+
+  $('calculusTitle').textContent=mode==='diff'?'미분':'적분';
+  $('calculusHelp').textContent=mode==='diff'
+    ? '미분할 Y 변수와 기준이 되는 X 변수를 선택하세요. 예: 위치를 시간에 대해 미분 → 속도'
+    : '적분할 Y 변수와 기준이 되는 X 변수를 선택하세요. 예: 속도를 시간에 대해 적분 → 변위';
+  $('calculusInsertBtn').textContent=mode==='diff'?'미분식 넣기':'적분식 넣기';
+  openModal('calculusModal');
+}
+
+$('calcDiffBtn').onclick=()=>openCalculusPicker('diff');
+$('calcIntegBtn').onclick=()=>openCalculusPicker('integ');
+
+$('calculusInsertBtn').onclick=()=>{
+  const x=$('calculusX').value;
+  const y=$('calculusY').value;
+  if(!x||!y){
+    alert('X 변수와 Y 변수를 모두 선택해 주세요.');
+    return;
+  }
+  if(x===y){
+    alert('X 변수와 Y 변수는 서로 다른 변수를 선택해 주세요.');
+    return;
+  }
+  const token=calculusMode==='diff'
+    ? `diff("${y}","${x}")`
+    : `integ("${y}","${x}")`;
+  insertCalcToken(token);
+  closeModal('calculusModal');
+};
 $('calcBack').onclick=()=>{const el=$('calcExpr'),p=el.selectionStart??el.value.length;if(p>0){el.value=el.value.slice(0,p-1)+el.value.slice(el.selectionEnd??p);el.focus();el.setSelectionRange(p-1,p-1)}};
 $('calcClear').onclick=()=>{$('calcExpr').value='';$('calcExpr').focus()};
 $('calcApply').onclick=()=>{const name=$('calcName').value.trim(),expr=$('calcExpr').value.trim();if(!/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)){alert('변수 이름은 영어 또는 _로 시작하고 영어/숫자/_만 사용할 수 있습니다.');return}if(!expr)return;let success=0;for(let i=0;i<dataRows.length;i++){try{const v=calcExpression(expr,i);if(Number.isFinite(v)){dataRows[i][name]=v;success++}else dataRows[i][name]=''}catch{dataRows[i][name]=''}}if(!success){alert('계산된 값이 없습니다. 변수명과 수식을 확인하세요.');return}syncVars();renderTable();scheduleSave();closeModal('calcModal');alert(`계산 변수 '${name}'이 추가되었습니다. 계산 성공: ${success}개`)};
-function calcExpression(expr,i){let s=expr.trim();s=s.replace(/diff\(\s*["']([A-Za-z_][A-Za-z0-9_]*)["']\s*\)/g,(_,v)=>String(calcDiff(v,i))).replace(/integ\(\s*["']([A-Za-z_][A-Za-z0-9_]*)["']\s*\)/g,(_,v)=>String(calcInteg(v,i)));const funcs={sqrt:'Math.sqrt',log:'Math.log',sin:'Math.sin',cos:'Math.cos',tan:'Math.tan',abs:'Math.abs'};for(const [k,v] of Object.entries(funcs))s=s.replace(new RegExp(`\\b${k}\\s*\\(`,'g'),v+'(');s=s.replace(/\bpi\b/g,String(Math.PI));const ids=s.match(/[A-Za-z_][A-Za-z0-9_]*/g)||[];for(const id of [...new Set(ids)]){if(id==='Math')continue;if(!Object.prototype.hasOwnProperty.call(dataRows[i],id))throw new Error('unknown');const v=dataRows[i][id];if(!Number.isFinite(v))throw new Error('nan');s=s.replace(new RegExp(`\\b${id}\\b`,'g'),`(${v})`)}if(!/^[0-9eE+\-*/%().,\sMathsqrtlogincota]+$/.test(s))throw new Error('unsafe');return Function(`"use strict";return (${s})`)()}
-function calcDiff(v,i){if(i===0)return 0;const a=dataRows[i],b=dataRows[i-1],dt=a.time-b.time;return Number.isFinite(a[v])&&Number.isFinite(b[v])&&Number.isFinite(dt)&&dt!==0?(a[v]-b[v])/dt:0}function calcInteg(v,i){let t=0;for(let j=1;j<=i;j++){const a=dataRows[j],b=dataRows[j-1],dt=a.time-b.time;if(Number.isFinite(a[v])&&Number.isFinite(b[v])&&Number.isFinite(dt))t+=(a[v]+b[v])/2*dt}return t}
+function calcExpression(expr,i){let s=expr.trim();
+s=s.replace(/diff\(\s*["']([A-Za-z_][A-Za-z0-9_]*)["']\s*,\s*["']([A-Za-z_][A-Za-z0-9_]*)["']\s*\)/g,(_,y,x)=>String(calcDiff(y,x,i)))
+ .replace(/integ\(\s*["']([A-Za-z_][A-Za-z0-9_]*)["']\s*,\s*["']([A-Za-z_][A-Za-z0-9_]*)["']\s*\)/g,(_,y,x)=>String(calcInteg(y,x,i)))
+ .replace(/diff\(\s*["']([A-Za-z_][A-Za-z0-9_]*)["']\s*\)/g,(_,y)=>String(calcDiff(y,'time',i)))
+ .replace(/integ\(\s*["']([A-Za-z_][A-Za-z0-9_]*)["']\s*\)/g,(_,y)=>String(calcInteg(y,'time',i)));const funcs={sqrt:'Math.sqrt',log:'Math.log',sin:'Math.sin',cos:'Math.cos',tan:'Math.tan',abs:'Math.abs'};for(const [k,v] of Object.entries(funcs))s=s.replace(new RegExp(`\\b${k}\\s*\\(`,'g'),v+'(');s=s.replace(/\bpi\b/g,String(Math.PI));const ids=s.match(/[A-Za-z_][A-Za-z0-9_]*/g)||[];for(const id of [...new Set(ids)]){if(id==='Math')continue;if(!Object.prototype.hasOwnProperty.call(dataRows[i],id))throw new Error('unknown');const v=dataRows[i][id];if(!Number.isFinite(v))throw new Error('nan');s=s.replace(new RegExp(`\\b${id}\\b`,'g'),`(${v})`)}if(!/^[0-9eE+\-*/%().,\sMathsqrtlogincota]+$/.test(s))throw new Error('unsafe');return Function(`"use strict";return (${s})`)()}
+function calcDiff(yVar,xVar,i){
+  if(i===0)return 0;
+  const a=dataRows[i],b=dataRows[i-1];
+  const dx=a[xVar]-b[xVar];
+  return Number.isFinite(a[yVar])&&Number.isFinite(b[yVar])&&Number.isFinite(dx)&&dx!==0
+    ?(a[yVar]-b[yVar])/dx
+    :0;
+}
+function calcInteg(yVar,xVar,i){
+  let total=0;
+  for(let j=1;j<=i;j++){
+    const a=dataRows[j],b=dataRows[j-1],dx=a[xVar]-b[xVar];
+    if(Number.isFinite(a[yVar])&&Number.isFinite(b[yVar])&&Number.isFinite(dx)){
+      total+=(a[yVar]+b[yVar])/2*dx;
+    }
+  }
+  return total;
+}
 
 // 이동평균 변수
 $('maVarBtn').onclick=()=>openModal('maModal');$('maCreate').onclick=()=>{const v=$('maVarSelect').value,n=+$('maVarN').value;if(!v||!Number.isInteger(n)||n<2){alert('변수와 2 이상의 정수 n을 확인하세요.');return}const name=`${v}_ma${n}`,vals=dataRows.map(r=>r[v]);for(let i=0;i<dataRows.length;i++){const w=vals.slice(Math.max(0,i-n+1),i+1).filter(Number.isFinite);dataRows[i][name]=w.length?mean(w):''}syncVars();renderTable();scheduleSave();closeModal('maModal');alert(`이동평균 변수 '${name}'이 추가되었습니다.`)};
@@ -527,8 +625,22 @@ function getGraphPoints(useRange=true){
   return{xv,yv,pts:pointsForSeries(xv,yv,useRange)};
 }
 function yAxisFromPoints(pts,applyCustom=false){
-  const ys=pts.map(p=>p.y);let ymin=Math.min(...ys),ymax=Math.max(...ys);
-  if(ymin===ymax){ymin-=1;ymax+=1}
+  const ys=pts.map(p=>p.y).filter(Number.isFinite);
+  let ymin=Math.min(...ys),ymax=Math.max(...ys);
+
+  // 각 Y변수는 자신의 데이터 최소/최대만으로 독립 축 범위를 만든다.
+  // 위아래에 약간의 여백을 주어 점이 축 경계에 붙지 않게 한다.
+  if(ymin===ymax){
+    const base=Math.abs(ymin)||1;
+    ymin-=base*.08;
+    ymax+=base*.08;
+  }else{
+    const pad=(ymax-ymin)*.06;
+    ymin-=pad;
+    ymax+=pad;
+  }
+
+  // 수동 Y범위는 '분석 대상' Y축에만 적용.
   if(applyCustom&&$('customRangeCheck').checked){
     const a=$('yMin').value.trim(),b=$('yMax').value.trim();
     if(a!==''&&Number.isFinite(Number(a)))ymin=Number(a);
@@ -560,7 +672,7 @@ function niceTicks(min,max,target=6){
 }
 function clearCanvas(c){c.getContext('2d').clearRect(0,0,c.width,c.height)}
 function makeMultiGraphState(canvas,xv,seriesData,xAxis){
-  const pad={l:110,r:95,t:48,b:52},plotH=canvas.height-pad.t-pad.b,plotW=canvas.width-pad.l-pad.r;
+  const pad={l:135,r:120,t:60,b:68},plotH=canvas.height-pad.t-pad.b,plotW=canvas.width-pad.l-pad.r;
   const X=x=>pad.l+(x-xAxis.xmin)/(xAxis.xmax-xAxis.xmin)*plotW,active=getActiveSeries();
   const series=seriesData.map((sd,i)=>{
     const axis=yAxisFromPoints(sd.pts,sd.config.id===active?.id);
@@ -589,7 +701,7 @@ function renderGraph(st,hover=null,range=null){
   for(const v of niceTicks(xmin,xmax,7)){
     const px=st.X(v);if(px<l-1||px>c.width-r+1)continue;
     ctx.strokeStyle='#e7edf3';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(px,t);ctx.lineTo(px,c.height-b);ctx.stroke();
-    ctx.fillStyle='#64748b';ctx.font='12px Arial';ctx.textAlign='center';ctx.fillText(fmt(v),px,c.height-b+20);
+    ctx.fillStyle='#64748b';ctx.font='14px Arial';ctx.textAlign='center';ctx.fillText(fmt(v),px,c.height-b+25);
   }
 
   const active=getActiveSeries(),activeSeries=st.series.find(s=>s.config.id===active?.id)||st.series[0];
@@ -605,28 +717,28 @@ function renderGraph(st,hover=null,range=null){
   }
 
   ctx.strokeStyle='#94a3b8';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(l,c.height-b);ctx.lineTo(c.width-r,c.height-b);ctx.stroke();
-  ctx.fillStyle='#334155';ctx.font='bold 13px Arial';ctx.textAlign='right';ctx.fillText(st.xv,c.width-r,c.height-10);
+  ctx.fillStyle='#334155';ctx.font='bold 16px Arial';ctx.textAlign='right';ctx.fillText(st.xv,c.width-r,c.height-10);
 
   st.series.forEach((s,i)=>{
     const ax=axisXPosition(st,i),right=i===1;
     ctx.strokeStyle=s.color;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(ax,t);ctx.lineTo(ax,c.height-b);ctx.stroke();
-    ctx.fillStyle=s.color;ctx.font='11px Arial';
+    ctx.fillStyle=s.color;ctx.font='14px Arial';
     niceTicks(s.axis.ymin,s.axis.ymax,5).forEach(v=>{
       const py=s.Y(v);ctx.strokeStyle=s.color;ctx.beginPath();
-      if(right){ctx.moveTo(ax,py);ctx.lineTo(ax+5,py);ctx.stroke();ctx.textAlign='left';ctx.fillText(fmt(v),ax+8,py+4)}
-      else{ctx.moveTo(ax-5,py);ctx.lineTo(ax,py);ctx.stroke();ctx.textAlign='right';ctx.fillText(fmt(v),ax-8,py+4)}
+      if(right){ctx.moveTo(ax,py);ctx.lineTo(ax+5,py);ctx.stroke();ctx.textAlign='left';ctx.fillText(fmt(v),ax+8,py+5)}
+      else{ctx.moveTo(ax-5,py);ctx.lineTo(ax,py);ctx.stroke();ctx.textAlign='right';ctx.fillText(fmt(v),ax-8,py+5)}
     });
-    ctx.font='bold 12px Arial';
-    if(i===0){ctx.textAlign='left';ctx.fillText(s.config.y,st.pad.l+4,t-15)}
-    else if(i===1){ctx.textAlign='right';ctx.fillText(s.config.y,c.width-st.pad.r-4,t-15)}
-    else{ctx.textAlign='left';ctx.fillText(s.config.y,8,t-15)}
+    ctx.font='bold 15px Arial';
+    if(i===0){ctx.textAlign='left';ctx.fillText(s.config.y,st.pad.l+4,t-20)}
+    else if(i===1){ctx.textAlign='right';ctx.fillText(s.config.y,c.width-st.pad.r-4,t-20)}
+    else{ctx.textAlign='left';ctx.fillText(s.config.y,8,t-20)}
   });
 
   let lx=l;
   st.series.forEach(s=>{
-    ctx.fillStyle=s.color;ctx.fillRect(lx,t-35,13,4);
-    ctx.font=s.config.active?'bold 12px Arial':'12px Arial';ctx.textAlign='left';
-    ctx.fillText(`${s.config.active?'● ':''}${s.config.y}`,lx+18,t-30);
+    ctx.fillStyle=s.color;ctx.fillRect(lx,t-43,13,4);
+    ctx.font=s.config.active?'bold 15px Arial':'15px Arial';ctx.textAlign='left';
+    ctx.fillText(`${s.config.active?'● ':''}${s.config.y}`,lx+18,t-36);
     lx+=Math.max(115,ctx.measureText(s.config.y).width+65);
   });
 
@@ -672,7 +784,7 @@ function drawTangentOverlay(st,hover){
   const slope=(s.pts[i2].y-s.pts[i1].y)/dx,span=(st.xAxis.xmax-st.xAxis.xmin)*.08;
   const xa=p.x-span,xb=p.x+span,ya=p.y+slope*(xa-p.x),yb=p.y+slope*(xb-p.x),ctx=st.canvas.getContext('2d');
   ctx.strokeStyle=s.color;ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(st.X(xa),s.Y(ya));ctx.lineTo(st.X(xb),s.Y(yb));ctx.stroke();
-  ctx.fillStyle=s.color;ctx.font='bold 13px Arial';ctx.textAlign='left';ctx.fillText('기울기: '+fmt(slope),st.pad.l+10,st.pad.t+18);
+  ctx.fillStyle=s.color;ctx.font='bold 16px Arial';ctx.textAlign='left';ctx.fillText('기울기: '+fmt(slope),st.pad.l+10,st.pad.t+18);
 }
 
 function nearestPoint(st,px,py){
@@ -720,7 +832,7 @@ function bindGraphEvents(canvas,isInterval=false){
       const inv=px=>graphState.xAxis.xmin+(px-graphState.pad.l)/(canvas.width-graphState.pad.l-graphState.pad.r)*(graphState.xAxis.xmax-graphState.xAxis.xmin);
       let a=inv(Math.min(start,end)),b=inv(Math.max(start,end));
       renderGraph(graphState,null,[a,b]);
-      const ctx=canvas.getContext('2d');ctx.fillStyle='#08767b';ctx.font='bold 13px Arial';ctx.textAlign='left';
+      const ctx=canvas.getContext('2d');ctx.fillStyle='#08767b';ctx.font='bold 16px Arial';ctx.textAlign='left';
       ctx.fillText(`선택 중: ${fmt(a)} ~ ${fmt(b)}`,graphState.pad.l+10,graphState.pad.t+18);
     });
     canvas.addEventListener('pointerup',e=>{
@@ -904,7 +1016,9 @@ let mediaScale = null;          // 실제 단위 / canvas pixel
 let mediaUnit = 'cm';
 let mediaOrigin = null;
 let mediaXAxis = null;          // normalized screen-space x basis
-let mediaPoints = [];
+let mediaTargetNames={1:'대상1',2:'대상2',3:'대상3'};
+let mediaPointsByTarget={1:[],2:[],3:[]};
+let mediaPoints=mediaPointsByTarget[1];
 let mediaRaf = null;
 const mediaCanvas = $('mediaCanvas');
 const mediaCtx = mediaCanvas.getContext('2d');
@@ -925,7 +1039,7 @@ function updateMediaStepUI(){
   const hasMedia=!!mediaKind;
   const scaleDone=!!mediaScale;
   const axisDone=!!(mediaOrigin&&mediaXAxis);
-  const hasPoints=mediaPoints.length>0;
+  const hasPoints=allMediaPointCount()>0;
 
   if(!hasMedia){
     setStepState('setScaleBtn','disabled','① 기준 길이 설정');
@@ -981,9 +1095,28 @@ function validatePositiveNumber(value,label,integerOnly=false){
   return n;
 }
 
+
+function currentMediaTargetId(){
+  const v=Number($('mediaTargetSelect')?.value||1);
+  return [1,2,3].includes(v)?v:1;
+}
+function currentMediaTargetName(){
+  return mediaTargetNames[currentMediaTargetId()]||`대상${currentMediaTargetId()}`;
+}
+function syncCurrentMediaPoints(){
+  mediaPoints=mediaPointsByTarget[currentMediaTargetId()];
+}
+function allMediaPointCount(){
+  return Object.values(mediaPointsByTarget).reduce((sum,a)=>sum+a.length,0);
+}
+function clearAllMediaPoints(){
+  mediaPointsByTarget={1:[],2:[],3:[]};
+  syncCurrentMediaPoints();
+}
+
 function resetMediaCalibration(clearPoints=true){
   scaleClicks=[]; axisClicks=[]; mediaScale=null; mediaOrigin=null; mediaXAxis=null; mediaTool='none';
-  if(clearPoints) mediaPoints=[];
+  if(clearPoints) clearAllMediaPoints();
   renderMediaPointTable();
   drawMediaFrame();
   updateMediaStepUI();
@@ -1011,6 +1144,24 @@ function openMediaPicker(kind){
   input.value='';
   input.click();
 }
+
+$('mediaTargetSelect').onchange=()=>{
+  syncCurrentMediaPoints();
+  $('mediaTargetName').value=currentMediaTargetName();
+  renderMediaPointTable();
+  drawMediaFrame();
+  updateMediaStepUI();
+};
+$('applyTargetNameBtn').onclick=()=>{
+  const id=currentMediaTargetId();
+  const name=$('mediaTargetName').value.trim();
+  if(!name){alert('대상 이름을 입력해 주세요.');return}
+  mediaTargetNames[id]=name;
+  renderMediaPointTable();
+  drawMediaFrame();
+  scheduleSave();
+};
+
 $('loadImageBtn').onclick=()=>openMediaPicker('image');
 $('loadVideoBtn').onclick=()=>openMediaPicker('video');
 
@@ -1131,6 +1282,7 @@ mediaCanvas.addEventListener('click',e=>{
     const q=screenToWorld(p);
     const row={x:q.x,y:q.y,px:p.x,py:p.y};
     if(mediaKind==='video') row.time=mediaVideo.currentTime;
+    syncCurrentMediaPoints();
     mediaPoints.push(row);
     renderMediaPointTable();
     updateMediaStepUI();
@@ -1184,36 +1336,98 @@ function drawMediaFrame(){
     axisClicks.forEach(p=>drawCross(mediaCtx,p,7,'#ef4444'));
   }
 
-  mediaPoints.forEach((p,i)=>{
-    mediaCtx.fillStyle='#00d4db';mediaCtx.beginPath();mediaCtx.arc(p.px,p.py,5,0,Math.PI*2);mediaCtx.fill();
-    mediaCtx.fillStyle='#fff';mediaCtx.font='bold 12px Arial';mediaCtx.fillText(String(i+1),p.px+7,p.py-7);
+  const targetColors={1:'#00d4db',2:'#ff7a00',3:'#7c3aed'};
+  [1,2,3].forEach(tid=>{
+    (mediaPointsByTarget[tid]||[]).forEach((p,i)=>{
+      mediaCtx.fillStyle=targetColors[tid];
+      mediaCtx.beginPath();mediaCtx.arc(p.px,p.py,5,0,Math.PI*2);mediaCtx.fill();
+      mediaCtx.fillStyle='#fff';mediaCtx.font='bold 12px Arial';
+      mediaCtx.fillText(`${tid}-${i+1}`,p.px+7,p.py-7);
+    });
   });
 }
 
 function renderMediaPointTable(){
+  const rows=[];
+  [1,2,3].forEach(tid=>{
+    const name=mediaTargetNames[tid]||`대상${tid}`;
+    (mediaPointsByTarget[tid]||[]).forEach((p,i)=>rows.push({tid,name,i,p}));
+  });
   if(mediaKind==='video'){
-    $('mediaPointHead').innerHTML='<tr><th>No.</th><th>time (s)</th><th>x ('+escapeHtml(mediaUnit)+')</th><th>y ('+escapeHtml(mediaUnit)+')</th></tr>';
-    $('mediaPointBody').innerHTML=mediaPoints.map((p,i)=>`<tr><td>${i+1}</td><td>${fmt(p.time)}</td><td>${fmt(p.x)}</td><td>${fmt(p.y)}</td></tr>`).join('');
+    $('mediaPointHead').innerHTML='<tr><th>대상</th><th>No.</th><th>time (s)</th><th>x ('+escapeHtml(mediaUnit)+')</th><th>y ('+escapeHtml(mediaUnit)+')</th></tr>';
+    $('mediaPointBody').innerHTML=rows.map(r=>`<tr><td>${escapeHtml(r.name)}</td><td>${r.i+1}</td><td>${fmt(r.p.time)}</td><td>${fmt(r.p.x)}</td><td>${fmt(r.p.y)}</td></tr>`).join('');
   }else{
-    $('mediaPointHead').innerHTML='<tr><th>No.</th><th>x ('+escapeHtml(mediaUnit)+')</th><th>y ('+escapeHtml(mediaUnit)+')</th></tr>';
-    $('mediaPointBody').innerHTML=mediaPoints.map((p,i)=>`<tr><td>${i+1}</td><td>${fmt(p.x)}</td><td>${fmt(p.y)}</td></tr>`).join('');
+    $('mediaPointHead').innerHTML='<tr><th>대상</th><th>No.</th><th>x ('+escapeHtml(mediaUnit)+')</th><th>y ('+escapeHtml(mediaUnit)+')</th></tr>';
+    $('mediaPointBody').innerHTML=rows.map(r=>`<tr><td>${escapeHtml(r.name)}</td><td>${r.i+1}</td><td>${fmt(r.p.x)}</td><td>${fmt(r.p.y)}</td></tr>`).join('');
   }
 }
-$('undoMediaPointBtn').onclick=()=>{mediaPoints.pop();renderMediaPointTable();drawMediaFrame();updateMediaStepUI();scheduleSave()};
-$('clearMediaPointsBtn').onclick=()=>{if(mediaPoints.length&&!confirm('기록한 측정점을 모두 지울까요?'))return;mediaPoints=[];renderMediaPointTable();drawMediaFrame();updateMediaStepUI();scheduleSave()};
+$('undoMediaPointBtn').onclick=()=>{
+  syncCurrentMediaPoints();
+  mediaPoints.pop();
+  renderMediaPointTable();drawMediaFrame();updateMediaStepUI();scheduleSave();
+};
+$('clearMediaPointsBtn').onclick=()=>{
+  syncCurrentMediaPoints();
+  if(mediaPoints.length&&!confirm(`${currentMediaTargetName()}의 측정점을 모두 지울까요?`))return;
+  mediaPointsByTarget[currentMediaTargetId()]=[];
+  syncCurrentMediaPoints();
+  renderMediaPointTable();drawMediaFrame();updateMediaStepUI();scheduleSave();
+};
 
 $('applyMediaDataBtn').onclick=()=>{
-  if(!mediaPoints.length){alert('먼저 측정점을 기록해 주세요.');return}
-  let rows,headers;
+  if(allMediaPointCount()===0){alert('먼저 측정점을 기록해 주세요.');return}
+
+  const safeName=name=>String(name||'').trim().replace(/[^A-Za-z0-9가-힣_]+/g,'_');
+  let rows=[],headers=[];
+
   if(mediaKind==='video'){
-    rows=mediaPoints.map(p=>({time:+p.time.toFixed(6),x:p.x,y:p.y}));
-    headers=['time','x','y'];
+    const timeSet=new Set();
+    [1,2,3].forEach(tid=>(mediaPointsByTarget[tid]||[]).forEach(p=>timeSet.add(+p.time.toFixed(6))));
+    const times=[...timeSet].sort((a,b)=>a-b);
+
+    rows=times.map(t=>{
+      const r={time:t};
+      [1,2,3].forEach(tid=>{
+        const name=safeName(mediaTargetNames[tid]||`대상${tid}`);
+        const arr=mediaPointsByTarget[tid]||[];
+        const hit=arr.find(p=>Math.abs(p.time-t)<1e-6);
+        if(hit){r[`x_${name}`]=hit.x;r[`y_${name}`]=hit.y}
+      });
+      return r;
+    });
+
+    headers=['time'];
+    [1,2,3].forEach(tid=>{
+      if((mediaPointsByTarget[tid]||[]).length){
+        const name=safeName(mediaTargetNames[tid]||`대상${tid}`);
+        headers.push(`x_${name}`,`y_${name}`);
+      }
+    });
   }else{
-    rows=mediaPoints.map((p,i)=>({Point:i+1,x:p.x,y:p.y}));
-    headers=['Point','x','y'];
+    const maxLen=Math.max(...[1,2,3].map(tid=>(mediaPointsByTarget[tid]||[]).length));
+    for(let i=0;i<maxLen;i++){
+      const r={Point:i+1};
+      [1,2,3].forEach(tid=>{
+        const arr=mediaPointsByTarget[tid]||[],p=arr[i];
+        if(p){
+          const name=safeName(mediaTargetNames[tid]||`대상${tid}`);
+          r[`x_${name}`]=p.x;r[`y_${name}`]=p.y;
+        }
+      });
+      rows.push(r);
+    }
+
+    headers=['Point'];
+    [1,2,3].forEach(tid=>{
+      if((mediaPointsByTarget[tid]||[]).length){
+        const name=safeName(mediaTargetNames[tid]||`대상${tid}`);
+        headers.push(`x_${name}`,`y_${name}`);
+      }
+    });
   }
-  applyLoadedRows(rows,headers,mediaKind==='video'?'영상 분석 데이터':'사진 분석 데이터');
-  $('schemaMsg').textContent=`${mediaKind==='video'?'영상':'사진'}에서 측정한 ${rows.length}개 좌표를 ArduLab 데이터로 적용했습니다.`;
+
+  applyLoadedRows(rows,headers,mediaKind==='video'?'영상 다중대상 분석 데이터':'사진 다중대상 분석 데이터');
+  $('schemaMsg').textContent=`${mediaKind==='video'?'영상':'사진'}에서 기록한 여러 대상의 좌표를 ArduLab 데이터로 적용했습니다.`;
   setInputMode('media');
 };
 
@@ -1222,7 +1436,7 @@ $('copySetupPrompt').onclick=async()=>{try{await navigator.clipboard.writeText($
 
 function downloadBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}function stamp(){const d=new Date(),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`}
 window.addEventListener('beforeunload',e=>{if(collecting){e.preventDefault();e.returnValue=''}});
-(async function boot(){startTableTimer();renderTable();updateCounts();initManual();updateMediaStepUI();try{await initDB();await restoreTemp()}catch(e){console.warn('임시저장 초기화 실패',e)}})();
+(async function boot(){startTableTimer();renderTable();updateCounts();initManual();syncCurrentMediaPoints();$('mediaTargetName').value=currentMediaTargetName();updateMediaStepUI();try{await initDB();await restoreTemp()}catch(e){console.warn('임시저장 초기화 실패',e)}})();
 </script>
 
 </body>
