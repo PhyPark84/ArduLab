@@ -29,7 +29,15 @@
 .mediaTargetBox,.mediaStepBox{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px;background:#fbfcfd}
 .mediaTargetBox{background:#f8fbfc}
 .mediaStepBox{background:#fff}
-.mediaTargetTitle{font-size:13px;font-weight:900;color:#334155;margin-bottom:4px}
+.mediaTargetTitle{font-size:13px;font-weight:900;color:#334155;margin-bottom:4px}.mediaTargetGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.mediaTargetItem{display:grid;grid-template-columns:auto auto 1fr;gap:7px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:9px 10px;background:#fff;cursor:pointer}
+.mediaTargetItem.selected{border-color:var(--a);box-shadow:0 0 0 2px #00979d18;background:#f5fbfb}
+.mediaTargetItem input[type=radio]{accent-color:var(--a);width:16px;height:16px}
+.mediaTargetLabel{font-weight:900;white-space:nowrap}
+.mediaTargetNameInput{min-width:0;width:100%;padding:7px 9px}
+.mediaTargetNameInput::placeholder,#scaleLengthPopup::placeholder{color:#a0a8b3;opacity:1}
+@media(max-width:760px){.mediaTargetGrid{grid-template-columns:1fr}}
+
 .scaleLabelTag{display:inline-block;padding:3px 7px;border-radius:7px;background:#111;color:#fff;font:bold 13px Arial}
 
 .mediaControls input{width:110px}
@@ -125,17 +133,29 @@
   
   <div class="mediaTargetBox">
     <div class="mediaTargetTitle">기록 대상 설정</div>
-    <div class="mediaControls">
-      <label>기록 대상
-        <select id="mediaTargetSelect">
-          <option value="1">대상 1</option>
-          <option value="2">대상 2</option>
-          <option value="3">대상 3</option>
-        </select>
+    <div class="mediaTargetGrid">
+      <label class="mediaTargetItem selected" data-target-item="1">
+        <input type="radio" name="mediaTargetRadio" value="1" checked>
+        <span class="mediaTargetLabel">기록대상1</span>
+        <input id="mediaTargetName1" class="mediaTargetNameInput" placeholder="(이름)">
       </label>
-      <label>대상 이름 <input id="mediaTargetName" value="대상1" placeholder="예: 왼쪽 물체"></label>
-      
+      <label class="mediaTargetItem" data-target-item="2">
+        <input type="radio" name="mediaTargetRadio" value="2">
+        <span class="mediaTargetLabel">기록대상2</span>
+        <input id="mediaTargetName2" class="mediaTargetNameInput" placeholder="(이름)">
+      </label>
+      <label class="mediaTargetItem" data-target-item="3">
+        <input type="radio" name="mediaTargetRadio" value="3">
+        <span class="mediaTargetLabel">기록대상3</span>
+        <input id="mediaTargetName3" class="mediaTargetNameInput" placeholder="(이름)">
+      </label>
     </div>
+    <select id="mediaTargetSelect" style="display:none">
+      <option value="1">대상 1</option>
+      <option value="2">대상 2</option>
+      <option value="3">대상 3</option>
+    </select>
+    <input id="mediaTargetName" style="display:none">
   </div>
 
   <div class="mediaStepBox">
@@ -1090,9 +1110,12 @@ function resetWholeExperiment(){
 
   if(typeof resetMediaCalibration==='function')resetMediaCalibration(true);
   if(typeof mediaTargetNames!=='undefined'){
-    mediaTargetNames={1:'대상1',2:'대상2',3:'대상3'};
+    mediaTargetNames={1:'',2:'',3:''};
     if($('mediaTargetSelect'))$('mediaTargetSelect').value='1';
-    if($('mediaTargetName'))$('mediaTargetName').value='대상1';
+    if($('mediaTargetName'))$('mediaTargetName').value='';
+    [1,2,3].forEach(id=>{const el=$(`mediaTargetName${id}`);if(el)el.value=''});
+    const r1=document.querySelector('input[name="mediaTargetRadio"][value="1"]');if(r1)r1.checked=true;
+    syncTargetUI();
   }
 
   refreshVarUI();
@@ -1127,7 +1150,7 @@ let pendingScaleClicks=null;        // 두 점 클릭 후 팝업 입력 대기
 let mediaUnit = 'cm';
 let mediaOrigin = null;
 let mediaXAxis = null;          // normalized screen-space x basis
-let mediaTargetNames={1:'대상1',2:'대상2',3:'대상3'};
+let mediaTargetNames={1:'',2:'',3:''};
 let mediaPointsByTarget={1:[],2:[],3:[]};
 let mediaPoints=mediaPointsByTarget[1];
 let mediaRaf = null;
@@ -1262,37 +1285,35 @@ function openMediaPicker(kind){
 }
 
 
-function applyCurrentTargetName(){
+function syncTargetUI(){
   const id=currentMediaTargetId();
-  const el=$('mediaTargetName');
-  if(!el)return;
-  const name=el.value.trim();
-  if(!name){
-    el.value=mediaTargetNames[id]||`대상${id}`;
-    return;
-  }
-  mediaTargetNames[id]=name;
-  renderMediaPointTable();
-  drawMediaFrame();
-  scheduleSave();
+  document.querySelectorAll('.mediaTargetItem').forEach(item=>{
+    item.classList.toggle('selected', Number(item.dataset.targetItem)===id);
+  });
+  const hiddenName=$('mediaTargetName');
+  if(hiddenName)hiddenName.value=mediaTargetNames[id]||'';
 }
-$('mediaTargetName').addEventListener('change',applyCurrentTargetName);
-$('mediaTargetName').addEventListener('blur',applyCurrentTargetName);
-$('mediaTargetName').addEventListener('keydown',e=>{
-  if(e.key==='Enter'){
-    e.preventDefault();
-    applyCurrentTargetName();
-    e.target.blur();
-  }
-});
-
-$('mediaTargetSelect').onchange=()=>{
+function setMediaTarget(id){
+  $('mediaTargetSelect').value=String(id);
   syncCurrentMediaPoints();
-  $('mediaTargetName').value=currentMediaTargetName();
+  syncTargetUI();
   renderMediaPointTable();
   drawMediaFrame();
   updateMediaStepUI();
-};
+}
+document.querySelectorAll('input[name="mediaTargetRadio"]').forEach(r=>{
+  r.addEventListener('change',()=>{if(r.checked)setMediaTarget(Number(r.value))});
+});
+[1,2,3].forEach(id=>{
+  const inp=$(`mediaTargetName${id}`);
+  inp.addEventListener('input',()=>{
+    mediaTargetNames[id]=inp.value.trim();
+    if(currentMediaTargetId()===id && $('mediaTargetName'))$('mediaTargetName').value=mediaTargetNames[id];
+    renderMediaPointTable();
+    drawMediaFrame();
+    scheduleSave();
+  });
+});
 
 $('loadImageBtn').onclick=()=>openMediaPicker('image');
 $('loadVideoBtn').onclick=()=>openMediaPicker('video');
@@ -1356,8 +1377,11 @@ $('videoSeek').addEventListener('input',()=>{
   if(mediaKind!=='video'||!Number.isFinite(mediaVideo.duration)||mediaVideo.duration<=0)return;
   mediaVideo.pause();
   mediaVideo.currentTime=(+$('videoSeek').value/1000)*mediaVideo.duration;
+  updateVideoTimeline();
+  if(mediaVideo.readyState>=2)drawMediaFrame();
 });
-$('videoSeek').addEventListener('change',()=>setTimeout(()=>{drawMediaFrame();updateVideoTimeline()},30));
+mediaVideo.addEventListener('seeked',()=>{if(mediaKind==='video'){drawMediaFrame();updateVideoTimeline()}});
+$('videoSeek').addEventListener('change',()=>{drawMediaFrame();updateVideoTimeline()});
 
 function animateVideo(){
   drawMediaFrame();
@@ -1694,7 +1718,7 @@ $('copySetupPrompt').onclick=async()=>{try{await navigator.clipboard.writeText($
 
 function downloadBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}function stamp(){const d=new Date(),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`}
 window.addEventListener('beforeunload',e=>{if(collecting){e.preventDefault();e.returnValue=''}});
-(function boot(){startTableTimer();renderTable();updateCounts();initManual();syncCurrentMediaPoints();$('mediaTargetName').value=currentMediaTargetName();updateMediaStepUI();})();
+(function boot(){startTableTimer();renderTable();updateCounts();initManual();syncCurrentMediaPoints();syncTargetUI();updateMediaStepUI();})();
 </script>
 
 </body>
