@@ -449,7 +449,6 @@ function parseLine(line){const out={};for(const p0 of line.trim().split(',')){co
 function processSerialData(d){
   const keys=Object.keys(d);
   if(!keys.length)return;
-  const schema=keys.join('|');
   if(!sourceVars.length){
     sourceVars=[...keys];
     allVars=['time',...sourceVars];
@@ -457,11 +456,15 @@ function processSerialData(d){
     refreshVarUI();
     renderTable();
     $('schemaMsg').textContent='변수 인식 완료: '+sourceVars.join(', ');
-  }else if(sourceVars.join('|')!==schema){
-    $('schemaMsg').textContent='현재 변수 형식과 다른 데이터 줄을 건너뛰었습니다. 현재 변수: '+sourceVars.join(', ');
-    return;
+  }else{
+    const sameSchema=keys.length===sourceVars.length&&sourceVars.every(k=>Object.prototype.hasOwnProperty.call(d,k));
+    if(!sameSchema){
+      $('schemaMsg').textContent='현재 변수 형식과 다른 데이터 줄을 건너뛰었습니다. 현재 변수: '+sourceVars.join(', ');
+      return;
+    }
   }
-  if(collecting)addSerialRow(d);
+  const normalized=Object.fromEntries(sourceVars.map(k=>[k,d[k]]));
+  if(collecting)addSerialRow(normalized);
   $('status').textContent=collecting?'데이터 수집 중':'연결됨 · 수집 중지';
 }
 function addSerialRow(d,receivedAt=null){$('status').textContent='데이터 수집 중';const now=receivedAt??performance.now();if(startTime===null){startTime=now;lastSample=now}const row={time:+((now-startTime)/1000).toFixed(3),...d};dataRows.push(row);if(dataRows.length>MAX_DATA){dataRows.shift();excluded=new Set([...excluded].filter(i=>i>0).map(i=>i-1))}if(lastSample!==null&&now>lastSample){totalDt+=(now-lastSample)/1000;dtCount++;const av=totalDt/dtCount;$('sampling').textContent=`${av.toFixed(3)} s / ${(1/av).toFixed(1)} Hz`}lastSample=now;updateCounts();markTableDirty();scheduleSave()}
@@ -551,8 +554,32 @@ $('collect').onclick=()=>{
   $('status').textContent=collecting?(sourceVars.length?'데이터 수집 중':'연결됨 · 데이터 대기 중'):'연결됨 · 수집 중지';
 };
 
-// 현재 세션 동안에는 JS 메모리에만 유지합니다.
-function scheduleSave(){}
+// 각 사용자의 브라우저에만 저장합니다. 서버로 전송되지 않으며 사용자끼리 데이터가 섞이지 않습니다.
+const STORAGE_KEY='ArduLab_Web_session_v2';
+let saveTimer=null;
+function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(saveSession,600)}
+function saveSession(){
+  try{
+    localStorage.setItem(STORAGE_KEY,JSON.stringify({version:2,savedAt:Date.now(),dataRows,excluded:[...excluded],sourceVars,tableVars,selectedRange,note}));
+  }catch(err){console.warn('ArduLab session save skipped:',err)}
+}
+function restoreSession(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);if(!raw)return false;
+    const s=JSON.parse(raw);if(!s||s.version!==2||!Array.isArray(s.dataRows))return false;
+    dataRows=s.dataRows.slice(-MAX_DATA);
+    excluded=new Set((Array.isArray(s.excluded)?s.excluded:[]).filter(i=>Number.isInteger(i)&&i>=0&&i<dataRows.length));
+    sourceVars=Array.isArray(s.sourceVars)?s.sourceVars:[];
+    allVars=unionVars();
+    tableVars=Array.isArray(s.tableVars)?s.tableVars.filter(v=>allVars.includes(v)):[...allVars];
+    if(!tableVars.length)tableVars=[...allVars];
+    selectedRange=Array.isArray(s.selectedRange)&&s.selectedRange.length===2?s.selectedRange:null;
+    if(s.note&&typeof s.note==='object')note={...note,...s.note};
+    refreshVarUI();loadNoteUI();updateCounts();renderTable();
+    if(dataRows.length){$('status').textContent='이전 작업 복원됨';$('schemaMsg').textContent='이 브라우저에 저장된 이전 실험 데이터를 복원했습니다.'}
+    return dataRows.length>0||Object.values(note).some(Boolean);
+  }catch(err){console.warn('ArduLab session restore skipped:',err);return false}
+}
 $('newExp').onclick=()=>openModal('newExperimentModal');
 
 // 파일 불러오기 / 저장
@@ -633,29 +660,36 @@ $('calculusInsertBtn').onclick=()=>{
 };
 $('calcBack').onclick=()=>{const el=$('calcExpr'),p=el.selectionStart??el.value.length;if(p>0){el.value=el.value.slice(0,p-1)+el.value.slice(el.selectionEnd??p);el.focus();el.setSelectionRange(p-1,p-1)}};
 $('calcClear').onclick=()=>{$('calcExpr').value='';$('calcExpr').focus()};
-$('calcApply').onclick=()=>{const name=$('calcName').value.trim(),expr=$('calcExpr').value.trim();if(!/^[A-Za-z가-힣_][A-Za-z0-9가-힣_]*$/.test(name)){alert('변수 이름은 영어 또는 _로 시작하고 영어/숫자/_만 사용할 수 있습니다.');return}if(!expr)return;let success=0;for(let i=0;i<dataRows.length;i++){try{const v=calcExpression(expr,i);if(Number.isFinite(v)){dataRows[i][name]=v;success++}else dataRows[i][name]=''}catch{dataRows[i][name]=''}}if(!success){alert('계산된 값이 없습니다. 변수명과 수식을 확인하세요.');return}syncVars();renderTable();scheduleSave();closeModal('calcModal');alert(`계산 변수 '${name}'이 추가되었습니다. 계산 성공: ${success}개`)};
-function calcExpression(expr,i){let s=expr.trim();
-s=s.replace(/diff\(\s*["']([A-Za-z_][A-Za-z0-9_]*)["']\s*,\s*["']([A-Za-z_][A-Za-z0-9_]*)["']\s*\)/g,(_,y,x)=>String(calcDiff(y,x,i)))
- .replace(/integ\(\s*["']([A-Za-z_][A-Za-z0-9_]*)["']\s*,\s*["']([A-Za-z_][A-Za-z0-9_]*)["']\s*\)/g,(_,y,x)=>String(calcInteg(y,x,i)))
- .replace(/diff\(\s*["']([A-Za-z_][A-Za-z0-9_]*)["']\s*\)/g,(_,y)=>String(calcDiff(y,'time',i)))
- .replace(/integ\(\s*["']([A-Za-z_][A-Za-z0-9_]*)["']\s*\)/g,(_,y)=>String(calcInteg(y,'time',i)));const funcs={sqrt:'Math.sqrt',log:'Math.log',sin:'Math.sin',cos:'Math.cos',tan:'Math.tan',abs:'Math.abs'};for(const [k,v] of Object.entries(funcs))s=s.replace(new RegExp(`\\b${k}\\s*\\(`,'g'),v+'(');s=s.replace(/\bpi\b/g,String(Math.PI));const ids=s.match(/[A-Za-z_][A-Za-z0-9_]*/g)||[];for(const id of [...new Set(ids)]){if(id==='Math')continue;if(!Object.prototype.hasOwnProperty.call(dataRows[i],id))throw new Error('unknown');const v=dataRows[i][id];if(!Number.isFinite(v))throw new Error('nan');s=s.replace(new RegExp(`\\b${id}\\b`,'g'),`(${v})`)}if(!/^[0-9eE+\-*/%().,\sMathsqrtlogincota]+$/.test(s))throw new Error('unsafe');return Function(`"use strict";return (${s})`)()}
+let calcIntegCache=new Map();
+$('calcApply').onclick=()=>{const name=$('calcName').value.trim(),expr=$('calcExpr').value.trim();if(!/^[A-Za-z가-힣_][A-Za-z0-9가-힣_]*$/.test(name)){alert('변수 이름은 영어·한글·_로 시작하고 영어/한글/숫자/_만 사용할 수 있습니다.');return}if(!expr)return;calcIntegCache.clear();let success=0;for(let i=0;i<dataRows.length;i++){try{const v=calcExpression(expr,i);if(Number.isFinite(v)){dataRows[i][name]=v;success++}else dataRows[i][name]=''}catch{dataRows[i][name]=''}}if(!success){alert('계산된 값이 없습니다. 변수명과 수식을 확인하세요.');return}syncVars();renderTable();scheduleSave();closeModal('calcModal');alert(`계산 변수 '${name}'이 추가되었습니다. 계산 성공: ${success}개`)};
+function calcExpression(expr,i){
+  let s=expr.trim();
+  const ident='([\\p{L}_][\\p{L}\\p{N}_]*)';
+  s=s.replace(new RegExp(`diff\\(\\s*["']${ident}["']\\s*,\\s*["']${ident}["']\\s*\\)`,'gu'),(_,y,x)=>String(calcDiff(y,x,i)))
+   .replace(new RegExp(`integ\\(\\s*["']${ident}["']\\s*,\\s*["']${ident}["']\\s*\\)`,'gu'),(_,y,x)=>String(calcInteg(y,x,i)))
+   .replace(new RegExp(`diff\\(\\s*["']${ident}["']\\s*\\)`,'gu'),(_,y)=>String(calcDiff(y,'time',i)))
+   .replace(new RegExp(`integ\\(\\s*["']${ident}["']\\s*\\)`,'gu'),(_,y)=>String(calcInteg(y,'time',i)));
+  const funcs={sqrt:'Math.sqrt',log:'Math.log',sin:'Math.sin',cos:'Math.cos',tan:'Math.tan',abs:'Math.abs'};
+  s=s.replace(/[\p{L}_][\p{L}\p{N}_]*/gu,id=>{
+    if(id==='pi')return String(Math.PI);
+    if(Object.prototype.hasOwnProperty.call(funcs,id))return id;
+    if(!Object.prototype.hasOwnProperty.call(dataRows[i],id))throw new Error('unknown');
+    const v=dataRows[i][id];if(!Number.isFinite(v))throw new Error('nan');return `(${v})`;
+  });
+  for(const [k,v] of Object.entries(funcs))s=s.replace(new RegExp(`\\b${k}\\s*\\(`,'g'),v+'(');
+  if(!/^[0-9eE+\-*/%().,\sA-Za-z]+$/.test(s))throw new Error('unsafe');
+  return Function(`"use strict";return (${s})`)();
+}
 function calcDiff(yVar,xVar,i){
-  if(i===0)return 0;
-  const a=dataRows[i],b=dataRows[i-1];
-  const dx=a[xVar]-b[xVar];
-  return Number.isFinite(a[yVar])&&Number.isFinite(b[yVar])&&Number.isFinite(dx)&&dx!==0
-    ?(a[yVar]-b[yVar])/dx
-    :0;
+  const n=dataRows.length;if(n<2||i<0||i>=n)return NaN;
+  let i0,i1;if(i===0){i0=0;i1=1}else if(i===n-1){i0=n-2;i1=n-1}else{i0=i-1;i1=i+1}
+  const a=dataRows[i1],b=dataRows[i0],dx=a[xVar]-b[xVar];
+  return Number.isFinite(a[yVar])&&Number.isFinite(b[yVar])&&Number.isFinite(a[xVar])&&Number.isFinite(b[xVar])&&Number.isFinite(dx)&&dx!==0?(a[yVar]-b[yVar])/dx:NaN;
 }
 function calcInteg(yVar,xVar,i){
-  let total=0;
-  for(let j=1;j<=i;j++){
-    const a=dataRows[j],b=dataRows[j-1],dx=a[xVar]-b[xVar];
-    if(Number.isFinite(a[yVar])&&Number.isFinite(b[yVar])&&Number.isFinite(dx)){
-      total+=(a[yVar]+b[yVar])/2*dx;
-    }
-  }
-  return total;
+  const key=`${yVar}\u0000${xVar}`;let vals=calcIntegCache.get(key);
+  if(!vals){vals=Array(dataRows.length).fill(0);let total=0;for(let j=1;j<dataRows.length;j++){const a=dataRows[j],b=dataRows[j-1],dx=a[xVar]-b[xVar];if(Number.isFinite(a[yVar])&&Number.isFinite(b[yVar])&&Number.isFinite(a[xVar])&&Number.isFinite(b[xVar])&&Number.isFinite(dx))total+=(a[yVar]+b[yVar])/2*dx;vals[j]=total}calcIntegCache.set(key,vals)}
+  return vals[i]??NaN;
 }
 
 // 이동평균 변수
@@ -1092,6 +1126,8 @@ let mediaKind = null;
 function resetWholeExperiment(){
   if(!confirm('현재 실험 데이터와 실험노트를 모두 지우고 새 실험을 시작할까요?'))return;
 
+  clearTimeout(saveTimer);
+  try{localStorage.removeItem(STORAGE_KEY)}catch{}
   dataRows=[];
   excluded.clear();
   sourceVars=[];
@@ -1265,10 +1301,11 @@ function resetMediaCalibration(clearPoints=true){
 }
 
 function configureMediaCanvas(w,h){
-  const maxW=1280, maxH=760;
-  let s=Math.min(1,maxW/w,maxH/h);
-  mediaCanvas.width=Math.max(320,Math.round(w*s));
-  mediaCanvas.height=Math.max(180,Math.round(h*s));
+  const maxW=1280,maxH=760;
+  if(!Number.isFinite(w)||!Number.isFinite(h)||w<=0||h<=0){w=960;h=540}
+  const s=Math.min(1,maxW/w,maxH/h);
+  mediaCanvas.width=Math.max(1,Math.round(w*s));
+  mediaCanvas.height=Math.max(1,Math.round(h*s));
 }
 
 function openMediaPicker(kind){
@@ -1545,7 +1582,11 @@ mediaCanvas.addEventListener('click',e=>{
   }else if(mediaTool==='record'){
     const q=screenToWorld(p);
     const row={x:q.x,y:q.y,px:p.x,py:p.y};
-    if(mediaKind==='video') row.time=mediaVideo.currentTime;
+    if(mediaKind==='video'){
+      const fps=Number($('videoFps').value);
+      if(Number.isFinite(fps)&&fps>0){row.frame=Math.max(0,Math.round(mediaVideo.currentTime*fps));row.fps=fps;row.time=row.frame/fps}
+      else row.time=mediaVideo.currentTime;
+    }
     syncCurrentMediaPoints();
     mediaPoints.push(row);
     renderMediaPointTable();
@@ -1639,8 +1680,8 @@ function renderMediaPointTable(){
     (mediaPointsByTarget[tid]||[]).forEach((p,i)=>rows.push({tid,name,i,p}));
   });
   if(mediaKind==='video'){
-    $('mediaPointHead').innerHTML='<tr><th>대상</th><th>No.</th><th>time (s)</th><th>x ('+escapeHtml(mediaUnit)+')</th><th>y ('+escapeHtml(mediaUnit)+')</th></tr>';
-    $('mediaPointBody').innerHTML=rows.map(r=>`<tr><td>${escapeHtml(r.name)}</td><td>${r.i+1}</td><td>${fmt(r.p.time)}</td><td>${fmt(r.p.x)}</td><td>${fmt(r.p.y)}</td></tr>`).join('');
+    $('mediaPointHead').innerHTML='<tr><th>대상</th><th>No.</th><th>frame</th><th>time (s)</th><th>x ('+escapeHtml(mediaUnit)+')</th><th>y ('+escapeHtml(mediaUnit)+')</th></tr>';
+    $('mediaPointBody').innerHTML=rows.map(r=>`<tr><td>${escapeHtml(r.name)}</td><td>${r.i+1}</td><td>${Number.isInteger(r.p.frame)?r.p.frame:'-'}</td><td>${fmt(r.p.time)}</td><td>${fmt(r.p.x)}</td><td>${fmt(r.p.y)}</td></tr>`).join('');
   }else{
     $('mediaPointHead').innerHTML='<tr><th>대상</th><th>No.</th><th>x ('+escapeHtml(mediaUnit)+')</th><th>y ('+escapeHtml(mediaUnit)+')</th></tr>';
     $('mediaPointBody').innerHTML=rows.map(r=>`<tr><td>${escapeHtml(r.name)}</td><td>${r.i+1}</td><td>${fmt(r.p.x)}</td><td>${fmt(r.p.y)}</td></tr>`).join('');
@@ -1666,22 +1707,20 @@ $('applyMediaDataBtn').onclick=()=>{
   let rows=[],headers=[];
 
   if(mediaKind==='video'){
-    const timeSet=new Set();
-    [1,2,3].forEach(tid=>(mediaPointsByTarget[tid]||[]).forEach(p=>timeSet.add(+p.time.toFixed(6))));
-    const times=[...timeSet].sort((a,b)=>a-b);
-
-    rows=times.map(t=>{
-      const r={time:t};
+    const fps=validatePositiveNumber($('videoFps').value,'FPS',true);if(fps===null)return;
+    const frameOf=p=>Number.isInteger(p.frame)?p.frame:Math.max(0,Math.round(Number(p.time||0)*fps));
+    const frameSet=new Set();
+    [1,2,3].forEach(tid=>(mediaPointsByTarget[tid]||[]).forEach(p=>frameSet.add(frameOf(p))));
+    const frames=[...frameSet].sort((a,b)=>a-b);
+    rows=frames.map(frame=>{
+      const r={time:frame/fps,frame};
       [1,2,3].forEach(tid=>{
-        const name=safeName(mediaTargetNames[tid]||`대상${tid}`);
-        const arr=mediaPointsByTarget[tid]||[];
-        const hit=arr.find(p=>Math.abs(p.time-t)<1e-6);
+        const name=safeName(mediaTargetNames[tid]||`대상${tid}`),arr=mediaPointsByTarget[tid]||[],hit=arr.find(p=>frameOf(p)===frame);
         if(hit){r[`x_${name}`]=hit.x;r[`y_${name}`]=hit.y}
       });
       return r;
     });
-
-    headers=['time'];
+    headers=['time','frame'];
     [1,2,3].forEach(tid=>{
       if((mediaPointsByTarget[tid]||[]).length){
         const name=safeName(mediaTargetNames[tid]||`대상${tid}`);
@@ -1721,7 +1760,7 @@ $('copySetupPrompt').onclick=async()=>{try{await navigator.clipboard.writeText($
 
 function downloadBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}function stamp(){const d=new Date(),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`}
 window.addEventListener('beforeunload',e=>{if(collecting){e.preventDefault();e.returnValue=''}});
-(function boot(){startTableTimer();renderTable();updateCounts();initManual();syncCurrentMediaPoints();syncTargetUI();updateMediaStepUI();})();
+(function boot(){startTableTimer();initManual();syncCurrentMediaPoints();syncTargetUI();updateMediaStepUI();if(!restoreSession()){renderTable();updateCounts()}})();
 </script>
 
 </body>
