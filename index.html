@@ -1690,7 +1690,9 @@ function canvasPos(evt){
 
 
 
-function recalculateAllMediaPoints({syncApplied=true}={}){
+function recalculateAllMediaPoints(){
+  // 사진·영상 분석 영역의 작업 데이터만 다시 계산한다.
+  // 이미 'ArduLab 데이터로 적용'한 실험 데이터는 다음 적용 버튼을 누르기 전까지 변경하지 않는다.
   if(!(mediaScale&&mediaOrigin&&mediaXAxis))return;
   [1,2,3].forEach(tid=>{
     (mediaPointsByTarget[tid]||[]).forEach(row=>{
@@ -1701,7 +1703,6 @@ function recalculateAllMediaPoints({syncApplied=true}={}){
     });
   });
   renderMediaPointTable();
-  if(syncApplied&&mediaDataApplied) applyMediaPointsToData(true);
   scheduleSave();
 }
 function updateScaleFromHandles(){
@@ -2020,7 +2021,7 @@ function applyMediaPointsToData(silent=false){
   }
 
   applyLoadedRows(rows,headers,mediaKind==='video'?'영상 다중대상 분석 데이터':'사진 다중대상 분석 데이터');
-  $('schemaMsg').textContent=`${mediaKind==='video'?'영상':'사진'}에서 기록한 여러 대상의 좌표를 ArduLab 데이터로 적용했습니다. 좌표 단위: ${mediaUnit}.`;
+  $('schemaMsg').textContent=`${mediaKind==='video'?'영상':'사진'} 분석의 현재 좌표 데이터를 ArduLab 실험 데이터로 적용했습니다. 이후 사진·영상 분석 데이터를 수정해도 다시 'ArduLab 데이터로 적용'을 누르기 전까지 실험 데이터는 변경되지 않습니다. 좌표 단위: ${mediaUnit}.`;
 
   mediaDataApplied=true;
   if(!silent)setInputMode('media');
