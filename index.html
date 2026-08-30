@@ -350,7 +350,7 @@ Arduino 코드를 작성하거나 수정할 때 시리얼 데이터는 ArduLab�
       <h3>기준 길이 입력</h3>
       <button data-close="scaleInputModal" class="gray">닫기</button>
     </div>
-    <p class="muted">방금 선택한 두 점 사이의 실제 길이를 입력하세요.</p>
+    <p class="muted">기준 길이의 실제 수치와 단위를 입력하세요. 설정 후 화면의 길이 표시값을 더블클릭하면 다시 수정할 수 있습니다.</p>
     <div class="controls">
       <label>기준 길이
         <input id="scaleLengthPopup" type="text" inputmode="decimal" placeholder="예: 30">
@@ -1233,6 +1233,7 @@ let mediaXAxisHandle = null;    // draggable +X direction handle
 let mediaDragHandle = null;     // scale0 | scale1 | origin | xaxis
 let mediaDragMoved = false;
 let suppressNextCanvasClick = false;
+let mediaScaleLabelHit = null;  // 기준 길이 표시값의 더블클릭 판정 영역
 let mediaTargetNames={1:'',2:'',3:''};
 let mediaPointsByTarget={1:[],2:[],3:[]};
 let mediaPoints=mediaPointsByTarget[1];
@@ -1649,7 +1650,7 @@ $('scaleApplyPopup').onclick=()=>{
   mediaTool='none';
   recalculateAllMediaPoints();
   closeModal('scaleInputModal');
-  $('mediaHint').textContent=`기준 길이 설정 완료: ${fmt(L)} ${mediaUnit}. 양 끝점을 드래그해 미세 조정할 수 있습니다.`;
+  $('mediaHint').textContent=`기준 길이 설정 완료: ${fmt(L)} ${mediaUnit}. 양 끝점을 드래그해 미세 조정하거나, 화면의 길이 표시값을 더블클릭해 수치·단위를 변경할 수 있습니다.`;
   updateMediaStepUI();
   drawMediaFrame();
 };
@@ -1738,6 +1739,10 @@ function detectMediaHandle(p){
 }
 function setMediaCursor(p){
   if(mediaDragHandle){mediaCanvas.style.cursor='grabbing';return}
+  if(mediaTool!=='scale'&&mediaTool!=='axis'&&mediaTool!=='scaleInput'&&pointInScaleLabel(p)){
+    mediaCanvas.style.cursor='pointer';
+    return;
+  }
   const h=(mediaTool==='scale'||mediaTool==='axis')?null:detectMediaHandle(p);
   mediaCanvas.style.cursor=h?'grab':'crosshair';
 }
@@ -1814,6 +1819,9 @@ mediaCanvas.addEventListener('click',e=>{
   if(!mediaKind)return;
   const p=canvasPos(e);
 
+  // 기준 길이 표시값은 편집용 영역이므로 일반 점 기록/설정 클릭으로 처리하지 않는다.
+  if(mediaTool!=='scale'&&mediaTool!=='axis'&&mediaTool!=='scaleInput'&&pointInScaleLabel(p))return;
+
   if(mediaTool==='scale'){
     scaleClicks.push(p);
     if(scaleClicks.length===2){
@@ -1859,6 +1867,15 @@ mediaCanvas.addEventListener('click',e=>{
   drawMediaFrame();
 });
 
+mediaCanvas.addEventListener('dblclick',e=>{
+  if(!mediaKind||mediaTool==='scale'||mediaTool==='axis'||mediaTool==='scaleInput')return;
+  const p=canvasPos(e);
+  if(!pointInScaleLabel(p))return;
+  e.preventDefault();
+  e.stopPropagation();
+  openScaleEditModal();
+});
+
 function screenToWorld(p){
   const dx=p.x-mediaOrigin.x,dy=p.y-mediaOrigin.y;
   const ux=mediaXAxis.x,uy=mediaXAxis.y;
@@ -1877,9 +1894,63 @@ function drawCross(ctx,p,size=6,color='#ff7a00'){
   ctx.moveTo(p.x,p.y-size);ctx.lineTo(p.x,p.y+size);ctx.stroke();
 }
 
+function pointInScaleLabel(p){
+  const g=mediaScaleLabelHit;
+  if(!g)return false;
+  const ca=Math.cos(g.angle),sa=Math.sin(g.angle);
+  const dx=p.x-g.cx,dy=p.y-g.cy;
+  const lx=dx*ca+dy*sa;
+  const ly=-dx*sa+dy*ca;
+  return Math.abs(lx)<=g.w/2+5&&Math.abs(ly)<=g.h/2+5;
+}
+
+function scaleLabelGeometry(label,w,h){
+  if(scaleClicks.length!==2)return null;
+  const a=scaleClicks[0],b=scaleClicks[1];
+  const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);
+  if(d<2)return null;
+
+  const ux=dx/d,uy=dy/d;
+  const nx=-uy,ny=ux;
+  let angle=Math.atan2(dy,dx);
+  if(angle>Math.PI/2)angle-=Math.PI;
+  if(angle<-Math.PI/2)angle+=Math.PI;
+
+  mediaCtx.font='bold 14px Arial';
+  const boxW=mediaCtx.measureText(label).width+14;
+  const boxH=24;
+  const mx=(a.x+b.x)/2,my=(a.y+b.y)/2;
+  const offset=30;
+
+  // 화면 밖으로 덜 벗어나는 쪽에 라벨을 배치한다.
+  const candidates=[
+    {cx:mx+nx*offset,cy:my+ny*offset},
+    {cx:mx-nx*offset,cy:my-ny*offset}
+  ];
+  const score=c=>{
+    const margin=8;
+    const left=c.cx-boxW/2,right=c.cx+boxW/2,top=c.cy-boxH/2,bottom=c.cy+boxH/2;
+    return Math.max(0,margin-left)+Math.max(0,right-(w-margin))+
+           Math.max(0,margin-top)+Math.max(0,bottom-(h-margin));
+  };
+  const c=score(candidates[0])<=score(candidates[1])?candidates[0]:candidates[1];
+  return {cx:c.cx,cy:c.cy,w:boxW,h:boxH,angle};
+}
+
+function openScaleEditModal(){
+  if(!mediaScaleLength||scaleClicks.length!==2)return;
+  pendingScaleClicks=scaleClicks.map(p=>({x:p.x,y:p.y}));
+  $('scaleLengthPopup').value=String(mediaScaleLength);
+  $('scaleUnitPopup').value=mediaUnit||'cm';
+  $('mediaHint').textContent='기준 길이의 수치와 단위를 수정한 뒤 적용하세요.';
+  openModal('scaleInputModal');
+  setTimeout(()=>{$('scaleLengthPopup')?.focus();$('scaleLengthPopup')?.select();},0);
+}
+
 function drawMediaFrame(){
   const w=mediaCanvas.width,h=mediaCanvas.height;
   mediaCtx.clearRect(0,0,w,h); mediaCtx.fillStyle='#111';mediaCtx.fillRect(0,0,w,h);
+  if(scaleClicks.length!==2||!mediaScale||!mediaScaleLength)mediaScaleLabelHit=null;
 
   try{
     if(mediaKind==='image'&&mediaImage.complete&&mediaImage.naturalWidth) mediaCtx.drawImage(mediaImage,0,0,w,h);
@@ -1901,16 +1972,29 @@ function drawMediaFrame(){
       mediaCtx.stroke();
 
       if(mediaScale&&mediaScaleLength){
-        const mx=(scaleClicks[0].x+scaleClicks[1].x)/2;
-        const my=(scaleClicks[0].y+scaleClicks[1].y)/2;
         const label=`${fmt(mediaScaleLength)} ${mediaUnit}`;
-        mediaCtx.font='bold 14px Arial';
-        const tw=mediaCtx.measureText(label).width;
-        mediaCtx.fillStyle='#111';
-        mediaCtx.fillRect(mx-tw/2-6,my-25,tw+12,22);
-        mediaCtx.fillStyle='#fff';
-        mediaCtx.textAlign='center';
-        mediaCtx.fillText(label,mx,my-9);
+        const g=scaleLabelGeometry(label,w,h);
+        mediaScaleLabelHit=g;
+        if(g){
+          mediaCtx.save();
+          mediaCtx.translate(g.cx,g.cy);
+          mediaCtx.rotate(g.angle);
+          mediaCtx.fillStyle='rgba(17,24,39,.92)';
+          mediaCtx.strokeStyle='#f59e0b';
+          mediaCtx.lineWidth=1.5;
+          mediaCtx.beginPath();
+          mediaCtx.roundRect(-g.w/2,-g.h/2,g.w,g.h,6);
+          mediaCtx.fill();
+          mediaCtx.stroke();
+          mediaCtx.fillStyle='#fff';
+          mediaCtx.font='bold 14px Arial';
+          mediaCtx.textAlign='center';
+          mediaCtx.textBaseline='middle';
+          mediaCtx.fillText(label,0,0);
+          mediaCtx.restore();
+        }
+      }else{
+        mediaScaleLabelHit=null;
       }
     }
   }
