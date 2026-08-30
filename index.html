@@ -129,6 +129,7 @@
   <div class="row">
     <button id="loadImageBtn" class="primary">사진 불러오기</button>
     <button id="loadVideoBtn" class="primary">영상 불러오기</button>
+    <button id="loadSampleMediaBtn" class="soft">샘플자료 가져오기</button>
     <input id="mediaFileInput" type="file" hidden>
     <span id="mediaStatus" class="mediaStatus">사진 또는 영상을 불러와 주세요.</span>
   </div>
@@ -349,6 +350,21 @@ Arduino 코드를 작성하거나 수정할 때 시리얼 데이터는 ArduLab�
 
 <!-- 표 변수 선택 -->
 <div id="tableVarsModal" class="modal"><div class="modalBox"><div class="modalHead"><h3>표에 표시할 변수 선택</h3><button data-close="tableVarsModal" class="gray">닫기</button></div><div id="tableVarChecks" class="checkgrid"></div><div class="row" style="margin-top:12px"><button id="selectAllVars" class="soft">전체 선택</button><button id="clearAllVars" class="gray">전체 해제</button><button id="applyTableVars" class="primary">적용</button></div></div></div>
+
+<!-- 사진·영상 샘플 자료 -->
+<div id="mediaSampleModal" class="modal">
+  <div class="modalBox">
+    <div class="modalHead">
+      <h3>샘플자료 가져오기</h3>
+      <button data-close="mediaSampleModal" class="gray">닫기</button>
+    </div>
+    <p class="muted">분석할 샘플 영상을 선택하세요. 선택하면 영상이 사진·영상 분석 화면에 바로 불러와집니다.</p>
+    <div class="sampleList">
+      <button class="sampleBtn mediaSampleBtn" data-media-sample="freefall">자유낙하운동(공지름 4.5cm)</button>
+      <button class="sampleBtn mediaSampleBtn" data-media-sample="projectile">포물선운동(공지름 4.5cm)</button>
+    </div>
+  </div>
+</div>
 
 <!-- 샘플 -->
 <div id="sampleModal" class="modal"><div class="modalBox"><div class="modalHead"><h3>예제 데이터 선택</h3><button data-close="sampleModal" class="gray">닫기</button></div><div class="sampleList"><button class="sampleBtn" data-sample="ohm">옴의 법칙 실험 (직선 관계와 회귀 분석)</button><button class="sampleBtn" data-sample="resonance">기주공명 실험 (피크와 구간 분석)</button><button class="sampleBtn" data-sample="fall">자유낙하운동 (변수 추가)</button><button class="sampleBtn" data-sample="light">거리에 따른 빛의 세기 (이상값 제거와 이동평균)</button><button class="sampleBtn" data-sample="reaction">시각 vs 청각 반응속도 비교 (변수 해석과 AI 협업)</button></div></div></div>
@@ -661,7 +677,7 @@ $('calculusInsertBtn').onclick=()=>{
 $('calcBack').onclick=()=>{const el=$('calcExpr'),p=el.selectionStart??el.value.length;if(p>0){el.value=el.value.slice(0,p-1)+el.value.slice(el.selectionEnd??p);el.focus();el.setSelectionRange(p-1,p-1)}};
 $('calcClear').onclick=()=>{$('calcExpr').value='';$('calcExpr').focus()};
 let calcIntegCache=new Map();
-$('calcApply').onclick=()=>{const name=$('calcName').value.trim(),expr=$('calcExpr').value.trim();if(!/^[A-Za-z가-힣_][A-Za-z0-9가-힣_]*$/.test(name)){alert('변수 이름은 영어·한글·_로 시작하고 영어/한글/숫자/_만 사용할 수 있습니다.');return}if(!expr)return;calcIntegCache.clear();let success=0;for(let i=0;i<dataRows.length;i++){try{const v=calcExpression(expr,i);if(Number.isFinite(v)){dataRows[i][name]=v;success++}else dataRows[i][name]=''}catch{dataRows[i][name]=''}}if(!success){alert('계산된 값이 없습니다. 변수명과 수식을 확인하세요.');return}syncVars();renderTable();scheduleSave();closeModal('calcModal');alert(`계산 변수 '${name}'이 추가되었습니다. 계산 성공: ${success}개`)};
+$('calcApply').onclick=()=>{const name=$('calcName').value.trim(),expr=$('calcExpr').value.trim();if(!/^[A-Za-z가-힣_][A-Za-z0-9가-힣_]*$/.test(name)){alert('변수 이름은 영어·한글·_로 시작하고 영어/한글/숫자/_만 사용할 수 있습니다.');return}if(!expr)return;calcIntegCache.clear();let success=0;for(let i=0;i<dataRows.length;i++){try{const v=calcExpression(expr,i);if(Number.isFinite(v)){dataRows[i][name]=v;success++}else dataRows[i][name]=''}catch{dataRows[i][name]=''}}if(!success){alert('계산된 값이 없습니다. 변수명과 수식을 확인하세요.');return}syncVars();if(!tableVars.includes(name))tableVars.push(name);renderTable();scheduleSave();closeModal('calcModal');alert(`계산 변수 '${name}'이 추가되었습니다. 계산 성공: ${success}개`)};
 function calcExpression(expr,i){
   let s=expr.trim();
   const ident='([\\p{L}_][\\p{L}\\p{N}_]*)';
@@ -1357,12 +1373,74 @@ document.querySelectorAll('input[name="mediaTargetRadio"]').forEach(r=>{
 
 $('loadImageBtn').onclick=()=>openMediaPicker('image');
 $('loadVideoBtn').onclick=()=>openMediaPicker('video');
+$('loadSampleMediaBtn').onclick=()=>openModal('mediaSampleModal');
+
+const MEDIA_SAMPLE_SOURCES={
+  freefall:{src:'./samples/freefall.mp4',label:'자유낙하운동(공지름 4.5cm)'},
+  projectile:{src:'./samples/projectile.mp4',label:'포물선운동(공지름 4.5cm)'}
+};
+
+function loadSampleMedia(key){
+  const sample=MEDIA_SAMPLE_SOURCES[key];
+  if(!sample)return;
+  if(mediaKind && mediaWorkExists()){
+    const ok=confirm('현재 사진·영상 분석 데이터가 초기화됩니다.\n샘플자료를 불러올까요?');
+    if(!ok)return;
+  }
+
+  if(mediaObjectUrl){
+    try{URL.revokeObjectURL(mediaObjectUrl)}catch{}
+    mediaObjectUrl=null;
+  }
+
+  mediaKind='video';
+  resetMediaCalibration(true);
+  $('videoControls').style.display='flex';
+  $('mediaStatus').textContent=`${sample.label} 불러오는 중...`;
+  mediaVideo.pause();
+  mediaVideo.preload='metadata';
+  mediaVideo.src=sample.src;
+
+  mediaVideo.onloadedmetadata=()=>{
+    configureMediaCanvas(mediaVideo.videoWidth||960,mediaVideo.videoHeight||540);
+    $('mediaStatus').textContent=`${sample.label} 불러오기 완료`;
+    $('videoTime').textContent='0.000 s';
+    $('videoCurrentLabel').textContent='0.000 s';
+    $('videoDurationLabel').textContent=(Number.isFinite(mediaVideo.duration)?mediaVideo.duration:0).toFixed(3)+' s';
+    $('videoSeek').value=0;
+
+    const firstTime=(mediaVideo.duration&&mediaVideo.duration>0.02)?0.01:0;
+    const drawFirst=()=>{
+      updateVideoTimeline();
+      drawMediaFrame();
+      updateMediaStepUI();
+    };
+    mediaVideo.addEventListener('seeked',drawFirst,{once:true});
+    try{mediaVideo.currentTime=firstTime}catch{drawFirst()}
+    setTimeout(()=>{if(mediaKind==='video')drawMediaFrame()},120);
+  };
+  mediaVideo.onerror=()=>{
+    $('mediaStatus').textContent=`${sample.label} 불러오기 실패`;
+    alert(`샘플 영상을 불러오지 못했습니다.\nGitHub의 samples 폴더에 ${sample.src.split('/').pop()} 파일이 있는지 확인해 주세요.`);
+    updateMediaStepUI();
+  };
+  mediaVideo.onplay=()=>{ $('videoPlayBtn').textContent='⏸ 정지'; animateVideo(); };
+  mediaVideo.onpause=()=>{ $('videoPlayBtn').textContent='▶ 재생'; cancelAnimationFrame(mediaRaf); drawMediaFrame(); };
+  mediaVideo.ontimeupdate=()=>{updateVideoTimeline();};
+  mediaVideo.load();
+  closeModal('mediaSampleModal');
+}
+
+document.querySelectorAll('[data-media-sample]').forEach(b=>{
+  b.onclick=()=>loadSampleMedia(b.dataset.mediaSample);
+});
 
 $('mediaFileInput').onchange=e=>{
   const f=e.target.files?.[0]; if(!f)return;
   if(mediaObjectUrl) URL.revokeObjectURL(mediaObjectUrl);
   mediaObjectUrl=URL.createObjectURL(f);
   mediaKind=e.target.dataset.kind;
+  mediaVideo.onerror=null;
   resetMediaCalibration(true);
 
   if(mediaKind==='image'){
