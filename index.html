@@ -173,6 +173,7 @@
       <button id="recordPointBtn" class="stepBtn step-disabled">점 기록</button>
       <button id="undoMediaPointBtn" class="stepBtn step-disabled">마지막 점 취소</button>
       <button id="clearMediaPointsBtn" class="stepBtn step-disabled">측정점 지우기</button>
+    <button id="saveAnalysisScreenBtn" class="soft">🖼️ 분석화면 저장하기</button>
     </div>
   </div>
 
@@ -2258,6 +2259,35 @@ function drawMediaFrame(){
     });
   });
 }
+
+function saveAnalysisScreenPng(){
+  if(!mediaKind){
+    alert('먼저 사진이나 영상을 불러와 주세요.');
+    return;
+  }
+
+  // 현재 화면의 영상/사진 프레임과 기준 길이, 좌표축, 측정점 오버레이를
+  // 모두 다시 그린 뒤 하나의 PNG로 저장한다.
+  drawMediaFrame();
+
+  try{
+    mediaCanvas.toBlob(blob=>{
+      if(!blob){
+        alert('분석화면 PNG 파일을 만들지 못했습니다.');
+        return;
+      }
+      const kind=mediaKind==='video'?'영상분석':'사진분석';
+      const framePart=mediaKind==='video'
+        ? `_frame${Math.max(0,Math.round(mediaVideo.currentTime*(Number($('videoFps').value)||30)))}`
+        : '';
+      downloadBlob(blob,`ArduLab_${kind}${framePart}_${stamp()}.png`);
+    },'image/png');
+  }catch(err){
+    console.error(err);
+    alert('분석화면을 저장하지 못했습니다. 외부 출처의 영상/이미지이거나 브라우저 보안 설정 때문에 PNG 저장이 제한될 수 있습니다.');
+  }
+}
+$('saveAnalysisScreenBtn').onclick=saveAnalysisScreenPng;
 
 function renderMediaPointTable(){
   const rows=[];
