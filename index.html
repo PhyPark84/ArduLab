@@ -182,14 +182,20 @@
       <button id="videoPlayBtn" class="soft">▶ 재생</button>
       <button id="prevFrameBtn" class="gray">◀ 이전 프레임</button>
       <button id="nextFrameBtn" class="gray">다음 프레임 ▶</button>
-      <label>FPS <input id="videoFps" type="number" min="1" step="1" value="30"></label>
+      <label>영상 FPS
+        <input id="videoFps" type="number" min="1" step="0.001" value="30" readonly title="영상에서 자동 감지합니다.">
+      </label>
+      <span id="videoFpsStatus" class="muted">영상 불러오기 후 자동 감지</span>
+      <button id="fpsHelpBtn" class="gray small" type="button" title="FPS 유의사항 및 확인 방법" aria-label="FPS 유의사항 및 확인 방법">⚠️ FPS 안내</button>
+      <button id="editVideoFpsBtn" class="gray small" type="button">FPS 직접 수정</button>
       <label class="seriesMini">
         <input id="autoAdvanceCheck" type="checkbox" checked>
         점 기록 후 자동 이동
       </label>
-      <label>이동 프레임
+      <label>점 간 프레임 수
         <input id="autoAdvanceFrames" type="number" min="1" step="1" value="1">
       </label>
+      <span id="pointIntervalInfo" class="muted">점 사이 시간: 약 0.0333 s</span>
     </div>
     <div class="videoTimeline">
       <span id="videoCurrentLabel">0.000 s</span>
@@ -202,7 +208,7 @@
 
   <div id="mediaHint" class="mediaHint">
     순서: 자료 불러오기 → 기준 길이 입력 후 두 점 클릭 → 원점과 +X 방향 점 클릭 → 기록 대상 선택 → 점 기록.
-    영상은 원하는 프레임으로 이동한 뒤 물체 위치를 클릭하세요. 권장 영상: MP4(H.264), 1080p 이하, 30/60fps 고정 프레임률(CFR).
+    영상은 FPS를 자동 감지하며, 사용자는 '점 간 프레임 수'만 정하면 됩니다. 점을 기록하면 설정한 프레임 수만큼 자동 이동합니다. 권장 영상: MP4(H.264), 1080p 이하, 고정 프레임률(CFR).
   </div>
 
   <div class="mediaStage" style="margin-top:10px">
@@ -342,6 +348,68 @@ Arduino 코드를 작성하거나 수정할 때 시리얼 데이터는 ArduLab�
 앞으로 내가 요청하는 Arduino 실험 코드는 이 규칙을 유지해서 작성해줘.</div>
 <button id="copySetupPrompt" class="primary" style="margin-top:9px">초기 프롬프트 복사</button></div>
 </div></div>
+
+<!-- FPS 유의사항 및 확인 방법 -->
+<div id="fpsHelpModal" class="modal">
+  <div class="modalBox">
+    <div class="modalHead">
+      <h3>⚠️ 영상 FPS 안내</h3>
+      <button data-close="fpsHelpModal" class="gray">닫기</button>
+    </div>
+
+    <div class="analysisSection">
+      <div class="analysisTitle">FPS가 왜 중요한가요?</div>
+      <p class="muted">
+        FPS(Frame Per Second)는 영상이 1초 동안 몇 개의 프레임으로 구성되어 있는지를 나타냅니다.
+        ArduLab은 프레임 번호와 FPS를 이용해 측정 시각을 계산하므로, FPS가 잘못되면 시간뿐 아니라
+        시간으로부터 계산하는 속도와 가속도에도 오차가 생길 수 있습니다.
+      </p>
+      <div class="codeGuide" style="margin-top:8px">점 사이 시간 = 점 간 프레임 수 ÷ 영상 FPS
+
+예) 30 fps 영상에서 3프레임 간격으로 측정
+→ 3 ÷ 30 = 0.1000 s</div>
+    </div>
+
+    <div class="analysisSection">
+      <div class="analysisTitle">ArduLab의 FPS 자동 감지 유의사항</div>
+      <ul class="muted">
+        <li>ArduLab은 영상을 불러오면 브라우저에서 재생되는 프레임의 시간 정보를 이용해 FPS를 자동으로 추정합니다.</li>
+        <li>30 fps, 60 fps와 같은 일반적인 고정 프레임률(CFR) 영상에서는 자동 감지값을 우선 사용할 수 있습니다.</li>
+        <li>자동 감지값은 영상 파일의 원본 메타데이터를 직접 읽은 값과 항상 동일하다고 보장할 수는 없습니다.</li>
+        <li>29.97 fps, 59.94 fps 영상이나 가변 프레임률(VFR) 영상, 특수 코덱 영상에서는 감지값을 확인하는 것이 좋습니다.</li>
+        <li>자동 감지값이 실제 영상 정보와 다르면 <b>FPS 직접 수정</b> 버튼을 눌러 영상의 실제 FPS를 입력하세요.</li>
+      </ul>
+    </div>
+
+    <div class="analysisSection">
+      <div class="analysisTitle">영상 파일에서 FPS 확인하기</div>
+      <div class="muted">
+        <b>Windows</b><br>
+        영상 파일을 마우스 오른쪽 버튼으로 클릭 → <b>속성</b> → <b>자세히</b> → 비디오 항목의
+        <b>프레임 속도</b>를 확인합니다.
+      </div>
+      <div class="muted" style="margin-top:10px">
+        <b>Mac</b><br>
+        영상을 <b>QuickTime Player</b>로 열고 동영상 정보/검사기에서 프레임률 정보를 확인합니다.
+        macOS 버전에 따라 메뉴 이름이나 표시되는 정보가 다를 수 있습니다.
+      </div>
+      <div class="muted" style="margin-top:10px">
+        <b>스마트폰</b><br>
+        기본 사진·갤러리 앱의 영상 정보에서 FPS가 표시되면 그 값을 확인합니다.
+        표시되지 않는 경우에는 촬영 당시 카메라 설정의 <b>30 fps / 60 fps</b> 설정을 확인하세요.
+      </div>
+    </div>
+
+    <div class="analysisSection">
+      <div class="analysisTitle">실험할 때 권장하는 방법</div>
+      <p class="muted">
+        가능하면 30 fps 또는 60 fps의 <b>고정 프레임률(CFR)</b>로 촬영한 영상을 사용하세요.
+        ArduLab의 자동 감지값과 영상 파일에서 확인한 FPS가 같다면 그대로 분석하면 됩니다.
+        두 값이 다르거나 확신하기 어렵다면 영상 파일에서 확인한 값을 <b>FPS 직접 수정</b>으로 입력한 뒤 분석하는 것을 권장합니다.
+      </p>
+    </div>
+  </div>
+</div>
 
 <!-- 기준 길이 입력 -->
 <div id="scaleInputModal" class="modal">
@@ -1238,6 +1306,9 @@ let mediaTargetNames={1:'',2:'',3:''};
 let mediaPointsByTarget={1:[],2:[],3:[]};
 let mediaPoints=mediaPointsByTarget[1];
 let mediaRaf = null;
+let detectedVideoFps = null;
+let videoFpsManual = false;
+let fpsDetectionToken = 0;
 const mediaCanvas = $('mediaCanvas');
 const mediaCtx = mediaCanvas.getContext('2d');
 
@@ -1485,6 +1556,8 @@ function loadSampleMedia(key){
     $('videoDurationLabel').textContent=(Number.isFinite(mediaVideo.duration)?mediaVideo.duration:0).toFixed(3)+' s';
     $('videoSeek').value=0;
     reviewLoadedVideo(null,{isSample:true,label:sample.label});
+    resetVideoFpsDetection();
+    detectVideoFps();
 
     const firstTime=(mediaVideo.duration&&mediaVideo.duration>0.02)?0.01:0;
     const drawFirst=()=>{
@@ -1540,6 +1613,8 @@ $('mediaFileInput').onchange=e=>{
       $('mediaStatus').textContent='영상 불러오기 완료';
       $('videoTime').textContent='0.000 s';$('videoCurrentLabel').textContent='0.000 s';$('videoDurationLabel').textContent=(Number.isFinite(mediaVideo.duration)?mediaVideo.duration:0).toFixed(3)+' s';$('videoSeek').value=0;
       reviewLoadedVideo(f);
+      resetVideoFpsDetection();
+      detectVideoFps();
 
       // 첫 프레임을 즉시 보여준다.
       const firstTime=(mediaVideo.duration&&mediaVideo.duration>0.02)?0.01:0;
@@ -1566,6 +1641,160 @@ $('mediaFileInput').onchange=e=>{
   e.target.value='';
 };
 
+
+
+function niceDetectedFps(raw){
+  if(!Number.isFinite(raw)||raw<1||raw>240)return null;
+  const standards=[23.976,24,25,29.97,30,48,50,59.94,60,90,100,119.88,120];
+  let best=raw,bestDiff=Infinity;
+  for(const s of standards){
+    const diff=Math.abs(raw-s)/s;
+    if(diff<bestDiff){bestDiff=diff;best=s}
+  }
+  return bestDiff<=0.025?best:Math.round(raw*1000)/1000;
+}
+function updatePointIntervalInfo(){
+  const fps=Number($('videoFps')?.value);
+  const frames=Number($('autoAdvanceFrames')?.value);
+  const el=$('pointIntervalInfo');
+  if(!el)return;
+  if(Number.isFinite(fps)&&fps>0&&Number.isInteger(frames)&&frames>0){
+    el.textContent=`점 사이 시간: 약 ${(frames/fps).toFixed(4)} s`;
+  }else{
+    el.textContent='점 사이 시간: -';
+  }
+}
+function setVideoFpsValue(fps,status,manual=false){
+  if(Number.isFinite(fps)&&fps>0){
+    detectedVideoFps=fps;
+    $('videoFps').value=String(Math.round(fps*1000)/1000);
+  }
+  videoFpsManual=manual;
+  $('videoFps').readOnly=!manual;
+  $('videoFps').title=manual?'직접 수정 중입니다.':'영상에서 자동 감지한 FPS입니다.';
+  $('videoFpsStatus').textContent=status||'';
+  $('editVideoFpsBtn').textContent=manual?'자동 감지로 돌아가기':'FPS 직접 수정';
+  updatePointIntervalInfo();
+}
+function resetVideoFpsDetection(){
+  fpsDetectionToken++;
+  detectedVideoFps=null;
+  videoFpsManual=false;
+  $('videoFps').readOnly=true;
+  $('videoFps').value='30';
+  $('videoFpsStatus').textContent='FPS 자동 감지 중...';
+  $('editVideoFpsBtn').textContent='FPS 직접 수정';
+  updatePointIntervalInfo();
+}
+async function detectVideoFps(){
+  const token=++fpsDetectionToken;
+  if(mediaKind!=='video')return null;
+  if(typeof mediaVideo.requestVideoFrameCallback!=='function'){
+    if(token===fpsDetectionToken&&!videoFpsManual){
+      setVideoFpsValue(30,'자동 감지 미지원 · 30 fps 임시값 (직접 수정 가능)',false);
+    }
+    return null;
+  }
+
+  const originalTime=mediaVideo.currentTime||0;
+  const wasPaused=mediaVideo.paused;
+  const samples=[];
+  let lastMediaTime=null;
+  let callbackId=null;
+  let timeoutId=null;
+
+  return new Promise(resolve=>{
+    const finish=(fps,status)=>{
+      if(timeoutId)clearTimeout(timeoutId);
+      if(callbackId!==null&&typeof mediaVideo.cancelVideoFrameCallback==='function'){
+        try{mediaVideo.cancelVideoFrameCallback(callbackId)}catch{}
+      }
+      try{mediaVideo.pause()}catch{}
+      try{mediaVideo.currentTime=originalTime}catch{}
+      if(token===fpsDetectionToken&&!videoFpsManual){
+        if(fps)setVideoFpsValue(fps,status,false);
+        else setVideoFpsValue(30,'FPS 감지 실패 · 30 fps 임시값 (직접 수정 가능)',false);
+      }
+      if(!wasPaused){
+        // 자동 감지 때문에 재생 상태를 강제로 이어가지는 않는다.
+      }
+      setTimeout(()=>{if(mediaKind==='video'){drawMediaFrame();updateVideoTimeline()}},40);
+      resolve(fps||null);
+    };
+
+    const onFrame=(now,meta)=>{
+      if(token!==fpsDetectionToken){finish(null,'');return}
+      const mt=Number(meta?.mediaTime);
+      if(Number.isFinite(mt)&&lastMediaTime!==null){
+        const dt=mt-lastMediaTime;
+        if(dt>0.002&&dt<0.2)samples.push(dt);
+      }
+      if(Number.isFinite(mt))lastMediaTime=mt;
+
+      // 18개 이상의 유효 프레임 간격이면 중앙값으로 FPS 추정.
+      if(samples.length>=18){
+        const sorted=[...samples].sort((a,b)=>a-b);
+        const median=sorted[Math.floor(sorted.length/2)];
+        const raw=1/median;
+        const fps=niceDetectedFps(raw);
+        if(fps){finish(fps,`자동 감지: ${fps} fps`);return}
+      }
+      callbackId=mediaVideo.requestVideoFrameCallback(onFrame);
+    };
+
+    try{
+      mediaVideo.muted=true;
+      callbackId=mediaVideo.requestVideoFrameCallback(onFrame);
+      const p=mediaVideo.play();
+      if(p&&typeof p.catch==='function'){
+        p.catch(()=>finish(null,''));
+      }
+      timeoutId=setTimeout(()=>{
+        if(samples.length>=5){
+          const sorted=[...samples].sort((a,b)=>a-b);
+          const fps=niceDetectedFps(1/sorted[Math.floor(sorted.length/2)]);
+          finish(fps,fps?`자동 감지: ${fps} fps`:'');
+        }else finish(null,'');
+      },1800);
+    }catch{
+      finish(null,'');
+    }
+  });
+}
+
+$('fpsHelpBtn').onclick=()=>openModal('fpsHelpModal');
+
+$('editVideoFpsBtn').onclick=()=>{
+  if(!mediaKind||mediaKind!=='video')return;
+  if(videoFpsManual){
+    videoFpsManual=false;
+    $('videoFps').readOnly=true;
+    $('videoFpsStatus').textContent='FPS 자동 재감지 중...';
+    detectVideoFps();
+  }else{
+    fpsDetectionToken++;
+    videoFpsManual=true;
+    $('videoFps').readOnly=false;
+    $('videoFpsStatus').textContent='직접 수정';
+    $('editVideoFpsBtn').textContent='자동 감지로 돌아가기';
+    $('videoFps').focus();
+    $('videoFps').select();
+  }
+  updatePointIntervalInfo();
+};
+$('videoFps').addEventListener('input',updatePointIntervalInfo);
+$('videoFps').addEventListener('change',()=>{
+  if(!videoFpsManual)return;
+  const fps=Number($('videoFps').value);
+  if(!Number.isFinite(fps)||fps<=0){
+    alert('FPS는 0보다 큰 숫자로 입력해 주세요.');
+    $('videoFps').value=detectedVideoFps||30;
+  }else{
+    detectedVideoFps=fps;
+    $('videoFpsStatus').textContent=`직접 수정: ${fps} fps`;
+  }
+  updatePointIntervalInfo();
+});
 
 function updateVideoTimeline(){
   if(mediaKind!=='video')return;
@@ -1791,7 +2020,7 @@ mediaCanvas.addEventListener('pointerleave',()=>{if(!mediaDragHandle)mediaCanvas
 function getAutoAdvanceFrames(){
   const n=Number($('autoAdvanceFrames')?.value);
   if(!Number.isInteger(n)||n<1){
-    alert('이동 프레임 수는 1 이상의 정수로 입력해 주세요.');
+    alert('점 간 프레임 수는 1 이상의 정수로 입력해 주세요.');
     return null;
   }
   return n;
@@ -1806,13 +2035,16 @@ function autoAdvanceAfterPoint(){
   mediaVideo.currentTime=Math.min(mediaVideo.duration||Infinity,mediaVideo.currentTime+frames/fps);
   setTimeout(()=>{drawMediaFrame();updateVideoTimeline()},35);
 }
+$('autoAdvanceFrames').addEventListener('input',updatePointIntervalInfo);
 $('autoAdvanceFrames').addEventListener('change',()=>{
   const n=Number($('autoAdvanceFrames').value);
   if(!Number.isInteger(n)||n<1){
-    alert('이동 프레임 수는 1 이상의 정수로 입력해 주세요.');
+    alert('점 간 프레임 수는 1 이상의 정수로 입력해 주세요.');
     $('autoAdvanceFrames').value=1;
   }
+  updatePointIntervalInfo();
 });
+updatePointIntervalInfo();
 
 mediaCanvas.addEventListener('click',e=>{
   if(suppressNextCanvasClick){suppressNextCanvasClick=false;return}
