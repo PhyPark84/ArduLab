@@ -1854,16 +1854,16 @@ $('applyMediaDataBtn').onclick=()=>{
     rows=frames.map(frame=>{
       const r={time:frame/fps,frame};
       [1,2,3].forEach(tid=>{
-        const name=safeName(mediaTargetNames[tid]||`대상${tid}`),arr=mediaPointsByTarget[tid]||[],hit=arr.find(p=>frameOf(p)===frame);
-        if(hit){r[`x_${name}`]=hit.x;r[`y_${name}`]=hit.y}
+        const name=safeName(mediaTargetNames[tid]||`대상${tid}`),unit=safeName(mediaUnit||'cm'),arr=mediaPointsByTarget[tid]||[],hit=arr.find(p=>frameOf(p)===frame);
+        if(hit){r[`x_${name}_${unit}`]=hit.x;r[`y_${name}_${unit}`]=hit.y}
       });
       return r;
     });
     headers=['time','frame'];
     [1,2,3].forEach(tid=>{
       if((mediaPointsByTarget[tid]||[]).length){
-        const name=safeName(mediaTargetNames[tid]||`대상${tid}`);
-        headers.push(`x_${name}`,`y_${name}`);
+        const name=safeName(mediaTargetNames[tid]||`대상${tid}`),unit=safeName(mediaUnit||'cm');
+        headers.push(`x_${name}_${unit}`,`y_${name}_${unit}`);
       }
     });
   }else{
@@ -1873,8 +1873,8 @@ $('applyMediaDataBtn').onclick=()=>{
       [1,2,3].forEach(tid=>{
         const arr=mediaPointsByTarget[tid]||[],p=arr[i];
         if(p){
-          const name=safeName(mediaTargetNames[tid]||`대상${tid}`);
-          r[`x_${name}`]=p.x;r[`y_${name}`]=p.y;
+          const name=safeName(mediaTargetNames[tid]||`대상${tid}`),unit=safeName(mediaUnit||'cm');
+          r[`x_${name}_${unit}`]=p.x;r[`y_${name}_${unit}`]=p.y;
         }
       });
       rows.push(r);
@@ -1883,14 +1883,14 @@ $('applyMediaDataBtn').onclick=()=>{
     headers=['Point'];
     [1,2,3].forEach(tid=>{
       if((mediaPointsByTarget[tid]||[]).length){
-        const name=safeName(mediaTargetNames[tid]||`대상${tid}`);
-        headers.push(`x_${name}`,`y_${name}`);
+        const name=safeName(mediaTargetNames[tid]||`대상${tid}`),unit=safeName(mediaUnit||'cm');
+        headers.push(`x_${name}_${unit}`,`y_${name}_${unit}`);
       }
     });
   }
 
   applyLoadedRows(rows,headers,mediaKind==='video'?'영상 다중대상 분석 데이터':'사진 다중대상 분석 데이터');
-  $('schemaMsg').textContent=`${mediaKind==='video'?'영상':'사진'}에서 기록한 여러 대상의 좌표를 ArduLab 데이터로 적용했습니다.`;
+  $('schemaMsg').textContent=`${mediaKind==='video'?'영상':'사진'}에서 기록한 여러 대상의 좌표를 ArduLab 데이터로 적용했습니다. 좌표 단위: ${mediaUnit}.`;
   setInputMode('media');
 };
 
