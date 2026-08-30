@@ -2348,11 +2348,57 @@ $('guideBtn').onclick=()=>openModal('guideModal');
 $('copySetupPrompt').onclick=async()=>{try{await navigator.clipboard.writeText($('setupPrompt').textContent);alert('초기 세팅 프롬프트를 복사했습니다.')}catch{alert('복사하지 못했습니다. 프롬프트를 직접 선택해 복사해 주세요.')}};
 
 function downloadBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}function stamp(){const d=new Date(),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`}
-window.addEventListener('beforeunload',e=>{if(collecting){e.preventDefault();e.returnValue=''}});
+
+// ============================================================
+// 새로고침 보호
+// - 작업 데이터가 있는 상태에서 새로고침/페이지 이탈 시 브라우저 확인창을 띄운다.
+// - 사용자가 실제로 새로고침을 승인한 경우 다음 로드에서 저장된 실험 데이터도 초기화한다.
+// - 취소하면 현재 화면과 저장 데이터는 그대로 유지된다.
+// ============================================================
+const RELOAD_RESET_KEY='ArduLab_reload_reset_pending_v1';
+let skipReloadWarning=false;
+
+function hasCurrentWork(){
+  const hasExperimentData=Array.isArray(dataRows)&&dataRows.length>0;
+  const hasMediaWork=!!mediaKind ||
+    (typeof allMediaPointCount==='function'&&allMediaPointCount()>0) ||
+    !!mediaScale || !!mediaOrigin;
+  const hasNote=note&&Object.values(note).some(v=>String(v??'').trim()!=='');
+  return !!(collecting||hasExperimentData||hasMediaWork||hasNote);
+}
+
+function markResetIfUnloadCompletes(){
+  try{sessionStorage.setItem(RELOAD_RESET_KEY,'1')}catch{}
+  // 사용자가 '취소'하면 페이지가 남아 있으므로 이 타이머가 실행되어 표식을 제거한다.
+  // 사용자가 '새로고침/나가기'를 승인하면 현재 문서가 종료되어 타이머가 실행되지 않고,
+  // 다음 로드에서 아래 boot 코드가 표식을 확인해 데이터를 초기화한다.
+  setTimeout(()=>{try{sessionStorage.removeItem(RELOAD_RESET_KEY)}catch{}},0);
+}
+
+window.addEventListener('beforeunload',e=>{
+  if(skipReloadWarning||!hasCurrentWork())return;
+  markResetIfUnloadCompletes();
+  e.preventDefault();
+  e.returnValue='';
+});
+
+function reloadAndResetWithConfirm(goMain=false){
+  if(hasCurrentWork()){
+    const ok=confirm('현재 사용 중인 실험 데이터와 사진·영상 분석 작업이 있습니다.\n\n새로고침하면 현재 데이터가 모두 초기화됩니다.\n계속 새로고침할까요?');
+    if(!ok)return;
+  }
+  clearTimeout(saveTimer);
+  try{localStorage.removeItem(STORAGE_KEY)}catch{}
+  try{
+    sessionStorage.removeItem(RELOAD_RESET_KEY);
+    if(goMain)sessionStorage.setItem('ardulabGoMain','1');
+  }catch{}
+  skipReloadWarning=true;
+  location.reload();
+}
 
 function goHomeByLogo(){
-  try{sessionStorage.setItem('ardulabGoMain','1')}catch{}
-  location.reload();
+  reloadAndResetWithConfirm(true);
 }
 const brandLogoHome=$('brandLogoHome');
 if(brandLogoHome){
@@ -2360,8 +2406,23 @@ if(brandLogoHome){
   brandLogoHome.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();goHomeByLogo()}});
 }
 (function boot(){
+  let resetAfterReload=false;
+  try{
+    resetAfterReload=sessionStorage.getItem(RELOAD_RESET_KEY)==='1';
+    if(resetAfterReload){
+      sessionStorage.removeItem(RELOAD_RESET_KEY);
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  }catch{}
+
   startTableTimer();initManual();syncCurrentMediaPoints();syncTargetUI();updateMediaStepUI();
   if(!restoreSession()){renderTable();updateCounts()}
+
+  if(resetAfterReload){
+    $('status').textContent='새로고침 · 데이터 초기화됨';
+    $('schemaMsg').textContent='새로고침 확인 후 이전 실험 데이터를 초기화했습니다.';
+  }
+
   let goMain=false;try{goMain=sessionStorage.getItem('ardulabGoMain')==='1';if(goMain)sessionStorage.removeItem('ardulabGoMain')}catch{}
   if(goMain){setInputMode('arduino');requestAnimationFrame(()=>window.scrollTo({top:0,left:0,behavior:'auto'}))}
 })();
