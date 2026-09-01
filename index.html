@@ -24,7 +24,7 @@
 @media(max-width:760px){.modeChooser{grid-template-columns:1fr}.modeBtn{min-height:auto}}
 .inputPanel{display:none}.inputPanel.active{display:block}
 .mediaStage{position:relative;width:100%;background:#111;border-radius:12px;overflow:hidden;border:1px solid var(--line);min-height:260px;display:flex;align-items:center;justify-content:center}
-#mediaCanvas{display:block;max-width:100%;height:auto;background:#111;cursor:crosshair}
+#mediaCanvas{display:block;max-width:100%;height:auto;background:#111;cursor:crosshair;-webkit-user-select:none;user-select:none}
 .mediaControls{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin:9px 0}
 .mediaTargetBox,.mediaStepBox{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px;background:#fbfcfd}
 .mediaTargetBox{background:#f8fbfc}
@@ -1953,12 +1953,15 @@ function updateAxisFromHandle(){
   return true;
 }
 function canvasDistance(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
-function dragHitRadius(){
+function dragHitRadius(pointerType='mouse'){
+  // 화면에 보이는 핸들 크기는 유지하되 손가락/펜 입력의 실제 판정 영역만 넓힌다.
+  // CSS 픽셀 기준: 손가락 26px, 펜 18px, 마우스 12px
+  const cssRadius=pointerType==='touch'?26:(pointerType==='pen'?18:12);
   const r=mediaCanvas.getBoundingClientRect();
-  return 12*mediaCanvas.width/Math.max(1,r.width);
+  return cssRadius*mediaCanvas.width/Math.max(1,r.width);
 }
-function detectMediaHandle(p){
-  const hit=dragHitRadius();
+function detectMediaHandle(p,pointerType='mouse'){
+  const hit=dragHitRadius(pointerType);
   if(scaleClicks.length===2){
     if(canvasDistance(p,scaleClicks[0])<=hit)return 'scale0';
     if(canvasDistance(p,scaleClicks[1])<=hit)return 'scale1';
@@ -1977,46 +1980,121 @@ function setMediaCursor(p){
   mediaCanvas.style.cursor=h?'grab':'crosshair';
 }
 
+let mediaTouchHandleIntent=false;
+
+function canvasPosFromClient(clientX,clientY){
+  const r=mediaCanvas.getBoundingClientRect();
+  return {
+    x:(clientX-r.left)*mediaCanvas.width/Math.max(1,r.width),
+    y:(clientY-r.top)*mediaCanvas.height/Math.max(1,r.height)
+  };
+}
+
+// 태블릿에서는 '핸들을 실제로 잡은 경우'에만 기본 스크롤 제스처를 막는다.
+// 빈 영상 영역에서는 기존처럼 페이지를 위/아래로 스크롤할 수 있다.
+mediaCanvas.addEventListener('touchstart',e=>{
+  if(!mediaKind||mediaTool==='scale'||mediaTool==='axis'||mediaTool==='scaleInput')return;
+  const t=e.touches?.[0];
+  if(!t)return;
+  const p=canvasPosFromClient(t.clientX,t.clientY);
+  mediaTouchHandleIntent=!!detectMediaHandle(p,'touch');
+  if(mediaTouchHandleIntent)e.preventDefault();
+},{passive:false});
+
+mediaCanvas.addEventListener('touchmove',e=>{
+  if(mediaTouchHandleIntent||mediaDragHandle)e.preventDefault();
+},{passive:false});
+
+function finishMediaTouchIntent(){
+  mediaTouchHandleIntent=false;
+}
+mediaCanvas.addEventListener('touchend',finishMediaTouchIntent,{passive:true});
+mediaCanvas.addEventListener('touchcancel',finishMediaTouchIntent,{passive:true});
+
 mediaCanvas.addEventListener('pointerdown',e=>{
   if(!mediaKind||mediaTool==='scale'||mediaTool==='axis'||mediaTool==='scaleInput')return;
-  const p=canvasPos(e),hit=detectMediaHandle(p);
+  const p=canvasPos(e),hit=detectMediaHandle(p,e.pointerType||'mouse');
   if(!hit)return;
-  mediaDragHandle=hit;mediaDragMoved=false;
-  mediaCanvas.setPointerCapture?.(e.pointerId);
+
+  mediaDragHandle=hit;
+  mediaDragMoved=false;
+  suppressNextCanvasClick=true;
+
+  try{mediaCanvas.setPointerCapture?.(e.pointerId)}catch{}
   mediaCanvas.style.cursor='grabbing';
+
+  // 핸들을 잡은 포인터는 캔버스가 끝까지 추적한다.
   e.preventDefault();
+  e.stopPropagation();
 });
+
 mediaCanvas.addEventListener('pointermove',e=>{
   if(!mediaKind)return;
   const p=canvasPos(e);
-  if(!mediaDragHandle){setMediaCursor(p);return}
+
+  if(!mediaDragHandle){
+    setMediaCursor(p);
+    return;
+  }
+
   mediaDragMoved=true;
+  suppressNextCanvasClick=true;
+
   if(mediaDragHandle==='scale0'||mediaDragHandle==='scale1'){
     const idx=mediaDragHandle==='scale0'?0:1;
     const other=scaleClicks[1-idx];
-    if(other&&canvasDistance(p,other)>=2){scaleClicks[idx]={x:p.x,y:p.y};updateScaleFromHandles()}
+    if(other&&canvasDistance(p,other)>=2){
+      scaleClicks[idx]={x:p.x,y:p.y};
+      updateScaleFromHandles();
+    }
   }else if(mediaDragHandle==='origin'){
     const dx=p.x-mediaOrigin.x,dy=p.y-mediaOrigin.y;
     mediaOrigin={x:p.x,y:p.y};
-    if(mediaXAxisHandle)mediaXAxisHandle={x:mediaXAxisHandle.x+dx,y:mediaXAxisHandle.y+dy};
+    if(mediaXAxisHandle){
+      mediaXAxisHandle={x:mediaXAxisHandle.x+dx,y:mediaXAxisHandle.y+dy};
+    }
     recalculateAllMediaPoints();
   }else if(mediaDragHandle==='xaxis'){
-    if(canvasDistance(p,mediaOrigin)>=2){mediaXAxisHandle={x:p.x,y:p.y};updateAxisFromHandle()}
+    if(canvasDistance(p,mediaOrigin)>=2){
+      mediaXAxisHandle={x:p.x,y:p.y};
+      updateAxisFromHandle();
+    }
   }
+
   drawMediaFrame();
   e.preventDefault();
+  e.stopPropagation();
 });
+
 function finishMediaDrag(e){
   if(!mediaDragHandle)return;
-  suppressNextCanvasClick=mediaDragMoved;
+
+  suppressNextCanvasClick=true;
   mediaDragHandle=null;
+  mediaTouchHandleIntent=false;
+
   try{mediaCanvas.releasePointerCapture?.(e.pointerId)}catch{}
-  setMediaCursor(canvasPos(e));
+  try{setMediaCursor(canvasPos(e))}catch{mediaCanvas.style.cursor='crosshair'}
+
   drawMediaFrame();
+
+  // 손가락을 떼는 순간 생성될 수 있는 click이 측정점으로 기록되는 것을 막고,
+  // 잠시 뒤 정상 클릭 기록을 다시 허용한다.
+  setTimeout(()=>{suppressNextCanvasClick=false},160);
+
+  e.preventDefault();
+  e.stopPropagation();
 }
+
 mediaCanvas.addEventListener('pointerup',finishMediaDrag);
 mediaCanvas.addEventListener('pointercancel',finishMediaDrag);
-mediaCanvas.addEventListener('pointerleave',()=>{if(!mediaDragHandle)mediaCanvas.style.cursor='crosshair'});
+mediaCanvas.addEventListener('lostpointercapture',()=>{
+  mediaDragHandle=null;
+  mediaTouchHandleIntent=false;
+});
+mediaCanvas.addEventListener('pointerleave',()=>{
+  if(!mediaDragHandle)mediaCanvas.style.cursor='crosshair';
+});
 
 function getAutoAdvanceFrames(){
   const n=Number($('autoAdvanceFrames')?.value);
