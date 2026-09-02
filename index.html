@@ -1962,6 +1962,17 @@ function dragHitRadius(pointerType='mouse'){
   const r=mediaCanvas.getBoundingClientRect();
   return cssRadius*mediaCanvas.width/Math.max(1,r.width);
 }
+function distanceToSegment(p,a,b){
+  const vx=b.x-a.x,vy=b.y-a.y;
+  const wx=p.x-a.x,wy=p.y-a.y;
+  const vv=vx*vx+vy*vy;
+  if(vv<=1e-9)return canvasDistance(p,a);
+  let t=(wx*vx+wy*vy)/vv;
+  t=Math.max(0,Math.min(1,t));
+  const q={x:a.x+t*vx,y:a.y+t*vy};
+  return canvasDistance(p,q);
+}
+
 function detectMediaHandle(p,pointerType='mouse'){
   const hit=dragHitRadius(pointerType);
   if(scaleClicks.length===2){
@@ -1970,16 +1981,28 @@ function detectMediaHandle(p,pointerType='mouse'){
   }
   if(mediaOrigin&&canvasDistance(p,mediaOrigin)<=hit)return 'origin';
   if(mediaXAxisHandle&&canvasDistance(p,mediaXAxisHandle)<=hit)return 'xaxis';
-  // 기준 길이 숫자 라벨 자체도 드래그 핸들처럼 사용한다.
-  // 라벨을 끌면 두 기준점과 선이 함께 평행이동한다.
+
+  // 기준 길이 숫자 라벨 또는 두 기준점 사이의 주황색 선을 잡으면
+  // 두 기준점+선+라벨 전체를 같은 거리만큼 평행이동한다.
   if(pointInScaleLabel(p))return 'scaleLabel';
+  if(scaleClicks.length===2){
+    // 선 자체는 얇게 그려지지만 터치에서는 넉넉한 판정 폭을 사용한다.
+    // 끝점은 위에서 먼저 판정하므로 끝점 근처에서는 기존의 '한 점 이동'이 우선한다.
+    const lineHit=pointerType==='touch'
+      ? dragHitRadius('touch')*0.85
+      : (pointerType==='pen'?dragHitRadius('pen')*0.8:dragHitRadius('mouse')*0.7);
+    if(distanceToSegment(p,scaleClicks[0],scaleClicks[1])<=lineHit)return 'scaleLabel';
+  }
   return null;
 }
 function setMediaCursor(p){
   if(mediaDragHandle){mediaCanvas.style.cursor='grabbing';return}
-  if(mediaTool!=='scale'&&mediaTool!=='axis'&&mediaTool!=='scaleInput'&&pointInScaleLabel(p)){
-    mediaCanvas.style.cursor='grab';
-    return;
+  if(mediaTool!=='scale'&&mediaTool!=='axis'&&mediaTool!=='scaleInput'){
+    const movableScalePart=detectMediaHandle(p,'mouse');
+    if(movableScalePart==='scaleLabel'){
+      mediaCanvas.style.cursor='grab';
+      return;
+    }
   }
   const h=(mediaTool==='scale'||mediaTool==='axis')?null:detectMediaHandle(p);
   mediaCanvas.style.cursor=h?'grab':'crosshair';
@@ -2054,7 +2077,7 @@ mediaCanvas.addEventListener('pointermove',e=>{
       updateScaleFromHandles();
     }
   }else if(mediaDragHandle==='scaleLabel'){
-    // 라벨을 드래그하면 기준 길이 두 점을 같은 거리만큼 함께 이동한다.
+    // 라벨 또는 기준길이 선을 드래그하면 기준 길이 두 점을 같은 거리만큼 함께 이동한다.
     // 두 점 사이 거리는 그대로이므로 mediaScale(축척)은 변하지 않는다.
     if(mediaDragLastPoint&&scaleClicks.length===2){
       const dx=p.x-mediaDragLastPoint.x,dy=p.y-mediaDragLastPoint.y;
