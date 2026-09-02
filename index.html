@@ -316,7 +316,7 @@
     <li><b>영상 크기:</b> 원활한 분석을 위해 1080p 이하, 짧은 실험 영상, 가능하면 100MB 이하를 권장합니다. 고해상도·장시간 영상은 기기 성능에 따라 느려질 수 있습니다.</li>
     <li><b>프레임 분석:</b> 프레임 단위 위치 분석에는 30fps 또는 60fps의 고정 프레임률(CFR) 영상을 권장합니다. 가변 프레임률(VFR) 영상은 프레임 이동과 실제 촬영 시점 사이에 오차가 생길 수 있습니다.</li>
     <li><b>기준 길이:</b> 영상 또는 사진 안에서 실제 길이를 알고 있는 두 점을 지정하고, 실제 길이와 단위(mm/cm/m)를 정확히 입력하세요. 기준 길이의 두 끝점은 설정 후 드래그하여 미세 조정할 수 있습니다.</li>
-    <li><b>좌표축:</b> 원점과 +X축 방향을 지정한 뒤 측정하세요. 설정 후 원점과 X축 방향 핸들을 드래그해 미세 조정할 수 있으며, 기준 길이나 좌표축을 바꾸면 기존 측정 좌표도 새 기준에 맞춰 다시 계산됩니다.</li>
+    <li><b>좌표축:</b> 원점과 +X축 방향을 지정한 뒤 측정하세요. 설정 후 X축·Y축 끝점 핸들을 드래그해 축을 회전할 수 있고, 빨간색 X축 또는 파란색 Y축 선을 드래그하면 좌표축 전체를 평행이동할 수 있습니다. 기준 길이나 좌표축을 바꾸면 기존 측정 좌표도 새 기준에 맞춰 다시 계산됩니다.</li>
     <li><b>측정점:</b> 추적하려는 물체의 같은 위치(예: 공의 중심)를 매 프레임 일관되게 클릭하세요. 대상이 여러 개인 경우 기록 대상을 구분해서 측정하세요.</li>
     <li><b>샘플 영상:</b> 샘플자료의 공 지름은 4.5cm입니다. 공의 지름을 기준 길이로 사용할 경우 공의 양 끝을 가능한 정확하게 지정하세요.</li>
     <li><b>분석 오차:</b> 영상의 원근 왜곡, 카메라 흔들림, 렌즈 왜곡, 모션 블러, 기준 길이와 물체의 거리 차이 등은 측정 오차를 만들 수 있습니다. 가능하면 카메라를 고정하고 운동 평면에 수직으로 촬영하세요.</li>
@@ -1317,7 +1317,8 @@ let mediaUnit = 'cm';
 let mediaOrigin = null;
 let mediaXAxis = null;          // normalized screen-space x basis
 let mediaXAxisHandle = null;    // draggable +X direction handle
-let mediaDragHandle = null;     // scale0 | scale1 | scaleLabel | origin | xaxis
+let mediaYAxisHandle = null;    // draggable +Y direction handle
+let mediaDragHandle = null;     // scale0 | scale1 | scaleLabel | origin | xaxis | yaxis | axisMove
 let mediaDragLastPoint = null;  // 기준길이 라벨 전체 평행이동용 직전 포인터 위치
 let mediaScaleLabelLastTap = 0; // 태블릿 더블탭 편집 판정
 let mediaDragMoved = false;
@@ -1430,7 +1431,7 @@ function clearAllMediaPoints(){
 }
 
 function resetMediaCalibration(clearPoints=true){
-  scaleClicks=[]; axisClicks=[]; mediaScale=null; mediaScaleLength=null; pendingScaleClicks=null; mediaOrigin=null; mediaXAxis=null; mediaXAxisHandle=null; mediaDragHandle=null; mediaTool='none';
+  scaleClicks=[]; axisClicks=[]; mediaScale=null; mediaScaleLength=null; pendingScaleClicks=null; mediaOrigin=null; mediaXAxis=null; mediaXAxisHandle=null; mediaYAxisHandle=null; mediaDragHandle=null; mediaTool='none';
   if(clearPoints) clearAllMediaPoints();
   renderMediaPointTable();
   drawMediaFrame();
@@ -1913,6 +1914,7 @@ $('setAxisBtn').onclick=()=>{
   mediaOrigin=null;
   mediaXAxis=null;
   mediaXAxisHandle=null;
+  mediaYAxisHandle=null;
   mediaTool='axis';
 
   $('mediaHint').textContent='좌표의 원점을 클릭한 뒤, +X축 방향의 두 번째 점을 클릭하세요.';
@@ -1964,13 +1966,58 @@ function updateScaleFromHandles(){
   recalculateAllMediaPoints();
   return true;
 }
-function updateAxisFromHandle(){
+function axisYBasis(){
+  const u=mediaXAxis||{x:1,y:0};
+  return {x:u.y,y:-u.x};
+}
+function ensureAxisHandles(){
+  if(!mediaOrigin)return;
+  const axisLen=Math.min(mediaCanvas.width,mediaCanvas.height)*.18;
+  const u=mediaXAxis||{x:1,y:0};
+  const v={x:u.y,y:-u.x};
+  if(!mediaXAxisHandle)mediaXAxisHandle={x:mediaOrigin.x+u.x*axisLen,y:mediaOrigin.y+u.y*axisLen};
+  if(!mediaYAxisHandle)mediaYAxisHandle={x:mediaOrigin.x+v.x*axisLen,y:mediaOrigin.y+v.y*axisLen};
+}
+function updateAxisFromXHandle(){
   if(!mediaOrigin||!mediaXAxisHandle)return false;
   const dx=mediaXAxisHandle.x-mediaOrigin.x,dy=mediaXAxisHandle.y-mediaOrigin.y,len=Math.hypot(dx,dy);
   if(len<2)return false;
+
+  const oldYLen=mediaYAxisHandle
+    ? Math.hypot(mediaYAxisHandle.x-mediaOrigin.x,mediaYAxisHandle.y-mediaOrigin.y)
+    : Math.min(mediaCanvas.width,mediaCanvas.height)*.18;
+
   mediaXAxis={x:dx/len,y:dy/len};
+  const v=axisYBasis();
+  mediaYAxisHandle={
+    x:mediaOrigin.x+v.x*oldYLen,
+    y:mediaOrigin.y+v.y*oldYLen
+  };
   recalculateAllMediaPoints();
   return true;
+}
+function updateAxisFromYHandle(){
+  if(!mediaOrigin||!mediaYAxisHandle)return false;
+  const dx=mediaYAxisHandle.x-mediaOrigin.x,dy=mediaYAxisHandle.y-mediaOrigin.y,len=Math.hypot(dx,dy);
+  if(len<2)return false;
+
+  const oldXLen=mediaXAxisHandle
+    ? Math.hypot(mediaXAxisHandle.x-mediaOrigin.x,mediaXAxisHandle.y-mediaOrigin.y)
+    : Math.min(mediaCanvas.width,mediaCanvas.height)*.18;
+
+  // 화면 좌표에서 +Y 기저 v=(u.y,-u.x)이므로, v에서 u를 역산한다.
+  const v={x:dx/len,y:dy/len};
+  mediaXAxis={x:-v.y,y:v.x};
+  mediaXAxisHandle={
+    x:mediaOrigin.x+mediaXAxis.x*oldXLen,
+    y:mediaOrigin.y+mediaXAxis.y*oldXLen
+  };
+  recalculateAllMediaPoints();
+  return true;
+}
+function updateAxisFromHandle(){
+  // 기존 호출 호환용: X축 핸들 기준 회전
+  return updateAxisFromXHandle();
 }
 function canvasDistance(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
 function dragHitRadius(pointerType='mouse'){
@@ -1997,8 +2044,20 @@ function detectMediaHandle(p,pointerType='mouse'){
     if(canvasDistance(p,scaleClicks[0])<=hit)return 'scale0';
     if(canvasDistance(p,scaleClicks[1])<=hit)return 'scale1';
   }
-  if(mediaOrigin&&canvasDistance(p,mediaOrigin)<=hit)return 'origin';
-  if(mediaXAxisHandle&&canvasDistance(p,mediaXAxisHandle)<=hit)return 'xaxis';
+  if(mediaOrigin){
+    ensureAxisHandles();
+    if(canvasDistance(p,mediaOrigin)<=hit)return 'origin';
+    if(mediaXAxisHandle&&canvasDistance(p,mediaXAxisHandle)<=hit)return 'xaxis';
+    if(mediaYAxisHandle&&canvasDistance(p,mediaYAxisHandle)<=hit)return 'yaxis';
+
+    // 빨간 X축 선이나 파란 Y축 선을 잡으면 좌표축 전체를 평행이동한다.
+    // 원점/끝점은 위에서 먼저 판정하므로 회전 핸들과 충돌하지 않는다.
+    const axisLineHit=pointerType==='touch'
+      ? dragHitRadius('touch')*.70
+      : (pointerType==='pen'?dragHitRadius('pen')*.65:dragHitRadius('mouse')*.55);
+    if(mediaXAxisHandle&&distanceToSegment(p,mediaOrigin,mediaXAxisHandle)<=axisLineHit)return 'axisMove';
+    if(mediaYAxisHandle&&distanceToSegment(p,mediaOrigin,mediaYAxisHandle)<=axisLineHit)return 'axisMove';
+  }
 
   // 기준 길이 숫자 라벨 또는 두 기준점 사이의 주황색 선을 잡으면
   // 두 기준점+선+라벨 전체를 같은 거리만큼 평행이동한다.
@@ -2110,14 +2169,28 @@ mediaCanvas.addEventListener('pointermove',e=>{
   }else if(mediaDragHandle==='origin'){
     const dx=p.x-mediaOrigin.x,dy=p.y-mediaOrigin.y;
     mediaOrigin={x:p.x,y:p.y};
-    if(mediaXAxisHandle){
-      mediaXAxisHandle={x:mediaXAxisHandle.x+dx,y:mediaXAxisHandle.y+dy};
-    }
+    if(mediaXAxisHandle)mediaXAxisHandle={x:mediaXAxisHandle.x+dx,y:mediaXAxisHandle.y+dy};
+    if(mediaYAxisHandle)mediaYAxisHandle={x:mediaYAxisHandle.x+dx,y:mediaYAxisHandle.y+dy};
     recalculateAllMediaPoints();
   }else if(mediaDragHandle==='xaxis'){
     if(canvasDistance(p,mediaOrigin)>=2){
       mediaXAxisHandle={x:p.x,y:p.y};
-      updateAxisFromHandle();
+      updateAxisFromXHandle();
+    }
+  }else if(mediaDragHandle==='yaxis'){
+    if(canvasDistance(p,mediaOrigin)>=2){
+      mediaYAxisHandle={x:p.x,y:p.y};
+      updateAxisFromYHandle();
+    }
+  }else if(mediaDragHandle==='axisMove'){
+    // X축/ Y축 선의 어느 부분을 잡아도 축 전체를 같은 거리만큼 이동한다.
+    if(mediaDragLastPoint&&mediaOrigin){
+      const dx=p.x-mediaDragLastPoint.x,dy=p.y-mediaDragLastPoint.y;
+      mediaOrigin={x:mediaOrigin.x+dx,y:mediaOrigin.y+dy};
+      if(mediaXAxisHandle)mediaXAxisHandle={x:mediaXAxisHandle.x+dx,y:mediaXAxisHandle.y+dy};
+      if(mediaYAxisHandle)mediaYAxisHandle={x:mediaYAxisHandle.x+dx,y:mediaYAxisHandle.y+dy};
+      mediaDragLastPoint={...p};
+      recalculateAllMediaPoints();
     }
   }
 
@@ -2206,8 +2279,12 @@ mediaCanvas.addEventListener('click',e=>{
   if(!mediaKind)return;
   const p=canvasPos(e);
 
-  // 기준 길이 표시값은 편집용 영역이므로 일반 점 기록/설정 클릭으로 처리하지 않는다.
-  if(mediaTool!=='scale'&&mediaTool!=='axis'&&mediaTool!=='scaleInput'&&pointInScaleLabel(p))return;
+  // 기준 길이 및 좌표축 조작 영역은 일반 측정점 클릭으로 처리하지 않는다.
+  if(mediaTool!=='scale'&&mediaTool!=='axis'&&mediaTool!=='scaleInput'){
+    if(pointInScaleLabel(p))return;
+    const manipulationHit=detectMediaHandle(p,'mouse');
+    if(['origin','xaxis','yaxis','axisMove','scaleLabel','scale0','scale1'].includes(manipulationHit))return;
+  }
 
   if(mediaTool==='scale'){
     scaleClicks.push(p);
@@ -2231,9 +2308,13 @@ mediaCanvas.addEventListener('click',e=>{
       if(len<2){axisClicks=[];mediaOrigin=null;alert('+X 방향점을 원점에서 조금 더 떨어뜨려 선택해 주세요.');return}
       mediaXAxis={x:dx/len,y:dy/len};
       mediaXAxisHandle={...axisClicks[1]};
+      const v={x:mediaXAxis.y,y:-mediaXAxis.x};
+      mediaYAxisHandle={x:mediaOrigin.x+v.x*len,y:mediaOrigin.y+v.y*len};
       mediaTool='none';
       recalculateAllMediaPoints();
-      $('mediaHint').textContent=mediaScale?'좌표축 설정 완료. 원점 또는 X축 끝점을 드래그해 미세 조정할 수 있습니다.':'좌표축 설정 완료. 기준 길이도 설정되면 점 기록을 시작할 수 있습니다.';
+      $('mediaHint').textContent=mediaScale
+        ? '좌표축 설정 완료. X/Y축 끝점으로 회전하고, 빨간색/파란색 축 선을 잡아 전체 위치를 옮길 수 있습니다.'
+        : '좌표축 설정 완료. 기준 길이도 설정되면 점 기록을 시작할 수 있습니다.';
       updateMediaStepUI();
     }
   }else if(mediaTool==='record'){
@@ -2388,17 +2469,35 @@ function drawMediaFrame(){
 
   if(mediaOrigin){
     const u=mediaXAxis||{x:1,y:0},axisLen=Math.min(w,h)*.18;
-    if(!mediaXAxisHandle)mediaXAxisHandle={x:mediaOrigin.x+u.x*axisLen,y:mediaOrigin.y+u.y*axisLen};
-    const handleLen=Math.hypot(mediaXAxisHandle.x-mediaOrigin.x,mediaXAxisHandle.y-mediaOrigin.y)||axisLen;
-    const drawLen=Math.max(axisLen,handleLen);
-    mediaCtx.lineWidth=3;
-    mediaCtx.strokeStyle='#ef4444';mediaCtx.beginPath();mediaCtx.moveTo(mediaOrigin.x,mediaOrigin.y);mediaCtx.lineTo(mediaOrigin.x+u.x*drawLen,mediaOrigin.y+u.y*drawLen);mediaCtx.stroke();
+    ensureAxisHandles();
     const v={x:u.y,y:-u.x};
-    mediaCtx.strokeStyle='#2563eb';mediaCtx.beginPath();mediaCtx.moveTo(mediaOrigin.x,mediaOrigin.y);mediaCtx.lineTo(mediaOrigin.x+v.x*axisLen,mediaOrigin.y+v.y*axisLen);mediaCtx.stroke();
-    mediaCtx.fillStyle='#fff';mediaCtx.strokeStyle='#111827';mediaCtx.lineWidth=3;mediaCtx.beginPath();mediaCtx.arc(mediaOrigin.x,mediaOrigin.y,8,0,Math.PI*2);mediaCtx.fill();mediaCtx.stroke();
-    mediaCtx.fillStyle='#fff';mediaCtx.strokeStyle='#ef4444';mediaCtx.beginPath();mediaCtx.arc(mediaXAxisHandle.x,mediaXAxisHandle.y,8,0,Math.PI*2);mediaCtx.fill();mediaCtx.stroke();
-    mediaCtx.font='bold 14px Arial';mediaCtx.fillStyle='#ef4444';mediaCtx.fillText('+X',mediaOrigin.x+u.x*drawLen+5,mediaOrigin.y+u.y*drawLen);
-    mediaCtx.fillStyle='#2563eb';mediaCtx.fillText('+Y',mediaOrigin.x+v.x*axisLen+5,mediaOrigin.y+v.y*axisLen);
+    const xLen=Math.hypot(mediaXAxisHandle.x-mediaOrigin.x,mediaXAxisHandle.y-mediaOrigin.y)||axisLen;
+    const yLen=Math.hypot(mediaYAxisHandle.x-mediaOrigin.x,mediaYAxisHandle.y-mediaOrigin.y)||axisLen;
+
+    mediaCtx.lineWidth=3;
+    mediaCtx.strokeStyle='#ef4444';
+    mediaCtx.beginPath();mediaCtx.moveTo(mediaOrigin.x,mediaOrigin.y);mediaCtx.lineTo(mediaXAxisHandle.x,mediaXAxisHandle.y);mediaCtx.stroke();
+
+    mediaCtx.strokeStyle='#2563eb';
+    mediaCtx.beginPath();mediaCtx.moveTo(mediaOrigin.x,mediaOrigin.y);mediaCtx.lineTo(mediaYAxisHandle.x,mediaYAxisHandle.y);mediaCtx.stroke();
+
+    // 원점은 기존 지름(16px)의 절반인 지름 8px로 줄이고, 진한 색으로 채운다.
+    mediaCtx.fillStyle='#111827';
+    mediaCtx.beginPath();mediaCtx.arc(mediaOrigin.x,mediaOrigin.y,4,0,Math.PI*2);mediaCtx.fill();
+
+    // +X 회전 핸들
+    mediaCtx.fillStyle='#fff';mediaCtx.strokeStyle='#ef4444';mediaCtx.lineWidth=3;
+    mediaCtx.beginPath();mediaCtx.arc(mediaXAxisHandle.x,mediaXAxisHandle.y,8,0,Math.PI*2);mediaCtx.fill();mediaCtx.stroke();
+
+    // +Y 회전 핸들
+    mediaCtx.fillStyle='#fff';mediaCtx.strokeStyle='#2563eb';mediaCtx.lineWidth=3;
+    mediaCtx.beginPath();mediaCtx.arc(mediaYAxisHandle.x,mediaYAxisHandle.y,8,0,Math.PI*2);mediaCtx.fill();mediaCtx.stroke();
+
+    mediaCtx.font='bold 14px Arial';
+    mediaCtx.fillStyle='#ef4444';
+    mediaCtx.fillText('+X',mediaOrigin.x+u.x*xLen+5,mediaOrigin.y+u.y*xLen);
+    mediaCtx.fillStyle='#2563eb';
+    mediaCtx.fillText('+Y',mediaOrigin.x+v.x*yLen+5,mediaOrigin.y+v.y*yLen);
   }else if(axisClicks.length){
     axisClicks.forEach(p=>drawCross(mediaCtx,p,7,'#ef4444'));
   }
