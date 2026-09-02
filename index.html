@@ -1299,7 +1299,9 @@ let mediaUnit = 'cm';
 let mediaOrigin = null;
 let mediaXAxis = null;          // normalized screen-space x basis
 let mediaXAxisHandle = null;    // draggable +X direction handle
-let mediaDragHandle = null;     // scale0 | scale1 | origin | xaxis
+let mediaDragHandle = null;     // scale0 | scale1 | scaleLabel | origin | xaxis
+let mediaDragLastPoint = null;  // 기준길이 라벨 전체 평행이동용 직전 포인터 위치
+let mediaScaleLabelLastTap = 0; // 태블릿 더블탭 편집 판정
 let mediaDragMoved = false;
 let suppressNextCanvasClick = false;
 let mediaScaleLabelHit = null;  // 기준 길이 표시값의 더블클릭 판정 영역
@@ -1968,12 +1970,15 @@ function detectMediaHandle(p,pointerType='mouse'){
   }
   if(mediaOrigin&&canvasDistance(p,mediaOrigin)<=hit)return 'origin';
   if(mediaXAxisHandle&&canvasDistance(p,mediaXAxisHandle)<=hit)return 'xaxis';
+  // 기준 길이 숫자 라벨 자체도 드래그 핸들처럼 사용한다.
+  // 라벨을 끌면 두 기준점과 선이 함께 평행이동한다.
+  if(pointInScaleLabel(p))return 'scaleLabel';
   return null;
 }
 function setMediaCursor(p){
   if(mediaDragHandle){mediaCanvas.style.cursor='grabbing';return}
   if(mediaTool!=='scale'&&mediaTool!=='axis'&&mediaTool!=='scaleInput'&&pointInScaleLabel(p)){
-    mediaCanvas.style.cursor='pointer';
+    mediaCanvas.style.cursor='grab';
     return;
   }
   const h=(mediaTool==='scale'||mediaTool==='axis')?null:detectMediaHandle(p);
@@ -2018,6 +2023,7 @@ mediaCanvas.addEventListener('pointerdown',e=>{
 
   mediaDragHandle=hit;
   mediaDragMoved=false;
+  mediaDragLastPoint={...p};
   suppressNextCanvasClick=true;
 
   try{mediaCanvas.setPointerCapture?.(e.pointerId)}catch{}
@@ -2047,6 +2053,19 @@ mediaCanvas.addEventListener('pointermove',e=>{
       scaleClicks[idx]={x:p.x,y:p.y};
       updateScaleFromHandles();
     }
+  }else if(mediaDragHandle==='scaleLabel'){
+    // 라벨을 드래그하면 기준 길이 두 점을 같은 거리만큼 함께 이동한다.
+    // 두 점 사이 거리는 그대로이므로 mediaScale(축척)은 변하지 않는다.
+    if(mediaDragLastPoint&&scaleClicks.length===2){
+      const dx=p.x-mediaDragLastPoint.x,dy=p.y-mediaDragLastPoint.y;
+      scaleClicks=scaleClicks.map(q=>({x:q.x+dx,y:q.y+dy}));
+      if(pendingScaleClicks?.length===2){
+        pendingScaleClicks=pendingScaleClicks.map(q=>({x:q.x+dx,y:q.y+dy}));
+      }
+      mediaDragLastPoint={...p};
+      // 축척값은 그대로지만 표시 위치와 저장 상태는 갱신한다.
+      scheduleSave();
+    }
   }else if(mediaDragHandle==='origin'){
     const dx=p.x-mediaOrigin.x,dy=p.y-mediaOrigin.y;
     mediaOrigin={x:p.x,y:p.y};
@@ -2069,8 +2088,12 @@ mediaCanvas.addEventListener('pointermove',e=>{
 function finishMediaDrag(e){
   if(!mediaDragHandle)return;
 
+  const finishedHandle=mediaDragHandle;
+  const wasMoved=mediaDragMoved;
+
   suppressNextCanvasClick=true;
   mediaDragHandle=null;
+  mediaDragLastPoint=null;
   mediaTouchHandleIntent=false;
 
   try{mediaCanvas.releasePointerCapture?.(e.pointerId)}catch{}
@@ -2078,8 +2101,19 @@ function finishMediaDrag(e){
 
   drawMediaFrame();
 
-  // 손가락을 떼는 순간 생성될 수 있는 click이 측정점으로 기록되는 것을 막고,
-  // 잠시 뒤 정상 클릭 기록을 다시 허용한다.
+  // 태블릿에서 기준 길이 라벨을 '드래그하지 않고' 두 번 탭하면
+  // 기존 더블클릭과 동일하게 길이/단위 수정창을 연다.
+  if(finishedHandle==='scaleLabel'&&!wasMoved&&(e.pointerType==='touch'||e.pointerType==='pen')){
+    const now=Date.now();
+    if(now-mediaScaleLabelLastTap<420){
+      mediaScaleLabelLastTap=0;
+      setTimeout(()=>openScaleEditModal(),0);
+    }else{
+      mediaScaleLabelLastTap=now;
+    }
+  }
+
+  // 드래그 종료 직후 click이 측정점으로 기록되는 것을 막는다.
   setTimeout(()=>{suppressNextCanvasClick=false},160);
 
   e.preventDefault();
@@ -2090,6 +2124,7 @@ mediaCanvas.addEventListener('pointerup',finishMediaDrag);
 mediaCanvas.addEventListener('pointercancel',finishMediaDrag);
 mediaCanvas.addEventListener('lostpointercapture',()=>{
   mediaDragHandle=null;
+  mediaDragLastPoint=null;
   mediaTouchHandleIntent=false;
 });
 mediaCanvas.addEventListener('pointerleave',()=>{
